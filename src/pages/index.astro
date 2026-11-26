@@ -2,7 +2,8 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import PanelCard from '../components/PanelCard.astro';
-import RatingPlate from '../components/RatingPlate.astro';
+import Hero from '../components/home/Hero.astro';
+import IndustryTicker from '../components/home/IndustryTicker.astro';
 import LocationMap from '../components/LocationMap.astro';
 import site from '../data/site.json';
 import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
@@ -13,8 +14,7 @@ const panels = await getPanels();
 const categories = await getCategories();
 const catMap = await getCategoryMap();
 const featured = panels.filter((p) => p.data.featured).slice(0, 6);
-const hero = featured[0] ?? panels[0];
-const heroImage = hero.data.gallery[0] ?? hero.data.image;
+const examplesFor = (id: string) => [...new Set(panels.filter((p) => p.data.category.id === id).map((p) => p.data.title.split(',')[0]))].slice(0, 3);
 const countFor = (id: string) => panels.filter((p) => p.data.category.id === id).length;
 const years = new Date().getFullYear() - site.established;
 
@@ -62,75 +62,15 @@ const steps = [
 ] as const;
 ---
 <Base>
-  <!-- ================= HERO ================= -->
-  <section class="hero blueprint on-dark">
-    <svg class="hero__sld" viewBox="0 0 640 520" aria-hidden="true">
-      <g class="sld-lines">
-        <path d="M320 0v70" />
-        <circle cx="320" cy="92" r="22" /><circle cx="320" cy="122" r="22" />
-        <path d="M320 144v46" />
-        <rect x="306" y="190" width="28" height="28" /><path d="M306 218l28-28" />
-        <path d="M320 218v42" />
-        <path d="M40 260h560" class="sld-bus" />
-        <path d="M80 260v70M200 260v70M320 260v70M440 260v70M560 260v70" />
-        <rect x="68" y="330" width="24" height="24" /><rect x="188" y="330" width="24" height="24" /><rect x="308" y="330" width="24" height="24" /><rect x="428" y="330" width="24" height="24" /><rect x="548" y="330" width="24" height="24" />
-        <path d="M80 354v60M200 354v60M320 354v60M440 354v60M560 354v60" />
-        <circle cx="80" cy="436" r="22" /><circle cx="200" cy="436" r="22" /><circle cx="320" cy="436" r="22" /><circle cx="440" cy="436" r="22" /><circle cx="560" cy="436" r="22" />
-      </g>
-      <g class="sld-flow">
-        <path d="M320 0v70M320 144v46M320 218v42M320 260h-240v70M320 260h240v70M320 260v70M320 260h-120v70M320 260h120v70" />
-      </g>
-      <g class="sld-text">
-        <text x="350" y="112">11kV / 433V</text>
-        <text x="66" y="442">M</text><text x="186" y="442">M</text><text x="306" y="442">M</text><text x="426" y="442">M</text><text x="546" y="442">M</text>
-        <text x="40" y="250">415V 3Ø 50Hz</text>
-      </g>
-    </svg>
-
-    <div class="wrap hero__inner">
-      <div class="hero__copy">
-        <span class="eyebrow">LT panel manufacturer · {site.address.city}</span>
-        <h1>Electrical panels engineered for <em>control</em>, <em>power</em> &amp; <em>safety</em>.</h1>
-        <p class="hero__lead">
-          {site.name} designs, builds and services MCC, PLC, VFD, AMF, DG synchronization, fire-fighting
-          and power distribution panels, all wired, tested and backed by our own service team.
-        </p>
-        <div class="hero__actions">
-          <a class="btn btn--red" href={url('/panels')}>Explore panels <Icon name="arrow" size={18} /></a>
-          <a class="btn btn--ghost" href={url('/contact')}>Request a quote</a>
-        </div>
-        <a class="hero__loc" href={directionsUrl} target="_blank" rel="noopener" aria-label={`Get directions to ${site.name}, ${site.address.line1}, ${site.address.city}`}>
-          <span class="hero__loc-icon"><Icon name="pin" size={18} /></span>
-          <span class="hero__loc-text">
-            <span class="hero__loc-label">Visit our works</span>
-            <span class="hero__loc-addr">No. 113, Yelachenahalli, Kanakapura Rd, {site.address.city}</span>
-          </span>
-          <span class="hero__loc-go"><span class="hero__loc-go-label">Directions</span> <Icon name="arrow" size={16} /></span>
-        </a>
-        <ul class="hero__trust">
-          <li><Icon name="check" size={16} />In-house design &amp; fabrication</li>
-          <li><Icon name="check" size={16} />Factory tested</li>
-          <li><Icon name="check" size={16} />Installation &amp; service</li>
-        </ul>
-      </div>
-
-      <div class="hero__show">
-        <a class="hero__frame" href={url(`/panels/${hero.id}`)}>
-          <span class="hero__status"><span class="led"></span>Featured · {catMap.get(hero.data.category.id)?.data.code}</span>
-          <img src={url(heroImage)} alt={hero.data.title} width="720" height="720" fetchpriority="high" />
-          <span class="hero__caption">{hero.data.title} <Icon name="arrow" size={16} /></span>
-        </a>
-        <RatingPlate class="hero__plate" items={hero.data.highlights} serial={`No. ${String(hero.data.order).padStart(3, '0')}`} />
-      </div>
-    </div>
-  </section>
+  <Hero panels={panels} categories={categories} />
+  <IndustryTicker />
 
   <!-- ================= STATS ================= -->
   <section class="stats">
     <div class="wrap stats__grid">
       {stats.map((s) => (
         <div class="stat reveal">
-          <span class="stat__value">{s.value}</span>
+          <span class="stat__value" data-count={s.value}>{s.value}</span>
           <span class="stat__label">{s.label}</span>
           <span class="stat__note">{s.note}</span>
         </div>
@@ -142,9 +82,9 @@ const steps = [
   <section class="section grid-paper">
     <div class="wrap">
       <div class="section-head reveal">
-        <span class="eyebrow">Product lines</span>
-        <h2>Every product line, fed from one busbar.</h2>
-        <p>Pick a line to see its panels, ratings and specification sheets.</p>
+        <span class="eyebrow">What do you need?</span>
+        <h2>Tell us the job. We'll build the panel for it.</h2>
+        <p>Pick what you need to achieve. Each line shows the panels we build for it, with full ratings and specifications.</p>
       </div>
 
       <div class="bus">
@@ -164,9 +104,12 @@ const steps = [
                     <span class="tag">{c.data.code}</span>
                     <span class="feeder__count">{String(countFor(c.id)).padStart(2, '0')} panels</span>
                   </span>
-                  <span class="feeder__title">{c.data.title}</span>
-                  <span class="feeder__desc">{c.data.description}</span>
-                  <span class="feeder__go">Browse <Icon name="arrow" size={16} /></span>
+                  <span class="feeder__title">{c.data.need ?? c.data.title}</span>
+                  <span class="feeder__cat">{c.data.title}</span>
+                  <ul class="feeder__ex">
+                    {examplesFor(c.id).map((t) => <li>{t}</li>)}
+                  </ul>
+                  <span class="feeder__go">See panels <Icon name="arrow" size={16} /></span>
                 </span>
               </a>
             </li>
@@ -282,145 +225,36 @@ const steps = [
   </section>
 </Base>
 
+<script>
+  // Count the headline numbers up when they scroll into view.
+  const nums = document.querySelectorAll<HTMLElement>('[data-count]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const el = e.target as HTMLElement;
+        io.unobserve(el);
+        const m = (el.dataset.count ?? '').match(/^(\d+)(.*)$/);
+        if (!m) return;
+        const target = Number(m[1]);
+        const suffix = m[2];
+        const t0 = performance.now();
+        const dur = 1400;
+        const tick = (t: number) => {
+          const p = Math.min(1, (t - t0) / dur);
+          const eased = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(target * eased) + suffix;
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+    }, { threshold: 0.6 });
+    nums.forEach((n) => io.observe(n));
+  }
+</script>
+
 <style>
-  /* ---------- Hero ---------- */
-  .hero { position: relative; overflow: hidden; padding-block: clamp(32px, 4vw, 56px) clamp(56px, 8vw, 104px); }
-  .hero::after {
-    content: '';
-    position: absolute; inset: auto 0 0 0; height: 140px;
-    background: linear-gradient(to bottom, transparent, rgb(8 17 41 / 60%));
-    pointer-events: none;
-  }
-  .hero__inner {
-    position: relative; z-index: 1;
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: clamp(32px, 5vw, 72px);
-    align-items: center;
-  }
-  .hero h1 {
-    margin-top: 16px;
-    font-size: clamp(38px, 5vw, 64px);
-    line-height: 1.02;
-    color: #fff;
-  }
-  .hero h1 em { font-style: normal; color: #ff5258; }
-  .hero__lead { margin-top: 18px; font-size: clamp(17px, 1.6vw, 19px); color: #b7c1d8; max-width: 56ch; }
-  .hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
-  .hero__trust {
-    display: flex; flex-wrap: wrap; gap: 10px 22px;
-    list-style: none; padding: 0; margin: 22px 0 0;
-    font-size: 14px; color: #c9d1e3;
-  }
-  .hero__trust li { display: inline-flex; align-items: center; gap: 8px; }
-  .hero__trust :global(svg) { color: var(--live); }
-
-  .hero__loc {
-    display: flex; align-items: center; gap: 14px;
-    width: fit-content; max-width: 100%;
-    margin-top: 22px;
-    padding: 10px 16px 10px 10px;
-    border: 1px solid rgb(255 255 255 / 14%);
-    border-radius: 12px;
-    background: rgb(255 255 255 / 5%);
-    transition: background .2s, border-color .2s;
-  }
-  .hero__loc:hover { background: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 28%); }
-  .hero__loc-icon {
-    display: grid; place-items: center; flex: none;
-    width: 40px; height: 40px; border-radius: 10px;
-    background: var(--red); color: #fff;
-  }
-  .hero__loc-text { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
-  .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #ff8a8e; }
-  .hero__loc-addr { font-size: 15px; font-weight: 500; color: #fff; }
-  .hero__loc-go {
-    display: inline-flex; align-items: center; gap: 6px; flex: none;
-    margin-left: 6px; padding-left: 14px;
-    border-left: 1px solid rgb(255 255 255 / 14%);
-    font-size: 14px; font-weight: 600; color: #fff;
-  }
-  .hero__loc-go :global(svg) { transition: transform .25s var(--ease); }
-  .hero__loc:hover .hero__loc-go :global(svg) { transform: translateX(3px); }
-  .hero__loc-addr { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  @media (max-width: 520px) {
-    .hero__loc { width: 100%; gap: 12px; padding-right: 12px; }
-    .hero__loc-text { flex: 1; }
-    .hero__loc-addr { white-space: normal; font-size: 14px; }
-    .hero__loc-go { margin-left: 0; padding-left: 12px; }
-    .hero__loc-go-label { display: none; }
-  }
-
-  .hero__show { position: relative; padding-bottom: 72px; }
-  .hero__frame {
-    position: relative;
-    display: block;
-    aspect-ratio: 1;
-    max-width: 520px;
-    margin-left: auto;
-    border-radius: 20px;
-    background: radial-gradient(100% 80% at 50% 10%, #fff 0%, #e7ebf0 100%);
-    box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / 10%);
-    overflow: hidden;
-    transition: transform .5s var(--ease);
-  }
-  .hero__frame:hover { transform: translateY(-4px); }
-  .hero__frame img { width: 100%; height: 100%; object-fit: contain; padding: 60px 28px 28px; mix-blend-mode: multiply; }
-  .hero__status {
-    position: absolute; top: 16px; left: 16px; z-index: 1;
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    background: var(--navy-900);
-    color: #fff;
-    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  }
-  .led {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--live);
-    box-shadow: 0 0 10px var(--live);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes pulse { 50% { opacity: .45; } }
-  .hero__caption {
-    position: absolute; top: 18px; right: 18px; left: 45%;
-    display: flex; justify-content: flex-end; align-items: center; gap: 6px;
-    text-align: right;
-    font-weight: 600; font-size: 13px; line-height: 1.3; color: var(--navy-800);
-  }
-  .hero__caption :global(svg) { flex: none; transition: transform .25s var(--ease); }
-  .hero__frame:hover .hero__caption :global(svg) { transform: translateX(3px); }
-  .hero__plate {
-    position: absolute;
-    left: 0; bottom: 0;
-    width: min(340px, 78%);
-    transform: rotate(-1.5deg);
-  }
-
-  .hero__sld {
-    position: absolute;
-    right: -60px; top: 40px;
-    width: min(760px, 70vw);
-    opacity: .5;
-    pointer-events: none;
-  }
-  .sld-lines { fill: none; stroke: #2c4a94; stroke-width: 1.5; }
-  .sld-bus { stroke-width: 5; stroke: #35569f; }
-  .sld-flow path {
-    fill: none; stroke: #ff4d55; stroke-width: 2;
-    stroke-dasharray: 3 14;
-    animation: flow 1.6s linear infinite;
-  }
-  .sld-text { fill: #5a75b5; font-family: var(--font-mono); font-size: 12px; }
-  @keyframes flow { to { stroke-dashoffset: -34; } }
-
-  @media (max-width: 960px) {
-    .hero__inner { grid-template-columns: 1fr; }
-    .hero__show { max-width: 520px; width: 100%; margin-inline: auto; }
-    .hero__frame { margin-inline: auto; }
-    .hero__sld { opacity: .28; width: 120vw; right: -30vw; top: auto; bottom: 0; }
-  }
-
   /* ---------- Stats ---------- */
   .stats { background: var(--white); border-bottom: 1px solid var(--line); }
   .stats__grid { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -497,7 +331,11 @@ const steps = [
   .feeder__top { display: flex; justify-content: space-between; align-items: center; }
   .feeder__count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
   .feeder__title { font-weight: 700; font-stretch: 110%; font-size: 19px; line-height: 1.2; }
-  .feeder__desc { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .feeder__cat { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .feeder__ex { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 6px; }
+  .feeder__ex li { position: relative; padding-left: 16px; font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
+  .feeder__ex li::before { content: ''; position: absolute; left: 0; top: .5em; width: 7px; height: 7px; border-radius: 2px; background: var(--navy-700); }
+  .feeder:hover .feeder__ex li::before { background: var(--red); }
   .feeder__go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; color: var(--navy-700); }
 
   @media (max-width: 760px) {

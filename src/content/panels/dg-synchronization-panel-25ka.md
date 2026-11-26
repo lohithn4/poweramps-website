@@ -6,8 +6,8 @@ featured: true
 order: 20
 image: /uploads/panels/dg-sync-panel-25ka-1.webp
 gallery:
-  - /uploads/panels/dg-sync-panel-25ka-2.webp
   - /uploads/panels/dg-sync-panel-25ka-3.webp
+  - /uploads/panels/dg-sync-panel-25ka-2.webp
   - /uploads/panels/dg-sync-panel-25ka-4.webp
 highlights:
   - { label: Voltage, value: 415 V }

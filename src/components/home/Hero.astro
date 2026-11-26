@@ -1,0 +1,391 @@
+---
+/**
+ * Home hero. The headline completes "Electrical panels that keep your …"
+ * with each product line's client benefit, in sync with an auto-rotating
+ * showcase of that line's featured panel (photo + rating plate).
+ * Rotation pauses on hover/focus and off-screen, and is disabled for
+ * visitors who prefer reduced motion.
+ */
+import Icon from '../Icon.astro';
+import RatingPlate from '../RatingPlate.astro';
+import site from '../../data/site.json';
+import type { Panel, Category } from '../../lib/panels';
+import { url } from '../../lib/url';
+import { directionsUrl } from '../../lib/location';
+
+interface Props {
+  panels: Panel[];
+  categories: Category[];
+}
+const { panels, categories } = Astro.props;
+
+const slides = categories
+  .map((cat) => {
+    const panel = panels.find((p) => p.data.category.id === cat.id && p.data.featured);
+    if (!panel) return null;
+    return {
+      cat,
+      panel,
+      image: panel.data.gallery[0] ?? panel.data.image,
+      phrase: cat.data.benefit ?? cat.data.title.toLowerCase(),
+    };
+  })
+  .filter((s): s is NonNullable<typeof s> => s !== null);
+
+const shortTitle = (t: string) => t.split(',')[0];
+const DURATION = 5000;
+---
+<section class="hero blueprint on-dark" data-hero style={`--dur:${DURATION}ms`}>
+  <svg class="hero__sld" viewBox="0 0 640 520" aria-hidden="true">
+    <g class="sld-lines">
+      <path d="M320 0v70" />
+      <circle cx="320" cy="92" r="22" /><circle cx="320" cy="122" r="22" />
+      <path d="M320 144v46" />
+      <rect x="306" y="190" width="28" height="28" /><path d="M306 218l28-28" />
+      <path d="M320 218v42" />
+      <path d="M40 260h560" class="sld-bus" />
+      <path d="M80 260v70M200 260v70M320 260v70M440 260v70M560 260v70" />
+      <rect x="68" y="330" width="24" height="24" /><rect x="188" y="330" width="24" height="24" /><rect x="308" y="330" width="24" height="24" /><rect x="428" y="330" width="24" height="24" /><rect x="548" y="330" width="24" height="24" />
+      <path d="M80 354v60M200 354v60M320 354v60M440 354v60M560 354v60" />
+      <circle cx="80" cy="436" r="22" /><circle cx="200" cy="436" r="22" /><circle cx="320" cy="436" r="22" /><circle cx="440" cy="436" r="22" /><circle cx="560" cy="436" r="22" />
+    </g>
+    <g class="sld-flow">
+      <path d="M320 0v70M320 144v46M320 218v42M320 260h-240v70M320 260h240v70M320 260v70M320 260h-120v70M320 260h120v70" />
+    </g>
+    <g class="sld-text">
+      <text x="350" y="112">11kV / 433V</text>
+      <text x="66" y="442">M</text><text x="186" y="442">M</text><text x="306" y="442">M</text><text x="426" y="442">M</text><text x="546" y="442">M</text>
+      <text x="40" y="250">415V 3Ø 50Hz</text>
+    </g>
+  </svg>
+
+  <div class="wrap hero__inner">
+    <div class="hero__copy">
+      <span class="eyebrow">LT panel manufacturer · {site.address.city} · Since {site.established}</span>
+
+      <h1>
+        Electrical panels that keep your
+        <span class="sr-only">{slides.map((s) => s.phrase).join(', ')}.</span>
+        <span class="rot" aria-hidden="true">
+          {slides.map((s, i) => (
+            <span class:list={['rot__item', { 'is-active': i === 0 }]} data-idx={i}>{s.phrase}.</span>
+          ))}
+        </span>
+      </h1>
+
+      <p class="hero__lead">
+        We design, build, test and install control &amp; power distribution panels for factories, water plants,
+        hospitals, data centres and buildings: <strong>one {site.address.city} team, from drawing to commissioning.</strong>
+      </p>
+
+      <div class="hero__actions">
+        <a class="btn btn--red" href={url('/contact')}>Get a quote <Icon name="arrow" size={18} /></a>
+        <a class="btn btn--ghost" href={url('/panels')}>Browse {panels.length} panels</a>
+      </div>
+
+      <a class="hero__loc" href={directionsUrl} target="_blank" rel="noopener" aria-label={`Get directions to ${site.name}, ${site.address.line1}, ${site.address.city}`}>
+        <span class="hero__loc-icon"><Icon name="pin" size={18} /></span>
+        <span class="hero__loc-text">
+          <span class="hero__loc-label">Visit our works</span>
+          <span class="hero__loc-addr">No. 113, Yelachenahalli, Kanakapura Rd, {site.address.city}</span>
+        </span>
+        <span class="hero__loc-go"><span class="hero__loc-go-label">Directions</span> <Icon name="arrow" size={16} /></span>
+      </a>
+
+      <ul class="hero__trust">
+        <li><Icon name="check" size={16} />Built to your spec &amp; brand</li>
+        <li><Icon name="check" size={16} />Factory tested</li>
+        <li><Icon name="check" size={16} />Dispatch in 3–7 days</li>
+        <li><Icon name="check" size={16} />Installation &amp; service</li>
+      </ul>
+    </div>
+
+    <div class="show" data-show>
+      <div class="show__frame">
+        <div class="show__bars" role="tablist" aria-label="Product lines">
+          {slides.map((s, i) => (
+            <button
+              type="button"
+              role="tab"
+              class:list={['show__bar', { 'is-active': i === 0 }]}
+              data-idx={i}
+              data-go={i}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              aria-label={s.cat.data.title}
+            ><span></span></button>
+          ))}
+        </div>
+
+        {slides.map((s, i) => (
+          <a
+            class:list={['show__slide', { 'is-active': i === 0 }]}
+            data-idx={i}
+            href={url(`/panels/${s.panel.id}`)}
+            tabindex={i === 0 ? 0 : -1}
+            aria-hidden={i === 0 ? undefined : 'true'}
+          >
+            <span class="show__status"><span class="led"></span>{s.cat.data.code}<span class="show__status-name"> · {s.cat.data.title}</span></span>
+            <img
+              src={url(s.image)}
+              alt={s.panel.data.title}
+              width="720"
+              height="720"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchpriority={i === 0 ? 'high' : undefined}
+            />
+            <span class="show__title">{shortTitle(s.panel.data.title)}</span>
+            <span class="show__view">View specs <Icon name="arrow" size={15} /></span>
+          </a>
+        ))}
+      </div>
+
+      <div class="show__plates" aria-hidden="true">
+        {slides.map((s, i) => (
+          <RatingPlate
+            class={i === 0 ? 'show__plate is-active' : 'show__plate'}
+            data-idx={i}
+            items={s.panel.data.highlights}
+            serial={s.cat.data.code}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-hero]');
+  if (root) {
+    const bars = [...root.querySelectorAll<HTMLButtonElement>('.show__bar')];
+    const count = bars.length;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let current = 0;
+
+    const setActive = (i: number) => {
+      current = (i + count) % count;
+      root.querySelectorAll<HTMLElement>('[data-idx]').forEach((el) => {
+        const on = Number(el.dataset.idx) === current;
+        el.classList.toggle('is-active', on);
+        if (el.classList.contains('show__slide')) {
+          el.tabIndex = on ? 0 : -1;
+          if (on) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', 'true');
+        }
+        if (el.classList.contains('show__bar')) el.setAttribute('aria-selected', String(on));
+      });
+      // restart the progress animation on the newly active bar
+      const fill = bars[current]?.querySelector('span');
+      if (fill) { fill.style.animation = 'none'; void fill.offsetWidth; fill.style.animation = ''; }
+    };
+
+    bars.forEach((b) => b.addEventListener('click', () => setActive(Number(b.dataset.go))));
+
+    if (reduce || count < 2) {
+      root.classList.add('is-static');
+    } else {
+      // advance when the active bar's fill animation completes
+      bars.forEach((b) => b.querySelector('span')?.addEventListener('animationend', () => {
+        if (Number(b.dataset.go) === current) setActive(current + 1);
+      }));
+      // pause while off-screen or the tab is hidden
+      const io = new IntersectionObserver(([e]) => root.classList.toggle('is-paused', !e.isIntersecting), { threshold: 0.2 });
+      io.observe(root);
+      document.addEventListener('visibilitychange', () => root.classList.toggle('is-paused', document.hidden));
+
+      // swipe on touch screens
+      const frame = root.querySelector<HTMLElement>('.show__frame');
+      let x0: number | null = null;
+      frame?.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+      frame?.addEventListener('touchend', (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 40) setActive(current + (dx < 0 ? 1 : -1));
+        x0 = null;
+      });
+    }
+  }
+</script>
+
+<style>
+  .hero { position: relative; overflow: hidden; padding-block: clamp(32px, 4vw, 56px) clamp(56px, 7vw, 96px); }
+  .hero::after {
+    content: '';
+    position: absolute; inset: auto 0 0 0; height: 140px;
+    background: linear-gradient(to bottom, transparent, rgb(8 17 41 / 60%));
+    pointer-events: none;
+  }
+  .hero__inner {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+  }
+
+  /* ---- Headline with rotating benefit ---- */
+  .hero h1 {
+    margin-top: 16px;
+    font-size: clamp(36px, 4.7vw, 62px);
+    line-height: 1.04;
+    color: #fff;
+  }
+  .rot { display: grid; margin-top: 2px; }
+  .rot__item {
+    grid-area: 1 / 1;
+    color: #ff5258;
+    opacity: 0;
+    transform: translateY(0.45em);
+    transition: opacity .5s var(--ease), transform .6s var(--ease);
+  }
+  .rot__item.is-active { opacity: 1; transform: none; }
+
+  .hero__lead { margin-top: 18px; font-size: clamp(16px, 1.5vw, 18.5px); color: #b7c1d8; max-width: 58ch; }
+  .hero__lead strong { color: #fff; font-weight: 600; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+  .hero__trust {
+    display: flex; flex-wrap: wrap; gap: 10px 20px;
+    list-style: none; padding: 0; margin: 20px 0 0;
+    font-size: 14px; color: #c9d1e3;
+  }
+  .hero__trust li { display: inline-flex; align-items: center; gap: 8px; }
+  .hero__trust :global(svg) { color: var(--live); }
+
+  /* ---- Location card ---- */
+  .hero__loc {
+    display: flex; align-items: center; gap: 14px;
+    width: fit-content; max-width: 100%;
+    margin-top: 20px;
+    padding: 10px 16px 10px 10px;
+    border: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 5%);
+    transition: background .2s, border-color .2s;
+  }
+  .hero__loc:hover { background: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 28%); }
+  .hero__loc-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--red); color: #fff; }
+  .hero__loc-text { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
+  .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #ff8a8e; }
+  .hero__loc-addr { font-size: 15px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero__loc-go {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    margin-left: 6px; padding-left: 14px;
+    border-left: 1px solid rgb(255 255 255 / 14%);
+    font-size: 14px; font-weight: 600; color: #fff;
+  }
+  .hero__loc-go :global(svg) { transition: transform .25s var(--ease); }
+  .hero__loc:hover .hero__loc-go :global(svg) { transform: translateX(3px); }
+  @media (max-width: 520px) {
+    .hero__loc { width: 100%; gap: 12px; padding-right: 12px; }
+    .hero__loc-text { flex: 1; }
+    .hero__loc-addr { white-space: normal; font-size: 14px; }
+    .hero__loc-go { margin-left: 0; padding-left: 12px; }
+    .hero__loc-go-label { display: none; }
+  }
+
+  /* ---- Showcase ---- */
+  .show { position: relative; padding-bottom: 76px; }
+  .show__frame {
+    position: relative;
+    aspect-ratio: 1;
+    max-width: 520px;
+    margin-left: auto;
+    border-radius: 20px;
+    background: radial-gradient(100% 80% at 50% 10%, #fff 0%, #e7ebf0 100%);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / 10%);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .show__bars {
+    position: absolute; z-index: 3; top: 12px; left: 16px; right: 16px;
+    display: flex; gap: 6px;
+  }
+  .show__bar {
+    flex: 1; height: 16px; padding: 6px 0;
+    border: 0; background: none; cursor: pointer;
+  }
+  .show__bar::before {
+    content: ''; display: block; height: 4px; border-radius: 2px;
+    background: rgb(12 26 61 / 14%);
+  }
+  .show__bar span {
+    display: block; height: 4px; margin-top: -4px; width: 0;
+    border-radius: 2px; background: var(--red);
+  }
+  .show__bar.is-active span { animation: fill var(--dur) linear forwards; }
+  @keyframes fill { from { width: 0; } to { width: 100%; } }
+  .show:hover .show__bar.is-active span,
+  .show:focus-within .show__bar.is-active span,
+  .hero.is-paused .show__bar.is-active span { animation-play-state: paused; }
+  .hero.is-static .show__bar.is-active span { animation: none; width: 100%; }
+
+  .show__slide {
+    position: absolute; inset: 0;
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .6s var(--ease), visibility 0s linear .6s;
+  }
+  .show__slide.is-active { opacity: 1; visibility: visible; transition: opacity .6s var(--ease), visibility 0s; z-index: 1; }
+  .show__slide img {
+    width: 100%; height: 100%; object-fit: contain;
+    padding: 64px 30px 56px;
+    mix-blend-mode: multiply;
+    transform: scale(1.06);
+    transition: transform 5.5s var(--ease);
+  }
+  .show__slide.is-active img { transform: scale(1); }
+  .hero.is-static .show__slide img { transform: none; }
+
+  .show__status {
+    position: absolute; top: 34px; left: 16px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--navy-900); color: #fff;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .led { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 10px var(--live); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  .show__title {
+    position: absolute; top: 38px; right: 18px; left: 52%; z-index: 2;
+    text-align: right;
+    font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--navy-800);
+  }
+  .show__view {
+    position: absolute; right: 16px; bottom: 14px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    font-size: 13px; font-weight: 600; color: var(--navy-800);
+  }
+  .show__view :global(svg) { transition: transform .25s var(--ease); }
+  .show__slide:hover .show__view :global(svg) { transform: translateX(3px); }
+
+  .show__plates { position: absolute; z-index: 4; left: 0; bottom: 0; width: min(340px, 78%); }
+  .show__plates :global(.show__plate) {
+    position: absolute; left: 0; bottom: 0; width: 100%;
+    transform: rotate(-1.5deg) translateY(10px);
+    opacity: 0;
+    transition: opacity .45s var(--ease), transform .55s var(--ease);
+    pointer-events: none;
+  }
+  .show__plates :global(.show__plate.is-active) { opacity: 1; transform: rotate(-1.5deg); }
+
+  /* ---- Single-line diagram background ---- */
+  .hero__sld { position: absolute; right: -60px; top: 40px; width: min(760px, 70vw); opacity: .5; pointer-events: none; }
+  .sld-lines { fill: none; stroke: #2c4a94; stroke-width: 1.5; }
+  .sld-bus { stroke-width: 5; stroke: #35569f; }
+  .sld-flow path { fill: none; stroke: #ff4d55; stroke-width: 2; stroke-dasharray: 3 14; animation: flow 1.6s linear infinite; }
+  .sld-text { fill: #5a75b5; font-family: var(--font-mono); font-size: 12px; }
+  @keyframes flow { to { stroke-dashoffset: -34; } }
+
+  @media (max-width: 560px) {
+    .show__status-name, .show__view { display: none; }
+    .show__title { left: 30%; }
+  }
+
+  @media (max-width: 960px) {
+    .hero__inner { grid-template-columns: 1fr; }
+    .show { max-width: 520px; width: 100%; margin-inline: auto; }
+    .show__frame { margin-inline: auto; }
+    .hero__sld { opacity: .28; width: 120vw; right: -30vw; top: auto; bottom: 0; }
+  }
+</style>

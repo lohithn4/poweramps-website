@@ -2,5 +2,7 @@
   "title": "Power Distribution",
   "code": "PD",
   "order": 2,
+  "need": "Distribute power safely to every load",
+  "benefit": "power flowing",
   "description": "Bus duct tap-off boxes, UPS distribution panels, remote power panels and PDUs that take power safely to every load."
 }

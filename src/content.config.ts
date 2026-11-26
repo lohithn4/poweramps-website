@@ -14,6 +14,8 @@ const categories = defineCollection({
     title: z.string(),
     code: z.string().max(4), // short tag shown on cards, e.g. "CA"
     order: z.number().default(99),
+    need: z.string().optional(), // client-facing headline, e.g. "Run, protect & automate motors"
+    benefit: z.string().optional(), // short phrase for the hero: "Panels that keep your …"
     description: z.string(),
   }),
 });

@@ -2,5 +2,7 @@
   "title": "Fire Fighting",
   "code": "FF",
   "order": 4,
+  "need": "Keep fire-fighting systems ready",
+  "benefit": "fire pumps ready",
   "description": "Fire pump, booster and fire-fighting control panels plus engine controllers for building and plant fire protection systems."
 }

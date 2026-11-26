@@ -3,7 +3,7 @@ title: Bus Duct Tap-Off Box, 440 V
 category: power-distribution
 summary: Plug-in tap-off box that takes power from sandwich busbar trunking to downstream loads, with MCCB, MCB or fuse-switch protection.
 featured: true
-order: 10
+order: 12
 image: /uploads/panels/tap-off-box-440v-1.webp
 gallery:
   - /uploads/panels/tap-off-box-440v-2.webp

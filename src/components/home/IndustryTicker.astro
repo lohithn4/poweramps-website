@@ -1,0 +1,83 @@
+---
+/** Continuous scrolling band of the industries served. Edit the list in /admin → Site settings. */
+import site from '../../data/site.json';
+
+const items: string[] = site.industries ?? [];
+---
+{items.length > 0 && (
+  <section class="ticker" aria-label="Industries we serve">
+    <div class="ticker__label">
+      <span class="ticker__dot" aria-hidden="true"></span>
+      Panels running in
+    </div>
+    <div class="ticker__viewport">
+      <ul class="ticker__track">
+        {[0, 1].map((copy) =>
+          items.map((item) => (
+            <li aria-hidden={copy === 1 ? 'true' : undefined}>
+              <span class="ticker__sep" aria-hidden="true"></span>{item}
+            </li>
+          )),
+        )}
+      </ul>
+    </div>
+  </section>
+)}
+
+<style>
+  .ticker {
+    position: relative;
+    display: flex; align-items: stretch;
+    background: var(--navy-900);
+    border-block: 1px solid rgb(255 255 255 / 8%);
+    color: #dfe5f2;
+    overflow: hidden;
+  }
+  .ticker__label {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 10px; flex: none;
+    padding: 0 22px 0 max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
+    background: var(--red);
+    color: #fff;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+  }
+  .ticker__label::after {
+    content: ''; position: absolute; right: -14px; top: 0; bottom: 0; width: 14px;
+    background: var(--red);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+  .ticker__dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  .ticker__viewport {
+    flex: 1; min-width: 0; overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 92%, transparent);
+  }
+  .ticker__track {
+    display: flex; width: max-content;
+    list-style: none; margin: 0; padding: 0;
+    animation: marquee 45s linear infinite;
+  }
+  .ticker:hover .ticker__track { animation-play-state: paused; }
+  .ticker__track li {
+    display: inline-flex; align-items: center; gap: 18px;
+    padding: 16px 18px 16px 0;
+    font-size: 15px; font-weight: 500; white-space: nowrap;
+  }
+  .ticker__sep {
+    width: 8px; height: 8px; flex: none;
+    background: linear-gradient(135deg, var(--red) 50%, #2f6fd6 50%);
+    transform: rotate(45deg);
+    margin-left: 18px;
+  }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  @media (max-width: 640px) {
+    .ticker__label { padding-inline: 16px 14px; font-size: 11px; }
+    .ticker__track li { font-size: 14px; padding-block: 13px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker__track { animation: none; }
+  }
+</style>

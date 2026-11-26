@@ -113,6 +113,8 @@ collections:
     fields:
       - { label: Name, name: title, widget: string }
       - { label: Short code, name: code, widget: string, hint: "2–4 letters shown on cards, e.g. CA", pattern: ["^.{1,4}$", "Max 4 characters"] }
+      - { label: Client need (headline), name: need, widget: string, required: false, hint: "What the client wants to achieve, e.g. Run, protect & automate motors" }
+      - { label: Hero phrase, name: benefit, widget: string, required: false, hint: "Completes 'Electrical panels that keep your …', e.g. motors running. Keep it to 2–3 words." }
       - { label: Description, name: description, widget: text }
       - { label: Sort order, name: order, widget: number, value_type: int, default: 99 }
 
@@ -151,6 +153,11 @@ collections:
           - { label: IndiaMART URL, name: indiamart, widget: string }
           - { label: Form endpoint (optional), name: formEndpoint, widget: string, required: false, hint: "Paste a Formspree URL to receive enquiries by email. Leave empty to use email / WhatsApp links." }
           - { label: Show prices, name: showPrices, widget: boolean, default: false }
+          - label: Industries served
+            name: industries
+            widget: list
+            hint: "Shown in the scrolling band under the home page hero."
+            field: { label: Industry, name: industry, widget: string }
           - label: Map location
             name: map
             widget: object

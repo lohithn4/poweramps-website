@@ -2,5 +2,7 @@
   "title": "Battery Chargers",
   "code": "BC",
   "order": 5,
+  "need": "Keep standby batteries charged",
+  "benefit": "batteries charged",
   "description": "Battery chargers for generator starting batteries, forklifts and other DC systems."
 }

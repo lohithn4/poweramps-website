@@ -3,7 +3,7 @@ title: UPS Input / Output Distribution Panel
 category: power-distribution
 summary: Manages power flow between utility, UPS and critical loads, with maintenance bypass, metering and surge protection.
 featured: true
-order: 12
+order: 10
 image: /uploads/panels/ups-distribution-panel-1.webp
 gallery:
   - /uploads/panels/ups-distribution-panel-2.webp
