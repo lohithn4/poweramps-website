@@ -5,14 +5,15 @@ import ClientLogos from '../components/ClientLogos.astro';
 import Testimonial from '../components/Testimonial.astro';
 import site from '../data/site.json';
 import { getClients } from '../lib/clients';
+import { getTestimonials, toCard } from '../lib/testimonials';
 import { url } from '../lib/url';
 import { openMapUrl } from '../lib/location';
 
 const clients = await getClients();
-const stories = clients.filter((c) => c.data.quote);
+const stories = [...(await getTestimonials()).map(toCard), ...clients.filter((c) => c.data.quote).map((c) => c.data)];
 ---
 <Base
-  noindex={clients.length === 0}
+  noindex={clients.length === 0 && stories.length === 0}
   title="Clients & Testimonials"
   description={`Companies that trust ${site.name} for their electrical control and power distribution panels.`}
 >
@@ -23,8 +24,8 @@ const stories = clients.filter((c) => c.data.quote);
       </nav>
       <h1>Trusted by plants, buildings &amp; infrastructure.</h1>
       <p>
-        {clients.length > 0
-          ? `${clients.length} ${clients.length === 1 ? 'company relies' : 'companies rely'} on ${site.name} panels to keep their operations running.`
+        {clients.length > 0 || stories.length > 0
+          ? stories.length > clients.length ? `What ${site.name} clients say about our panels and service.` : `${clients.length} ${clients.length === 1 ? 'company relies' : 'companies rely'} on ${site.name} panels to keep their operations running.`
           : `Client stories from ${site.name} customers will appear here soon.`}
       </p>
     </div>
@@ -38,7 +39,7 @@ const stories = clients.filter((c) => c.data.quote);
           <h2>In our clients' words</h2>
         </div>
         <div class="stories">
-          {stories.map((c, i) => <Testimonial client={c} index={i} />)}
+          {stories.map((c, i) => <Testimonial data={c} index={i} />)}
         </div>
       </div>
     </section>

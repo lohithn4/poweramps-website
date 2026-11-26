@@ -1,11 +1,25 @@
 ---
 import { url } from '../lib/url';
-interface Props { active: 'requests' | 'team' }
+export type StaffTab = 'requests' | 'accounts' | 'docs' | 'payments' | 'parties' | 'items' | 'reports' | 'tally' | 'feedback' | 'team' | 'settings';
+interface Props { active: StaffTab }
 const { active } = Astro.props;
+const tabs: [StaffTab, string, string][] = [
+  ['requests', 'Requests', '/staff/'],
+  ['accounts', 'Accounts', '/staff/accounts/'],
+  ['docs', 'Quotes & invoices', '/staff/docs/'],
+  ['payments', 'Payments', '/staff/payments/'],
+  ['parties', 'Parties', '/staff/parties/'],
+  ['items', 'Items', '/staff/items/'],
+  ['reports', 'GST & reports', '/staff/reports/'],
+  ['tally', 'Tally', '/staff/tally/'],
+  ['feedback', 'Feedback', '/staff/feedback/'],
+  ['team', 'Team', '/staff/team/'],
+  ['settings', 'Settings', '/staff/settings/'],
+];
 ---
-<nav class="portal-tabs" aria-label="Staff">
-  <a href={url('/staff/')} class:list={{ 'is-active': active === 'requests' }}>Requests & orders</a>
-  <a href={url('/staff/team/')} class:list={{ 'is-active': active === 'team' }}>Team & clients</a>
-  <a href={url('/admin/')} target="_blank" rel="noopener">Website content ↗</a>
+<nav class="snav" aria-label="Staff sections">
+  {tabs.map(([k, label, href]) => <a href={url(href)} class:list={{ 'is-active': active === k }} aria-current={active === k ? 'page' : undefined}>{label}</a>)}
+  <span class="snav__sep" aria-hidden="true"></span>
+  <a href={url('/admin/')} target="_blank" rel="noopener">Website ↗</a>
   <a href={url('/portal/')}>My account</a>
 </nav>

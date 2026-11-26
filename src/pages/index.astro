@@ -7,6 +7,7 @@ import IndustryTicker from '../components/home/IndustryTicker.astro';
 import ClientLogos from '../components/ClientLogos.astro';
 import Testimonial from '../components/Testimonial.astro';
 import { getClients } from '../lib/clients';
+import { getTestimonials, toCard } from '../lib/testimonials';
 import LocationMap from '../components/LocationMap.astro';
 import site from '../data/site.json';
 import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
@@ -17,7 +18,9 @@ const panels = await getPanels();
 const categories = await getCategories();
 const catMap = await getCategoryMap();
 const clients = await getClients();
-const homeStories = [...clients.filter((c) => c.data.quote && c.data.featured), ...clients.filter((c) => c.data.quote && !c.data.featured)].slice(0, 3);
+const homeStories = [...clients.filter((c) => c.data.quote && c.data.featured), ...clients.filter((c) => c.data.quote && !c.data.featured)].map((c) => c.data);
+const portalStories = (await getTestimonials()).map(toCard);
+const stories3 = [...homeStories, ...portalStories].slice(0, 3);
 const featured = panels.filter((p) => p.data.featured).slice(0, 6);
 const examplesFor = (id: string) => [...new Set(panels.filter((p) => p.data.category.id === id).map((p) => p.data.title.split(',')[0]))].slice(0, 3);
 const countFor = (id: string) => panels.filter((p) => p.data.category.id === id).length;
@@ -141,7 +144,7 @@ const steps = [
   </section>
 
   <!-- ================= CLIENTS (shown once real clients are added in /admin) ================= -->
-  {clients.length > 0 && (
+  {(clients.length > 0 || stories3.length > 0) && (
     <section class="section clients-sec">
       <div class="wrap">
         <div class="section-head section-head--split reveal">
@@ -151,12 +154,12 @@ const steps = [
           </div>
           <a class="btn btn--ghost" href={url('/clients')}>All clients &amp; stories <Icon name="arrow" size={18} /></a>
         </div>
-        {homeStories.length > 0 && (
+        {stories3.length > 0 && (
           <div class="home-stories">
-            {homeStories.map((c, i) => <Testimonial client={c} index={i} />)}
+            {stories3.map((c, i) => <Testimonial data={c} index={i} />)}
           </div>
         )}
-        <ClientLogos clients={clients.slice(0, 10)} details={false} />
+        {clients.length > 0 && <ClientLogos clients={clients.slice(0, 10)} details={false} />}
       </div>
     </section>
   )}

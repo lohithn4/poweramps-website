@@ -1,0 +1,110 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Settings" active="settings" sub="Numbering, default terms, bank details and Tally ledger names. Company name, address and GSTIN come from Website content → Site settings.">
+  <form class="pstack" data-form novalidate>
+    <p class="notice" data-ro hidden>Only admins can change settings.</p>
+    <div class="pcard">
+      <div class="pcard__h"><h2>Company</h2></div>
+      <dl class="kv" data-company></dl>
+      <div class="pform" style="margin-top:14px"><div class="row3">
+        <label class="field"><span class="flabel">Home state code (for GST)</span><input class="input" name="company_state_code" maxlength="2" /></label>
+        <label class="field"><span class="flabel">Signatory line</span><input class="input" name="signatory" /></label>
+        <label class="field"><span class="flabel">Footer text</span><input class="input" name="invoice_footer" /></label>
+      </div></div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard__h"><h2>Document numbers</h2></div>
+      <p class="fhint" style="margin-bottom:12px"><code>{'{FY}'}</code> = financial year (26-27), <code>{'{NNNN}'}</code> = running number (resets every April). GST allows up to 16 characters.</p>
+      <div class="pform"><div class="row3">
+        <label class="field"><span class="flabel">Tax invoice</span><input class="input mono-s" name="invoice_pattern" /></label>
+        <label class="field"><span class="flabel">Quotation</span><input class="input mono-s" name="quotation_pattern" /></label>
+        <label class="field"><span class="flabel">BOQ</span><input class="input mono-s" name="boq_pattern" /></label>
+        <label class="field"><span class="flabel">Purchase bill (internal)</span><input class="input mono-s" name="purchase_pattern" /></label>
+        <label class="field"><span class="flabel">Receipt</span><input class="input mono-s" name="receipt_pattern" /></label>
+        <label class="field"><span class="flabel">Payment</span><input class="input mono-s" name="payment_pattern" /></label>
+        <label class="field"><span class="flabel">Loan received</span><input class="input mono-s" name="loan_received_pattern" /></label>
+        <label class="field"><span class="flabel">Loan repayment</span><input class="input mono-s" name="loan_repayment_pattern" /></label>
+      </div></div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard__h"><h2>Defaults</h2></div>
+      <div class="pform">
+        <div class="row3">
+          <label class="field"><span class="flabel">Quotation valid for (days)</span><input class="input" type="number" min="1" name="quotation_validity_days" /></label>
+          <label class="field"><span class="flabel">Invoice due after (days)</span><input class="input" type="number" min="0" name="invoice_due_days" /></label>
+          <label class="field"><span class="flabel">Round totals to nearest rupee</span><select class="input" name="round_off"><option value="yes">Yes</option><option value="no">No</option></select></label>
+        </div>
+        <label class="field"><span class="flabel">Quotation terms (one per line)</span><textarea class="input" rows="6" name="terms_quotation"></textarea></label>
+        <label class="field"><span class="flabel">Invoice terms (one per line)</span><textarea class="input" rows="4" name="terms_invoice"></textarea></label>
+      </div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard__h"><h2>Bank details (printed on quotations & invoices)</h2></div>
+      <div class="pform"><div class="row3">
+        <label class="field"><span class="flabel">Account name</span><input class="input" name="bank_account_name" /></label>
+        <label class="field"><span class="flabel">Bank</span><input class="input" name="bank_name" /></label>
+        <label class="field"><span class="flabel">Branch</span><input class="input" name="bank_branch" /></label>
+        <label class="field"><span class="flabel">Account number</span><input class="input" name="bank_account" /></label>
+        <label class="field"><span class="flabel">IFSC</span><input class="input" name="bank_ifsc" style="text-transform:uppercase" /></label>
+        <label class="field"><span class="flabel">UPI ID</span><input class="input" name="upi_id" /></label>
+      </div></div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard__h"><h2>Tally</h2></div>
+      <p class="fhint" style="margin-bottom:12px">These names must match ledgers in your Tally company exactly. Use <code>{'{RATE}'}</code> in the sales/purchase ledger to split by GST rate, e.g. <code>Sales @ {'{RATE}'}%</code>.</p>
+      <div class="pform"><div class="row3">
+        <label class="field"><span class="flabel">Tally company name</span><input class="input" name="tally_company" placeholder="(optional)" /></label>
+        <label class="field"><span class="flabel">Include stock items in vouchers</span><select class="input" name="tally_inventory"><option value="no">No: accounting entries only</option><option value="yes">Yes: item invoices (needs same item names in Tally)</option></select></label>
+        <label class="field"><span class="flabel">Sales ledger</span><input class="input" name="tally_sales_ledger" /></label>
+        <label class="field"><span class="flabel">Purchase ledger</span><input class="input" name="tally_purchase_ledger" /></label>
+        <label class="field"><span class="flabel">Output CGST</span><input class="input" name="tally_cgst_out" /></label>
+        <label class="field"><span class="flabel">Output SGST</span><input class="input" name="tally_sgst_out" /></label>
+        <label class="field"><span class="flabel">Output IGST</span><input class="input" name="tally_igst_out" /></label>
+        <label class="field"><span class="flabel">Input CGST</span><input class="input" name="tally_cgst_in" /></label>
+        <label class="field"><span class="flabel">Input SGST</span><input class="input" name="tally_sgst_in" /></label>
+        <label class="field"><span class="flabel">Input IGST</span><input class="input" name="tally_igst_in" /></label>
+        <label class="field"><span class="flabel">Round off</span><input class="input" name="tally_round_off" /></label>
+        <label class="field"><span class="flabel">Bank ledger</span><input class="input" name="tally_bank_ledger" /></label>
+        <label class="field"><span class="flabel">Cash ledger</span><input class="input" name="tally_cash_ledger" /></label>
+        <label class="field"><span class="flabel">Interest paid</span><input class="input" name="tally_interest_ledger" /></label>
+        <label class="field"><span class="flabel">TDS receivable</span><input class="input" name="tally_tds_ledger" /></label>
+        <label class="field"><span class="flabel">Customers group</span><input class="input" name="tally_debtors_group" /></label>
+        <label class="field"><span class="flabel">Suppliers group</span><input class="input" name="tally_creditors_group" /></label>
+        <label class="field"><span class="flabel">Loans group</span><input class="input" name="tally_loans_group" /></label>
+        <label class="field"><span class="flabel">Voucher type: sales</span><input class="input" name="tally_sales_vch" /></label>
+        <label class="field"><span class="flabel">Voucher type: purchase</span><input class="input" name="tally_purchase_vch" /></label>
+        <label class="field"><span class="flabel">Voucher type: receipt</span><input class="input" name="tally_receipt_vch" /></label>
+        <label class="field"><span class="flabel">Voucher type: payment</span><input class="input" name="tally_payment_vch" /></label>
+      </div></div>
+    </div>
+
+    <div class="pcard" data-save-bar>
+      <p class="form-error" data-error hidden></p>
+      <button class="btn btn--red" type="submit">Save settings</button>
+    </div>
+  </form>
+</StaffPage>
+
+<script>
+  import { api, requireAuth } from '../../scripts/api';
+  import { $, $$, esc, bindForm, toast } from '../../scripts/ui';
+  import { stateName } from '../../../shared/calc';
+
+  const form = $<HTMLFormElement>('[data-form]');
+  requireAuth('staff').then(async (me) => {
+    const { settings } = await api('/erp/settings');
+    $$<HTMLInputElement>('[name]', form).forEach((el) => { if (el.name in settings) el.value = settings[el.name] ?? ''; });
+    $('[data-company]').innerHTML = `<dt>Legal name</dt><dd>${esc(settings.company_name)}</dd><dt>GSTIN</dt><dd>${esc(settings.company_gstin || 'not set')}</dd><dt>Home state</dt><dd>${esc(stateName(settings.company_state_code))} (${esc(settings.company_state_code)})</dd>`;
+    if (me.role !== 'admin') {
+      $('[data-ro]').hidden = false; $('[data-save-bar]').hidden = true;
+      $$<HTMLInputElement>('[name]', form).forEach((el) => (el.disabled = true));
+    }
+  }).catch((e) => { if (e.message !== 'redirecting') toast(e.message, 'err'); });
+
+  bindForm(form, async (d) => { await api('/erp/settings', { method: 'PATCH', body: d }); toast('Settings saved'); });
+</script>

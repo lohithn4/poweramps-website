@@ -1,0 +1,250 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Tally import & export" active="tally" sub="Bring customers, suppliers, loans and stock items in from Tally or Excel, and send invoices and payments back to Tally.">
+  <div class="toolbar"><div class="seg" data-tabs><button type="button" data-t="import" class="is-active">Import / sync into this system</button><button type="button" data-t="export">Send to Tally</button></div></div>
+
+  <div data-pane="import" class="pstack">
+    <div class="pcard">
+      <div class="pcard__h"><h2>1. Choose a file</h2><span style="display:flex;gap:8px"><button class="btn btn--ghost btn--sm" type="button" data-tpl="parties">Parties template</button><button class="btn btn--ghost btn--sm" type="button" data-tpl="items">Items template</button></span></div>
+      <label class="dropzone" data-drop>
+        <input type="file" accept=".xml,.csv,.txt" data-file />
+        <strong>Drop a Tally XML or CSV file here, or click to choose</strong>
+        <span class="muted" style="font-size:14px">Tally <b>Masters</b> export (XML) · or any CSV, including Excel “Save as CSV”. The file is read on this computer; nothing is saved until you click Apply.</span>
+      </label>
+      <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">How to export from Tally</summary>
+        <ol class="howto">
+          <li><b>TallyPrime:</b> open the company → press <code>Alt+E</code> (Export) → <b>Masters</b>. Set <b>Type of Masters: All Masters</b> and <b>Format: XML (Data Interchange)</b> → <b>Send</b>. Note the file path shown.</li>
+          <li><b>Tally.ERP 9:</b> Gateway → Display → List of Accounts → <code>Alt+E</code> → Format: <b>XML</b> → Yes.</li>
+          <li>For current balances, export <b>Sundry Debtors</b> / <b>Sundry Creditors</b> (Group Summary) to Excel, save as CSV and import with mode “Only update existing”.</li>
+        </ol>
+      </details>
+    </div>
+
+    <div class="pcard" data-step2 hidden>
+      <div class="pcard__h"><h2>2. Check what was found</h2><span class="muted" data-filename></span></div>
+      <div data-found></div>
+    </div>
+
+    <div class="pcard" data-step3 hidden>
+      <div class="pcard__h"><h2>3. How should it be applied?</h2></div>
+      <div class="check-grid" style="margin-bottom:14px">
+        <label class="switch"><input type="radio" name="mode" value="upsert" checked /> <span><b>Sync</b>: add new and update existing</span></label>
+        <label class="switch"><input type="radio" name="mode" value="create" /> <span><b>Only add new</b> (never change existing)</span></label>
+        <label class="switch"><input type="radio" name="mode" value="update" /> <span><b>Only update existing</b> (e.g. balances, phone numbers)</span></label>
+      </div>
+      <p class="fhint" style="margin-bottom:14px">Matching: by Tally name, then name, then GSTIN (parties) or code (items). Empty cells never erase existing details.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn--ghost" type="button" data-preview>Preview changes</button><button class="btn btn--red" type="button" data-apply disabled>Apply</button></div>
+      <div data-result style="margin-top:16px"></div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard__h"><h2>Import history</h2></div>
+      <div data-history><div class="skeleton"></div></div>
+    </div>
+  </div>
+
+  <div data-pane="export" class="pstack" hidden>
+    <div class="pcard">
+      <div class="pcard__h"><h2>Choose what to send</h2></div>
+      <div class="pform">
+        <div class="row3">
+          <label class="field"><span class="flabel">From</span><input class="input" type="date" data-ex-from /></label>
+          <label class="field"><span class="flabel">To</span><input class="input" type="date" data-ex-to /></label>
+          <label class="field"><span class="flabel">Only new</span><label class="switch" style="min-height:46px"><input type="checkbox" data-ex-new checked /> Skip entries already sent to Tally</label></label>
+        </div>
+        <div class="check-grid">
+          <label class="switch"><input type="checkbox" value="sales" data-ex-inc checked /> Sales invoices</label>
+          <label class="switch"><input type="checkbox" value="purchases" data-ex-inc checked /> Purchase bills</label>
+          <label class="switch"><input type="checkbox" value="receipts" data-ex-inc checked /> Receipts</label>
+          <label class="switch"><input type="checkbox" value="payments" data-ex-inc checked /> Supplier payments</label>
+          <label class="switch"><input type="checkbox" value="loans" data-ex-inc checked /> Loan entries</label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button class="btn btn--ghost" type="button" data-ex="masters">1. Download masters (new parties/items)</button>
+          <button class="btn btn--red" type="button" data-ex="vouchers">2. Download vouchers</button>
+        </div>
+        <div data-ex-result></div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="pcard__h"><h2>How to import into Tally</h2></div>
+      <ol class="howto">
+        <li>Check the Tally ledger names in <a href="../settings/">Settings → Tally</a> match your Tally company (Sales, Output CGST, Bank Account…). Create any missing ledgers in Tally once.</li>
+        <li><b>TallyPrime:</b> Gateway of Tally → <code>Alt+O</code> (Import) → <b>Masters</b> → choose the masters file. Then <code>Alt+O</code> → <b>Transactions</b> → choose the vouchers file.<br><b>Tally.ERP 9:</b> Gateway → Import of Data → Masters, then Vouchers.</li>
+        <li>If Tally asks about duplicates, choose <b>Ignore duplicates</b> for masters.</li>
+        <li>Once Tally shows the import was successful, come back here and click <b>Mark as sent to Tally</b>, so the next export only has new entries.</li>
+      </ol>
+    </div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth } from '../../scripts/api';
+  import { $, $$, esc, toast } from '../../scripts/ui';
+  import { download, toCsv, fmtD, money } from '../../scripts/erp';
+  import { decodeFile, parseTallyXml, parseCsv, guessMapping, mapRows, FIELDS, TEMPLATES, type Entity, type Row } from '../../scripts/tally-parse';
+  import { today } from '../../../shared/calc';
+
+  // ---------- tabs ----------
+  $$<HTMLButtonElement>('[data-tabs] button').forEach((b) => b.addEventListener('click', () => {
+    $$<HTMLButtonElement>('[data-tabs] button').forEach((x) => x.classList.toggle('is-active', x === b));
+    $$<HTMLElement>('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== b.dataset.t));
+  }));
+
+  // ---------- import ----------
+  let sets: { entity: Entity; label: string; rows: Row[] }[] = [];
+  let csv: { headers: string[]; rows: string[][] } | null = null;
+  let fileName = '';
+  const drop = $('[data-drop]');
+  const file = $<HTMLInputElement>('[data-file]');
+
+  ['dragover', 'dragenter'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('is-over'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove('is-over')));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); const f = (e as DragEvent).dataTransfer?.files[0]; if (f) readFile(f); });
+  file.addEventListener('change', () => { if (file.files?.[0]) readFile(file.files[0]); });
+
+  async function readFile(f: File) {
+    fileName = f.name;
+    $('[data-result]').innerHTML = '';
+    $<HTMLButtonElement>('[data-apply]').disabled = true;
+    try {
+      if (f.size > 25 * 1024 * 1024) throw new Error('File is larger than 25 MB. Export fewer masters at a time.');
+      const text = decodeFile(await f.arrayBuffer());
+      const isXml = /^\s*</.test(text) || f.name.toLowerCase().endsWith('.xml');
+      csv = null; sets = [];
+      if (isXml) {
+        const t = parseTallyXml(text);
+        if (!t.parties.length && !t.items.length) throw new Error(`No customer/supplier/loan ledgers or stock items found${t.ignored ? ` (${t.ignored} other ledgers like bank, sales and expenses were skipped)` : ''}. Make sure you exported Masters.`);
+        if (t.parties.length) sets.push({ entity: 'parties', label: 'Parties', rows: t.parties });
+        if (t.items.length) sets.push({ entity: 'items', label: 'Stock items', rows: t.items });
+        showXml(t);
+      } else {
+        const rows = parseCsv(text);
+        if (rows.length < 2) throw new Error('The CSV needs a header row and at least one data row.');
+        csv = { headers: rows[0], rows: rows.slice(1) };
+        showCsv();
+      }
+      $('[data-step2]').hidden = false; $('[data-step3]').hidden = false;
+      $('[data-filename]').textContent = fileName;
+    } catch (e: any) { toast(e.message, 'err'); $('[data-step2]').hidden = true; $('[data-step3]').hidden = true; }
+  }
+
+  function preview(rows: Row[], cols: [string, string][]) {
+    return `<div class="ptable-wrap" style="max-height:320px;overflow:auto"><table class="ptable"><thead><tr>${cols.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>
+      ${rows.slice(0, 50).map((r) => `<tr>${cols.map(([k]) => `<td>${esc(r[k] ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${rows.length > 50 ? `<p class="fhint">Showing 50 of ${rows.length}</p>` : ''}`;
+  }
+  const PCOLS: [string, string][] = [['kind', 'Type'], ['name', 'Name'], ['gstin', 'GSTIN'], ['state', 'State'], ['phone', 'Phone'], ['opening_balance', 'Opening bal.']];
+  const ICOLS: [string, string][] = [['name', 'Item'], ['code', 'Code'], ['category', 'Category'], ['hsn', 'HSN'], ['gst_rate', 'GST %'], ['unit', 'Unit'], ['sale_rate', 'Sale rate'], ['opening_qty', 'Qty']];
+
+  function showXml(t: ReturnType<typeof parseTallyXml>) {
+    $('[data-found]').innerHTML = `<div class="stats">
+        <div class="stat"><span>Customers</span><strong>${t.counts.customer}</strong></div>
+        <div class="stat"><span>Suppliers</span><strong>${t.counts.supplier}</strong></div>
+        <div class="stat"><span>Lenders / loans</span><strong>${t.counts.lender}</strong></div>
+        <div class="stat"><span>Stock items</span><strong>${t.items.length}</strong></div>
+      </div>
+      <p class="fhint">${t.company ? `Company: <b>${esc(t.company)}</b> · ` : ''}${t.ignored} other ledgers (bank, cash, sales, expenses, taxes) are not needed and were skipped.</p>
+      <div class="check-grid" style="margin:12px 0">${sets.map((s, i) => `<label class="switch"><input type="checkbox" data-set="${i}" checked /> Import ${s.label.toLowerCase()} (${s.rows.length})</label>`).join('')}</div>
+      ${sets.map((s) => `<h3 style="font-size:15px;margin:14px 0 8px">${s.label}</h3>${preview(s.rows, s.entity === 'parties' ? PCOLS : ICOLS)}`).join('')}`;
+  }
+
+  function showCsv() {
+    const c = csv!;
+    const pGuess = guessMapping('parties', c.headers), iGuess = guessMapping('items', c.headers);
+    const looksItems = ['hsn', 'gst_rate', 'unit', 'sale_rate', 'opening_qty'].filter((k) => k in iGuess).length >= 2;
+    const render = (entity: Entity) => {
+      const guess = entity === 'items' ? iGuess : pGuess;
+      const opts = (sel?: number) => `<option value="-1">(not in file)</option>` + c.headers.map((h, i) => `<option value="${i}"${sel === i ? ' selected' : ''}>${esc(h || `Column ${i + 1}`)}</option>`).join('');
+      $('[data-csv-map]').innerHTML = `<div class="map-grid">${FIELDS[entity].map(([k, label]) => `<label class="field"><span class="flabel">${label}</span><select class="input" data-map="${k}">${opts(guess[k])}</select></label>`).join('')}</div>
+        ${entity === 'parties' ? `<label class="field" style="margin-top:12px;max-width:320px;display:grid;gap:4px"><span class="flabel">If the type is not in the file, treat rows as</span><select class="input" data-defkind><option value="customer">Customers</option><option value="supplier">Suppliers</option><option value="lender">Lenders</option></select></label>` : ''}
+        <h3 style="font-size:15px;margin:16px 0 8px">First rows of your file</h3>${preview(c.rows.map((r) => Object.fromEntries(c.headers.map((h, i) => [String(i), r[i]]))), c.headers.slice(0, 8).map((h, i) => [String(i), esc(h)]))}`;
+    };
+    $('[data-found]').innerHTML = `<div class="toolbar"><div class="seg" data-entity><button type="button" data-e="parties">These are parties</button><button type="button" data-e="items">These are items</button></div><span class="muted">${c.rows.length} rows · ${c.headers.length} columns</span></div><div data-csv-map></div>`;
+    const pick = (e: Entity) => { $$<HTMLButtonElement>('[data-entity] button').forEach((b) => b.classList.toggle('is-active', b.dataset.e === e)); render(e); $('[data-found]').dataset.entity = e; $('[data-result]').innerHTML = ''; $<HTMLButtonElement>('[data-apply]').disabled = true; };
+    $$<HTMLButtonElement>('[data-entity] button').forEach((b) => b.addEventListener('click', () => pick(b.dataset.e as Entity)));
+    pick(looksItems ? 'items' : 'parties');
+  }
+
+  function buildSets(): { entity: Entity; rows: Row[] }[] {
+    if (!csv) return sets.filter((_, i) => $<HTMLInputElement>(`[data-set="${i}"]`)?.checked !== false);
+    const entity = ($('[data-found]').dataset.entity ?? 'parties') as Entity;
+    const mapping: Record<string, number> = {};
+    $$<HTMLSelectElement>('[data-map]').forEach((s) => { if (Number(s.value) >= 0) mapping[s.dataset.map!] = Number(s.value); });
+    if (mapping.name === undefined) throw new Error('Choose which column has the name');
+    return [{ entity, rows: mapRows(entity, csv.rows, mapping, $<HTMLSelectElement>('[data-defkind]')?.value ?? 'customer') }];
+  }
+
+  async function run(dryRun: boolean) {
+    const mode = ($<HTMLInputElement>('input[name=mode]:checked')).value;
+    const out: string[] = [];
+    for (const s of buildSets()) {
+      const res = await api('/erp/import', { body: { entity: s.entity, mode, rows: s.rows, dryRun, source: fileName } });
+      const label = s.entity === 'items' ? 'Items' : 'Parties';
+      const shown = res.plans.filter((p: any) => p.action !== 'skip' || p.error !== 'No changes').slice(0, 300);
+      out.push(`<h3 style="font-size:16px;margin:10px 0">${label}: ${dryRun ? 'preview' : 'done'}</h3>
+        <div class="stats"><div class="stat stat--ok"><span>${dryRun ? 'Will add' : 'Added'}</span><strong>${res.created}</strong></div><div class="stat"><span>${dryRun ? 'Will update' : 'Updated'}</span><strong>${res.updated}</strong></div><div class="stat"><span>Unchanged / skipped</span><strong>${res.skipped}</strong></div><div class="stat${res.errors ? ' stat--warn' : ''}"><span>Problems</span><strong>${res.errors}</strong></div></div>
+        ${shown.length ? `<div class="ptable-wrap" style="max-height:340px;overflow:auto"><table class="ptable"><thead><tr><th>Row</th><th>Name</th><th>Action</th><th>Details</th></tr></thead><tbody>${shown.map((p: any) => `<tr><td>${p.row}</td><td>${esc(p.name)}</td><td class="act-${p.action}">${p.action}</td><td>${esc([p.changes?.length ? 'changes: ' + p.changes.join(', ') : '', p.error ?? ''].filter(Boolean).join(' · '))}</td></tr>`).join('')}</tbody></table></div>` : ''}`);
+    }
+    $('[data-result]').innerHTML = out.join('');
+    $<HTMLButtonElement>('[data-apply]').disabled = !dryRun ? true : false;
+    if (!dryRun) { toast('Import complete'); loadHistory(); }
+  }
+
+  async function guarded(btn: HTMLButtonElement, fn: () => Promise<void>) {
+    btn.classList.add('is-busy'); btn.disabled = true;
+    try { await fn(); } catch (e: any) { toast(e.message, 'err'); } finally { btn.classList.remove('is-busy'); btn.disabled = false; }
+  }
+  $('[data-preview]').addEventListener('click', (e) => guarded(e.currentTarget as HTMLButtonElement, () => run(true)));
+  $('[data-apply]').addEventListener('click', (e) => { if (confirm('Apply these changes to your records?')) guarded(e.currentTarget as HTMLButtonElement, () => run(false)); });
+  document.addEventListener('change', (e) => { if ((e.target as HTMLElement).matches('[data-map], [data-defkind], [data-set], input[name=mode]')) { $<HTMLButtonElement>('[data-apply]').disabled = true; $('[data-result]').innerHTML = '<p class="fhint">Settings changed. Preview again before applying.</p>'; } });
+  $$<HTMLButtonElement>('[data-tpl]').forEach((b) => b.addEventListener('click', () => {
+    const e = b.dataset.tpl as Entity;
+    const sample = e === 'parties' ? [['customer', 'ABC Industries Pvt Ltd', '29ABCDE1234F1ZW', 'Karnataka', 'Plot 12, Peenya', 'Bengaluru', '560058', '9800000000', 'accounts@abc.example', 'Mr. Rao', '30', '15000', '']] : [['MCCB 250A 4P', 'MC250', 'Schneider', 'Switchgear', '85362010', '18', 'Nos', '18500', '14200', '5', '2', '']];
+    download(`${e}-template.csv`, toCsv(TEMPLATES[e], sample));
+  }));
+
+  async function loadHistory() {
+    const { imports } = await api('/erp/import/history');
+    $('[data-history]').innerHTML = imports.length ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>When</th><th>What</th><th>File</th><th>Mode</th><th class="num">Added</th><th class="num">Updated</th><th class="num">Skipped</th><th>By</th></tr></thead><tbody>
+      ${imports.map((h: any) => `<tr><td class="nowrap">${fmtD(h.created_at.slice(0, 10))}</td><td>${esc(h.entity)}</td><td>${esc(h.source ?? '')}</td><td>${esc(h.mode)}</td><td class="num">${h.created}</td><td class="num">${h.updated}</td><td class="num">${h.skipped}</td><td>${esc(h.actor ?? '')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No imports yet.</p>';
+  }
+
+  // ---------- export ----------
+  const exFrom = $<HTMLInputElement>('[data-ex-from]'), exTo = $<HTMLInputElement>('[data-ex-to]');
+  const t = today();
+  exFrom.value = `${Number(t.slice(5, 7)) >= 4 ? t.slice(0, 4) : Number(t.slice(0, 4)) - 1}-04-01`; exTo.value = t;
+  let pending: { doc_ids: number[]; payment_ids: number[]; party_ids: number[]; item_ids: number[] } = { doc_ids: [], payment_ids: [], party_ids: [], item_ids: [] };
+
+  async function exportPart(part: 'masters' | 'vouchers') {
+    const inc = $$<HTMLInputElement>('[data-ex-inc]:checked').map((c) => c.value).join(',');
+    if (!inc) throw new Error('Tick at least one type of entry');
+    const p = new URLSearchParams({ part, from: exFrom.value, to: exTo.value, include: inc, only_new: $<HTMLInputElement>('[data-ex-new]').checked ? '1' : '0' });
+    const r = await api(`/erp/tally/export?${p}`);
+    const c = r.counts;
+    if (part === 'masters') {
+      if (!c.parties && !c.items) { toast('No new parties or items to send. They already exist in Tally.'); }
+      else download(`tally-masters-${exFrom.value}-to-${exTo.value}.xml`, r.xml, 'application/xml');
+      pending.party_ids = r.party_ids; pending.item_ids = r.item_ids;
+    } else {
+      if (!c.documents && !c.payments) { toast('Nothing new to send for these dates'); return; }
+      download(`tally-vouchers-${exFrom.value}-to-${exTo.value}.xml`, r.xml, 'application/xml');
+      pending.doc_ids = r.doc_ids; pending.payment_ids = r.payment_ids;
+    }
+    const total = pending.doc_ids.length + pending.payment_ids.length;
+    $('[data-ex-result]').innerHTML = `<div class="notice" style="margin-top:12px">${part === 'masters' ? `Masters file has ${c.parties} new part${c.parties === 1 ? 'y' : 'ies'}${c.items ? ` and ${c.items} item(s)` : ''}.` : `Vouchers file has ${c.documents} bill/invoice${c.documents === 1 ? '' : 's'} and ${c.payments} payment entr${c.payments === 1 ? 'y' : 'ies'}.`}
+      ${total ? `<div style="margin-top:10px"><button class="btn btn--red btn--sm" type="button" data-mark>Mark ${total} entr${total === 1 ? 'y' : 'ies'} as sent to Tally</button> <span class="fhint">Only after Tally confirms a successful import.</span></div>` : ''}</div>`;
+    $('[data-ex-result]').querySelector('[data-mark]')?.addEventListener('click', async (e) => {
+      await guarded(e.currentTarget as HTMLButtonElement, async () => {
+        const res = await api('/erp/tally/mark', { body: pending });
+        toast(`Marked ${res.documents + res.payments} entries as sent`);
+        pending = { doc_ids: [], payment_ids: [], party_ids: [], item_ids: [] };
+        $('[data-ex-result]').innerHTML = '<p class="form-ok" style="margin-top:12px">Done. The next export will only include new entries.</p>';
+      });
+    });
+  }
+  $$<HTMLButtonElement>('[data-ex]').forEach((b) => b.addEventListener('click', () => guarded(b, () => exportPart(b.dataset.ex as 'masters' | 'vouchers'))));
+
+  requireAuth('staff').then(loadHistory).catch(() => {});
+  void money;
+</script>

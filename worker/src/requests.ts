@@ -1,6 +1,8 @@
 import { Env, User, HttpError, json, readJson, str, email as emailField, currentUser, requireUser, requireStaff, issueToken, consumeToken, rateLimit, clientIp, isDev } from './lib';
 import { sendMail, staffRecipients, esc } from './email';
 import { getBrand } from './brand';
+import { feedbackLink } from './feedback';
+import { markQuoteDocAccepted } from './docs';
 
 export const STATUSES = {
   pending_verification: 'Awaiting email confirmation',
@@ -173,10 +175,18 @@ export async function getRequest(req: Request, env: Env, id: number) {
        FROM request_events e LEFT JOIN users u ON u.id = e.actor_id
       WHERE e.request_id = ? ${isStaff ? '' : 'AND e.visible_to_client = 1'} ORDER BY e.id ASC`,
   ).bind(id).all();
+  const { results: documents } = await env.DB.prepare(
+    `SELECT id, type, number, status, doc_date, valid_until, due_date, total, revision,
+       (SELECT COALESCE(SUM(amount + tds), 0) FROM payments x WHERE x.doc_id = d.id AND x.cancelled = 0) AS paid
+       FROM documents d WHERE request_id = ? ${isStaff ? '' : "AND type IN ('quotation', 'invoice') AND status != 'draft'"} ORDER BY id DESC`,
+  ).bind(id).all();
+  const feedback = await env.DB.prepare('SELECT rating, comment, consent, status, created_at FROM feedback WHERE request_id = ?').bind(id).first();
   return json({
     request: { ...r, config: JSON.parse(r.config), summary: r.summary ? JSON.parse(r.summary) : null },
     events: isStaff ? events : events.map(({ actor, ...e }: any) => e),
     statuses: STATUSES,
+    documents,
+    feedback,
   });
 }
 
@@ -192,16 +202,27 @@ export async function updateRequest(req: Request, env: Env, id: number) {
   const internal = b.internal === true;
   if (!status && !note) throw new HttpError(400, 'Nothing to update');
 
-  if (status) await env.DB.prepare("UPDATE requests SET status = ?, updated_at = datetime('now') WHERE id = ?").bind(status, id).run();
+  if (status) await env.DB.prepare("UPDATE requests SET status = ?, delivered_at = CASE WHEN ? = 'delivered' THEN datetime('now') ELSE delivered_at END, updated_at = datetime('now') WHERE id = ?").bind(status, status, id).run();
   await addEvent(env, id, status, note, !internal, u.id);
 
+  // Delivered: always ask for feedback (no sign-in needed), even if the update itself is internal.
+  const feedbackUrl = status === 'delivered' && !(await env.DB.prepare('SELECT 1 FROM feedback WHERE request_id = ?').bind(id).first()) ? await feedbackLink(env, id) : null;
+  if (feedbackUrl && (b.notify === false || internal)) {
+    await sendMail(env, {
+      to: r.contact_email,
+      subject: `How did we do? ${r.ref}`,
+      heading: 'Your panel has been delivered',
+      body: `<p><strong>${esc(r.title)}</strong> (${r.ref}) has been delivered. Thank you for choosing us.</p><p>Could you spare 30 seconds to rate your experience from 0 to 10? It helps us improve.</p>`,
+      cta: { label: 'Rate your experience', url: feedbackUrl },
+    });
+  }
   if (b.notify !== false && !internal) {
     await sendMail(env, {
       to: r.contact_email,
       subject: `Update on ${r.ref}: ${status ? label(status) : 'new message'}`,
       heading: status ? `Your ${r.kind} is now: ${label(status)}` : `New message about ${r.ref}`,
-      body: `<p><strong>${esc(r.title)}</strong> (${r.ref})</p>${note ? `<p style="padding:12px 14px;background:#f5f6f8;border-left:3px solid #cd030d;border-radius:6px">${esc(note)}</p>` : ''}`,
-      cta: { label: 'View details', url: site(env, `/portal/request/?id=${id}`) },
+      body: `<p><strong>${esc(r.title)}</strong> (${r.ref})</p>${note ? `<p style="padding:12px 14px;background:#f5f6f8;border-left:3px solid #cd030d;border-radius:6px">${esc(note)}</p>` : ''}${feedbackUrl ? '<p>Could you spare 30 seconds to rate your experience from 0 to 10? It helps us improve.</p>' : ''}`,
+      cta: feedbackUrl ? { label: 'Rate your experience', url: feedbackUrl } : { label: 'View details', url: site(env, `/portal/request/?id=${id}`) },
     });
   }
   return json({ ok: true });
@@ -239,6 +260,7 @@ export async function acceptQuote(req: Request, env: Env, id: number) {
   if (r.user_id !== u.id) throw new HttpError(403, 'Only the client can accept this quotation');
   if (r.status !== 'quoted') throw new HttpError(409, 'This quotation cannot be accepted right now');
   await env.DB.prepare("UPDATE requests SET kind = 'order', status = 'accepted', updated_at = datetime('now') WHERE id = ?").bind(id).run();
+  await markQuoteDocAccepted(env, (r as any).quote_doc_id ?? null);
   await addEvent(env, id, 'accepted', 'Quotation accepted by client. Order confirmed.', true, u.id);
   await sendMail(env, {
     to: staffRecipients(env),

@@ -1,0 +1,62 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Parties" active="parties" sub="Customers, suppliers and lenders with their live balances.">
+  <Fragment slot="actions"><button class="btn btn--red btn--sm" type="button" data-new>Add party</button></Fragment>
+  <div class="pcard">
+    <div class="toolbar">
+      <div class="seg" data-kinds><button type="button" data-k="customer">Customers</button><button type="button" data-k="supplier">Suppliers</button><button type="button" data-k="lender">Lenders</button><button type="button" data-k="">All</button></div>
+      <div class="toolbar__l" style="justify-content:flex-end">
+        <input class="input grow" type="search" placeholder="Search name, GSTIN, phone, city…" data-q />
+        <label class="switch"><input type="checkbox" data-inactive /> Show inactive</label>
+      </div>
+    </div>
+    <div data-list><div class="skeleton"></div><div class="skeleton"></div></div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, qs, toast } from '../../scripts/ui';
+  import { money, KIND_LABEL, newPartyDialog, rowLink, download, toCsv } from '../../scripts/erp';
+  import { stateName } from '../../../shared/calc';
+
+  let kind = qs('kind') ?? 'customer';
+  let rows: any[] = [];
+  const q = $<HTMLInputElement>('[data-q]');
+  const BAL: Record<string, string> = { customer: 'Receivable', supplier: 'Payable', lender: 'Loan outstanding', '': 'Balance' };
+
+  async function load() {
+    $$<HTMLButtonElement>('[data-kinds] button').forEach((b) => b.classList.toggle('is-active', b.dataset.k === kind));
+    const p = new URLSearchParams();
+    if (kind) p.set('kind', kind);
+    if (q.value.trim()) p.set('q', q.value.trim());
+    if ($<HTMLInputElement>('[data-inactive]').checked) p.set('all', '1');
+    rows = (await api(`/erp/parties?${p}`)).parties;
+    const list = $('[data-list]');
+    if (!rows.length) { list.innerHTML = `<div class="pempty"><strong>No ${kind ? KIND_LABEL[kind].toLowerCase() + 's' : 'parties'} yet</strong>Add them here, or import your ledgers from Tally.<br><a class="btn btn--ghost" href="${sitePath('/staff/tally/')}">Import from Tally</a></div>`; return; }
+    const total = rows.reduce((a, r) => a + (r.balance || 0), 0);
+    list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Name</th>${kind ? '' : '<th>Type</th>'}<th>GSTIN</th><th>City / state</th><th>Contact</th><th class="num">${BAL[kind]}</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr data-href="${sitePath(`/staff/party/?id=${r.id}`)}"${r.active ? '' : ' style="opacity:.55"'}>
+        <td><strong>${esc(r.name)}</strong>${r.tally_name ? '<span class="sub">Linked to Tally</span>' : ''}${r.user_id ? '<span class="sub">Has portal account</span>' : ''}</td>
+        ${kind ? '' : `<td>${KIND_LABEL[r.kind]}</td>`}
+        <td class="mono-s">${esc(r.gstin ?? '—')}</td>
+        <td>${esc(r.city ?? '')}<span class="sub">${esc(stateName(r.state_code ?? ''))}</span></td>
+        <td>${esc(r.contact_person ?? '')}<span class="sub">${esc([r.phone, r.email].filter(Boolean).join(' · '))}</span></td>
+        <td class="num"><strong>${money(r.balance)}</strong>${r.balance < -0.5 ? '<span class="sub">advance</span>' : ''}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="${kind ? 4 : 5}">${rows.length} ${rows.length === 1 ? 'party' : 'parties'} · <a href="#" data-csv>Download CSV</a></td><td class="num">${money(total)}</td></tr></tfoot></table></div>`;
+    rowLink(list);
+    list.querySelector('[data-csv]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      download(`parties-${kind || 'all'}.csv`, toCsv(['Type', 'Name', 'GSTIN', 'State', 'Address', 'City', 'PIN', 'Phone', 'Email', 'Contact person', 'Credit days', 'Opening balance', 'Current balance', 'Tally name'],
+        rows.map((r) => [r.kind, r.name, r.gstin, stateName(r.state_code ?? ''), r.address, r.city, r.pincode, r.phone, r.email, r.contact_person, r.credit_days, r.opening_balance, r.balance, r.tally_name])));
+    });
+  }
+
+  $$<HTMLButtonElement>('[data-kinds] button').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.k!; history.replaceState(null, '', kind ? `?kind=${kind}` : '?'); load(); }));
+  let t: number | undefined;
+  q.addEventListener('input', () => { clearTimeout(t); t = window.setTimeout(load, 300); });
+  $('[data-inactive]').addEventListener('change', load);
+  $('[data-new]').addEventListener('click', async () => { const r = await newPartyDialog(kind || 'customer'); if (r) { toast('Party added'); location.href = sitePath(`/staff/party/?id=${r.id}`); } });
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

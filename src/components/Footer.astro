@@ -5,10 +5,11 @@ import Icon from './Icon.astro';
 import site from '../data/site.json';
 import { url } from '../lib/url';
 import { getClients } from '../lib/clients';
+import { getTestimonials } from '../lib/testimonials';
 
 const categories = (await getCollection('categories')).sort((a, b) => a.data.order - b.data.order);
 const year = new Date().getFullYear();
-const hasClients = (await getClients()).length > 0;
+const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
 const a = site.address;
 ---
 <footer class="footer blueprint on-dark">

@@ -43,9 +43,20 @@ import { url } from '../../lib/url';
           </div>
 
           <div class="pcard">
-            <div class="pcard__h"><h2>Send quotation</h2></div>
-            <div data-current-quote></div>
-            <form class="pform" data-quote-form novalidate>
+            <div class="pcard__h"><h2>Quotation & documents</h2></div>
+            <div data-docs></div>
+            <div class="quick" style="margin-top:12px">
+              <a class="btn btn--red btn--sm" data-mk="quotation" href="#">Create quotation</a>
+              <a class="btn btn--ghost btn--sm" data-mk="boq" href="#">Create BOQ</a>
+              <a class="btn btn--ghost btn--sm" data-mk="invoice" href="#">Create tax invoice</a>
+            </div>
+            <div data-feedback style="margin-top:14px"></div>
+          </div>
+
+          <details class="pcard">
+            <summary style="cursor:pointer;font-weight:600">Quick quote (amount only, no line items)</summary>
+            <div data-current-quote style="margin-top:12px"></div>
+            <form class="pform" data-quote-form novalidate style="margin-top:12px">
               <div class="row2">
                 <label class="field"><span class="flabel">Amount (₹, excl. GST)</span><input class="input" type="number" min="1" step="1" name="amount" required /></label>
                 <label class="field"><span class="flabel">Valid for (days)</span><input class="input" type="number" min="1" max="365" name="validity_days" value="30" /></label>
@@ -54,7 +65,7 @@ import { url } from '../../lib/url';
               <p class="form-error" data-error hidden></p>
               <button class="btn btn--ghost" type="submit">Send quotation to client</button>
             </form>
-          </div>
+          </details>
 
           <div class="pcard">
             <div class="pcard__h"><h2>History</h2></div>
@@ -75,15 +86,23 @@ import { url } from '../../lib/url';
 </style>
 
 <script>
-  import { api, requireAuth } from '../../scripts/api';
-  import { $, bindForm, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, bindForm, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
+  import { money, DOC_LABEL, docBadge, payBadge } from '../../scripts/erp';
   import { panelSVG, summaryHTML, compute, normalize } from '../../scripts/panel';
 
   const id = Number(qs('id'));
   let loaded = false;
 
   async function load() {
-    const { request: r, events, statuses } = await api(`/requests/${id}`);
+    const { request: r, events, statuses, documents, feedback } = await api(`/requests/${id}`);
+    $$<HTMLAnchorElement>('[data-mk]').forEach((a) => (a.href = sitePath(`/staff/doc/?new=${a.dataset.mk}&request=${id}`)));
+    $('[data-docs]').innerHTML = documents?.length
+      ? `<ul class="pay-list">${documents.map((d: any) => `<li><span><a href="${sitePath(`/staff/doc/?id=${d.id}`)}"><strong>${esc(d.number ?? 'Draft')}</strong></a> · ${DOC_LABEL[d.type]}${d.revision ? ` rev ${d.revision}` : ''}<br>${docBadge(d.status)} ${payBadge(d)}</span><strong class="nowrap">${money(d.total)}</strong></li>`).join('')}</ul>`
+      : '<p class="muted" style="font-size:14px">No quotation yet. Create one with item lines, GST and terms; the client can download it as PDF and accept online.</p>';
+    $('[data-feedback]').innerHTML = feedback
+      ? `<p class="notice">Client feedback: <strong>${feedback.rating}/10</strong>${feedback.comment ? ` · “${esc(feedback.comment)}”` : ''} · <a href="${sitePath('/staff/feedback/')}">manage</a></p>`
+      : r.status === 'delivered' ? '<p class="fhint">Feedback request emailed to the client when marked Delivered.</p>' : '';
     document.title = `${r.ref} | Staff | ${document.title.split(" | ").pop()}`;
     $('[data-crumb]').textContent = r.ref;
     $('[data-title]').textContent = r.title;

@@ -1,0 +1,71 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Quotes & invoices" active="docs" sub="BOQs, quotations, GST tax invoices and purchase bills.">
+  <Fragment slot="actions">
+    <a class="btn btn--red btn--sm" data-new href="#">New document</a>
+  </Fragment>
+  <div class="pcard">
+    <div class="toolbar">
+      <div class="seg" data-types>
+        <button type="button" data-t="">All</button><button type="button" data-t="boq">BOQs</button><button type="button" data-t="quotation">Quotations</button><button type="button" data-t="invoice">Tax invoices</button><button type="button" data-t="purchase">Purchase bills</button>
+      </div>
+      <div class="toolbar__l" style="justify-content:flex-end">
+        <input class="input grow" type="search" placeholder="Search number, party, subject, PO…" data-q />
+        <select class="input" data-status><option value="open">All except cancelled</option><option value="">Everything</option><option value="draft">Drafts</option><option value="issued">Issued</option><option value="sent">Sent</option><option value="accepted">Accepted</option><option value="cancelled">Cancelled</option></select>
+        <input class="input" type="date" data-from title="From date" />
+        <input class="input" type="date" data-to title="To date" />
+      </div>
+    </div>
+    <div data-list><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, qs } from '../../scripts/ui';
+  import { money, DOC_LABEL, docBadge, payBadge, fmtD, rowLink } from '../../scripts/erp';
+
+  let type = qs('type') ?? '';
+  const q = $<HTMLInputElement>('[data-q]'), st = $<HTMLSelectElement>('[data-status]'), from = $<HTMLInputElement>('[data-from]'), to = $<HTMLInputElement>('[data-to]');
+  if (qs('q')) q.value = qs('q')!;
+
+  function syncTabs() {
+    $$<HTMLButtonElement>('[data-types] button').forEach((b) => b.classList.toggle('is-active', b.dataset.t === type));
+    $<HTMLAnchorElement>('[data-new]').href = sitePath(`/staff/doc/?new=${type || 'quotation'}`);
+    $<HTMLAnchorElement>('[data-new]').textContent = `New ${type ? DOC_LABEL[type].toLowerCase() : 'document'}`;
+  }
+
+  async function load() {
+    syncTabs();
+    const p = new URLSearchParams();
+    if (type) p.set('type', type);
+    if (st.value) p.set('status', st.value);
+    if (q.value.trim()) p.set('q', q.value.trim());
+    if (from.value) p.set('from', from.value);
+    if (to.value) p.set('to', to.value);
+    history.replaceState(null, '', `?${new URLSearchParams(type ? { type } : {})}`);
+    const { documents } = await api(`/erp/docs?${p}`);
+    const list = $('[data-list]');
+    if (!documents.length) { list.innerHTML = `<div class="pempty"><strong>Nothing here yet</strong>No ${type ? DOC_LABEL[type].toLowerCase() + 's' : 'documents'} match these filters.</div>`; return; }
+    const sum = (k: string) => documents.filter((d: any) => d.status !== 'cancelled').reduce((a: number, d: any) => a + (d[k] || 0), 0);
+    const showPaid = type === 'invoice' || type === 'purchase';
+    list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Number</th><th>Date</th><th>Party</th><th>Subject / ref</th><th>Status</th><th class="num">Taxable</th><th class="num">Total</th>${showPaid ? '<th class="num">Balance</th>' : ''}</tr></thead><tbody>
+      ${documents.map((d: any) => `<tr data-href="${sitePath(`/staff/doc/?id=${d.id}`)}">
+        <td><span class="ref">${esc(d.number ?? 'Draft')}</span><span class="sub">${DOC_LABEL[d.type]}${d.revision ? ` · rev ${d.revision}` : ''}${d.tally_exported_at ? ' · in Tally' : ''}</span></td>
+        <td class="nowrap">${fmtD(d.doc_date)}</td>
+        <td>${esc(d.party_name ?? '—')}</td>
+        <td>${esc(d.subject ?? '')}<span class="sub">${d.request_ref ? `Request ${esc(d.request_ref)}` : ''}${d.ref_no ? ` ${d.type === 'purchase' ? 'Bill' : 'PO'} ${esc(d.ref_no)}` : ''}</span></td>
+        <td>${docBadge(d.status)} ${payBadge(d)}</td>
+        <td class="num">${money(d.taxable)}</td><td class="num"><strong>${money(d.total)}</strong></td>
+        ${showPaid ? `<td class="num">${d.status === 'cancelled' ? '—' : money(d.total - d.paid)}</td>` : ''}</tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="5">${documents.length} document${documents.length === 1 ? '' : 's'} (excluding cancelled in totals)</td><td class="num">${money(sum('taxable'))}</td><td class="num">${money(sum('total'))}</td>${showPaid ? `<td class="num">${money(sum('total') - sum('paid'))}</td>` : ''}</tr></tfoot></table></div>`;
+    rowLink(list);
+  }
+
+  $$<HTMLButtonElement>('[data-types] button').forEach((b) => b.addEventListener('click', () => { type = b.dataset.t!; load(); }));
+  let t: number | undefined;
+  q.addEventListener('input', () => { clearTimeout(t); t = window.setTimeout(load, 300); });
+  [st, from, to].forEach((el) => el.addEventListener('change', load));
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

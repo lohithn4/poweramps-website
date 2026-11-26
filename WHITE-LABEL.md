@@ -51,6 +51,9 @@ Changes reach emails within about 10 minutes of the site rebuilding.
    `https://api.<domain>/auth/oauth/<provider>/callback`, put the client IDs in `wrangler.jsonc`
    and the secrets with `wrangler secret put`.
 10. Set `apiUrl` in site settings to `https://api.<domain>` and publish.
+11. **Accounts settings**: sign in as admin → Staff → **Settings**: invoice number format, bank details,
+    default terms and the Tally ledger names. Then **Tally** → import the company's masters (customers,
+    suppliers, loans, stock items). The GSTIN and home state come from `site.json` → `gst`.
 
 ## What stays product-specific
 

@@ -2,6 +2,13 @@ import { Env, HttpError, json, withCors, preflight, assertSafeMutation } from '.
 import * as auth from './auth';
 import * as requests from './requests';
 import * as staff from './staff';
+import * as settings from './settings';
+import * as masters from './masters';
+import * as docs from './docs';
+import * as payments from './payments';
+import * as reports from './reports';
+import * as tally from './tally';
+import * as feedback from './feedback';
 
 type Handler = (req: Request, env: Env, id: number) => Promise<Response> | Response;
 interface Route { method: string; pattern: RegExp; handler: Handler; mutation?: boolean }
@@ -44,6 +51,50 @@ const routes: Route[] = [
   r('GET', '/staff/users', staff.listUsers),
   r('POST', '/staff/users', staff.inviteStaff),
   r('PATCH', '/staff/users/:id', staff.updateUser),
+
+  // Feedback & testimonials
+  r('POST', '/feedback/lookup', feedback.lookupFeedback),
+  r('POST', '/feedback', feedback.submitFeedback),
+  r('GET', '/public/testimonials', feedback.publicTestimonials),
+  r('GET', '/staff/feedback', feedback.listFeedback),
+  r('PATCH', '/staff/feedback/:id', feedback.reviewFeedback),
+
+  // Client documents (quotations & invoices)
+  r('GET', '/docs/mine', docs.myDocs),
+  r('GET', '/docs/:id', docs.getDoc),
+  r('POST', '/docs/:id/accept', docs.acceptDoc),
+
+  // ERP (staff)
+  r('GET', '/erp/settings', settings.readSettings),
+  r('PATCH', '/erp/settings', settings.saveSettings),
+  r('GET', '/erp/summary', payments.summary),
+  r('GET', '/erp/items', masters.listItems),
+  r('POST', '/erp/items', masters.createItem),
+  r('PATCH', '/erp/items/:id', masters.updateItem),
+  r('GET', '/erp/parties', masters.listParties),
+  r('POST', '/erp/parties', masters.createParty),
+  r('GET', '/erp/parties/:id', masters.getParty),
+  r('PATCH', '/erp/parties/:id', masters.updateParty),
+  r('GET', '/erp/docs', docs.listDocs),
+  r('POST', '/erp/docs', docs.createDoc),
+  r('GET', '/erp/docs/:id', docs.getDoc),
+  r('PATCH', '/erp/docs/:id', docs.updateDoc),
+  r('DELETE', '/erp/docs/:id', docs.deleteDoc),
+  r('POST', '/erp/docs/:id/issue', docs.issueDoc),
+  r('POST', '/erp/docs/:id/cancel', docs.cancelDoc),
+  r('POST', '/erp/docs/:id/convert', docs.convertDoc),
+  r('POST', '/erp/docs/:id/send', docs.sendDoc),
+  r('GET', '/erp/payments', payments.listPayments),
+  r('POST', '/erp/payments', payments.createPayment),
+  r('POST', '/erp/payments/:id/cancel', payments.cancelPayment),
+  r('GET', '/erp/reports/gst', reports.gstReport),
+  r('GET', '/erp/reports/register', reports.register),
+  r('GET', '/erp/reports/outstanding', reports.outstanding),
+  r('POST', '/erp/import', tally.importData),
+  r('GET', '/erp/import/history', tally.importHistory),
+  r('POST', '/erp/purge', tally.purgeUnused),
+  r('GET', '/erp/tally/export', tally.tallyExport),
+  r('POST', '/erp/tally/mark', tally.tallyMark),
 ];
 
 export default {

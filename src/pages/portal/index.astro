@@ -24,6 +24,10 @@ import { url } from '../../lib/url';
         </div>
 
         <div class="pstack">
+          <div class="pcard" data-docs-card hidden>
+            <div class="pcard__h"><h2>Quotations & invoices</h2></div>
+            <div data-docs></div>
+          </div>
           <div class="pcard">
             <div class="pcard__h"><h2>Profile</h2></div>
             <form class="pform" data-profile novalidate>
@@ -67,6 +71,15 @@ import { url } from '../../lib/url';
     (f.elements.namedItem('phone') as HTMLInputElement).value = me.phone ?? '';
     (f.elements.namedItem('email') as HTMLInputElement).value = me.email;
 
+    api('/docs/mine').then(({ documents }) => {
+      if (!documents.length) return;
+      $('[data-docs-card]').hidden = false;
+      $('[data-docs]').innerHTML = documents.slice(0, 12).map((d: any) => {
+        const due = d.total - (d.paid || 0);
+        const tag = d.status === 'cancelled' ? '<span class="badge badge--muted">Cancelled</span>' : d.type === 'invoice' ? (due <= 0.5 ? '<span class="badge badge--done">Paid</span>' : `<span class="badge badge--amber">Due ${inr(due)}</span>`) : d.status === 'accepted' ? '<span class="badge badge--green">Accepted</span>' : '<span class="badge badge--violet">Awaiting you</span>';
+        return `<div class="doc-mini"><div><strong>${d.type === 'invoice' ? 'Invoice' : 'Quotation'} ${esc(d.number)}</strong><small>${fmtDate(d.doc_date)} · ${inr(d.total)}</small> ${tag}</div><a class="btn btn--ghost btn--sm" href="${sitePath(`/portal/document/?id=${d.id}`)}">View</a></div>`;
+      }).join('');
+    }).catch(() => {});
     const { requests, statuses } = await api('/requests');
     const list = $('[data-list]');
     if (!requests.length) {

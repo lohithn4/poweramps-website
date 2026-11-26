@@ -1,0 +1,421 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+import { url } from '../../lib/url';
+---
+<StaffPage title="Document" active="docs" crumb={{ href: url('/staff/docs/'), label: 'Quotes & invoices' }} sub="">
+  <Fragment slot="actions"><span data-badges></span></Fragment>
+
+  <p class="notice" data-lock hidden style="margin-bottom:14px"></p>
+  <div class="dgrid" data-root>
+    <div class="pstack">
+      <div class="pcard">
+        <div class="dfields">
+          <label class="field span2"><span class="flabel" data-party-label>Customer</span>
+            <div style="display:flex;gap:6px"><input class="input" list="party-list" data-party placeholder="Start typing a name…" autocomplete="off" /><button type="button" class="btn btn--ghost btn--sm" data-new-party title="Add new">+ New</button></div>
+            <div class="pinfo" data-party-info></div>
+          </label>
+          <label class="field"><span class="flabel">Date</span><input class="input" type="date" data-f="doc_date" /></label>
+          <label class="field" data-show="quotation"><span class="flabel">Valid until</span><input class="input" type="date" data-f="valid_until" /></label>
+          <label class="field" data-show="invoice purchase"><span class="flabel">Due date</span><input class="input" type="date" data-f="due_date" /></label>
+          <label class="field" data-show="quotation invoice boq"><span class="flabel">Client PO / ref no.</span><input class="input" data-f="ref_no" maxlength="60" /></label>
+          <label class="field" data-show="purchase"><span class="flabel">Supplier bill no. *</span><input class="input" data-f="ref_no" data-purchase-ref maxlength="60" /></label>
+          <label class="field" data-show="purchase invoice quotation"><span class="flabel" data-ref-date-label>PO date</span><input class="input" type="date" data-f="ref_date" /></label>
+          <label class="field" data-show="quotation invoice boq"><span class="flabel">Place of supply</span><select class="input" data-f="place_of_supply" data-pos></select></label>
+          <label class="field span2"><span class="flabel">Subject / project</span><input class="input" data-f="subject" maxlength="300" placeholder="e.g. MCC panel for 2 MLD STP" /></label>
+          <label class="field span2" data-show="invoice quotation"><span class="flabel">Ship to (if different)</span><input class="input" data-f="ship_to" maxlength="500" placeholder="Site address" /></label>
+        </div>
+        <p class="pinfo" data-request-info style="margin-top:12px"></p>
+      </div>
+
+      <div class="pcard">
+        <div class="pcard__h"><h2>Items</h2><span class="muted" style="font-size:13px" data-taxmode></span></div>
+        <div class="lines-wrap">
+          <table class="dlines">
+            <thead><tr><th>#</th><th>Description / make</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Rate ₹</th><th>Disc %</th><th>GST %</th><th data-show="boq">Cost ₹</th><th class="num">Amount</th><th></th></tr></thead>
+            <tbody data-lines></tbody>
+          </table>
+        </div>
+        <div class="add-line" data-edit-only>
+          <input class="input" list="item-list" data-item-pick placeholder="Add from items: type a name or code…" autocomplete="off" />
+          <button type="button" class="btn btn--ghost btn--sm" data-add-item>Add item</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-add-blank>+ Blank line</button>
+          <button type="button" class="btn btn--ghost btn--sm" data-new-item>+ New item</button>
+        </div>
+      </div>
+
+      <div class="pcard">
+        <div class="dfields">
+          <label class="field span2"><span class="flabel">Notes (shown on document)</span><textarea class="input" rows="3" data-f="notes"></textarea></label>
+          <label class="field span2" data-show="quotation invoice"><span class="flabel">Terms & conditions</span><textarea class="input" rows="5" data-f="terms"></textarea></label>
+          <label class="field" data-show="purchase"><span class="flabel">Round off (₹)</span><input class="input" type="number" step="0.01" data-f="round_off" placeholder="as per supplier bill" /></label>
+        </div>
+      </div>
+    </div>
+
+    <aside class="dside">
+      <div class="pcard">
+        <div class="pcard__h"><h2>Total</h2><span class="muted" data-dirty hidden>Unsaved</span></div>
+        <div class="totals" data-totals></div>
+        <div class="dactions" data-actions></div>
+        <p class="form-error" data-error hidden style="margin-top:12px"></p>
+      </div>
+      <div class="pcard" data-pay-card hidden>
+        <div class="pcard__h"><h2>Payments</h2></div>
+        <ul class="pay-list" data-pays></ul>
+      </div>
+      <div class="pcard" data-links hidden><div class="pcard__h"><h2>Linked</h2></div><div data-links-body style="font-size:14px;display:grid;gap:6px"></div></div>
+    </aside>
+  </div>
+
+  <datalist id="party-list"></datalist>
+  <datalist id="item-list"></datalist>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, qs, toast } from '../../scripts/ui';
+  import { computeDoc, amountInWords, today, addDays, stateName, num, GST_RATES } from '../../../shared/calc';
+  import { money, DOC_LABEL, KIND_LABEL, docBadge, payBadge, stateOptions, formDialog, field, inp, newPartyDialog, newItemDialog, fmtD, PAY_LABEL } from '../../scripts/erp';
+
+  type Line = { item_id?: number | null; description: string; make?: string; hsn?: string; qty: number; unit?: string; rate: number; discount_pct?: number; gst_rate?: number; cost_rate?: number | null };
+  const idParam = Number(qs('id')) || 0;
+  let docId = idParam;
+  let type: string = qs('new') ?? 'quotation';
+  let doc: any = {};
+  let lines: Line[] = [];
+  let parties: any[] = [];
+  let items: any[] = [];
+  let settings: any = {};
+  let partyId: number | null = null;
+  let request: any = null;
+  let payments: any[] = [];
+  let paid = 0;
+  let readonly = false;
+  let dirty = false;
+  let posTouched = false;
+
+  const root = $('[data-root]');
+  const F = (k: string) => $$<HTMLInputElement>(`[data-f="${k}"]`).find((el) => !el.closest('[hidden]')) ?? $<HTMLInputElement>(`[data-f="${k}"]`);
+  const partyKind = () => (type === 'purchase' ? 'supplier' : 'customer');
+  const isSales = () => type !== 'purchase';
+  const markDirty = () => { dirty = true; $('[data-dirty]').hidden = false; };
+
+  /* ---------------- data ---------------- */
+
+  async function loadMasters() {
+    const [p, i] = await Promise.all([api(`/erp/parties?kind=${partyKind()}`), api('/erp/items')]);
+    parties = p.parties; items = i.items;
+    $('#party-list').innerHTML = parties.map((x) => `<option value="${esc(x.name)}">${x.gstin ? esc(x.gstin) : ''}${x.city ? ' · ' + esc(x.city) : ''}</option>`).join('');
+    $('#item-list').innerHTML = items.map((x) => `<option value="${esc(x.name)}">${[x.code, x.make, x.hsn && 'HSN ' + x.hsn, '₹' + (type === 'purchase' ? x.purchase_rate : x.sale_rate)].filter(Boolean).map(esc).join(' · ')}</option>`).join('');
+  }
+
+  async function load() {
+    const s = await api('/erp/settings');
+    settings = s.settings;
+    if (docId) {
+      const d = await api(`/erp/docs/${docId}`);
+      doc = d.document; type = doc.type; lines = d.lines.map((l: any) => ({ ...l })); payments = d.payments; paid = d.paid; request = d.request;
+      partyId = doc.party_id;
+    } else {
+      if (!DOC_LABEL[type]) type = 'quotation';
+      doc = { type, status: 'draft', doc_date: today(), terms: type === 'quotation' ? settings.terms_quotation : type === 'invoice' ? settings.terms_invoice : '' };
+      const reqId = Number(qs('request'));
+      if (reqId) {
+        const r = await api(`/requests/${reqId}`);
+        request = r.request;
+        doc.request_id = reqId; doc.subject = request.title;
+        partyId = request.party_id ?? null;
+        lines = [{ description: request.title, hsn: '85371000', qty: request.quantity || 1, unit: 'Nos', rate: 0, gst_rate: 18 }];
+      }
+      if (qs('party')) partyId = Number(qs('party'));
+      if (!lines.length) lines = [{ description: '', qty: 1, unit: 'Nos', rate: 0, gst_rate: 18 }];
+    }
+    await loadMasters();
+    render();
+  }
+
+  /* ---------------- render ---------------- */
+
+  function render() {
+    readonly = doc.status === 'cancelled' || (type === 'invoice' && doc.status !== 'draft') || (type === 'quotation' && doc.status === 'accepted');
+    root.classList.toggle('is-ro', readonly);
+    const label = DOC_LABEL[type];
+    document.title = `${doc.number ?? 'New ' + label.toLowerCase()} | Staff | ${document.title.split(' | ').pop()}`;
+    $('[data-title]').textContent = doc.number ? `${label} ${doc.number}` : docId ? `${label} (draft)` : `New ${label.toLowerCase()}`;
+    $('[data-crumb]').textContent = doc.number ?? 'New';
+    $('[data-sub]').textContent = docId ? `Created ${fmtD(doc.created_at?.slice(0, 10))}${doc.revision ? ` · revision ${doc.revision}` : ''}${doc.tally_exported_at ? ' · sent to Tally' : ''}` : 'Fill in the details and items below.';
+    $('[data-badges]').innerHTML = docId ? `${docBadge(doc.status)} ${payBadge({ ...doc, paid })}` : '';
+    const lock = $('[data-lock]');
+    lock.hidden = !readonly;
+    lock.textContent = doc.status === 'cancelled' ? 'This document is cancelled. Make a copy to reuse it.' : type === 'invoice' ? 'Issued tax invoices are locked so your GST records stay correct. To change it, cancel it and issue a new invoice (or make a copy).' : 'This quotation was accepted by the client. Make a revised copy if anything changes.';
+
+    $$<HTMLElement>('[data-show]').forEach((el) => { el.hidden = !el.dataset.show!.split(' ').includes(type); });
+    $('[data-party-label]').textContent = `${KIND_LABEL[partyKind()]}${type === 'boq' ? ' (optional)' : ''}`;
+    $('[data-ref-date-label]').textContent = type === 'purchase' ? 'Supplier bill date' : 'PO date';
+    $<HTMLSelectElement>('[data-pos]').innerHTML = stateOptions(doc.place_of_supply ?? '');
+    for (const k of ['doc_date', 'valid_until', 'due_date', 'ref_no', 'ref_date', 'subject', 'ship_to', 'notes', 'terms', 'round_off']) {
+      $$<HTMLInputElement>(`[data-f="${k}"]`).forEach((el) => { el.value = doc[k] ?? ''; el.disabled = readonly; });
+    }
+    $<HTMLSelectElement>('[data-pos]').disabled = readonly;
+    const party = parties.find((p) => p.id === partyId);
+    const pIn = $<HTMLInputElement>('[data-party]');
+    pIn.value = party?.name ?? (doc.party_name || '');
+    pIn.disabled = readonly; $<HTMLButtonElement>('[data-new-party]').hidden = readonly;
+    $$('[data-edit-only]').forEach((el) => (el.hidden = readonly));
+    if (!doc.place_of_supply && party && isSales()) $<HTMLSelectElement>('[data-pos]').value = party.state_code || settings.company_state_code;
+    if (!$<HTMLSelectElement>('[data-pos]').value && isSales()) $<HTMLSelectElement>('[data-pos]').value = settings.company_state_code;
+    partyInfo();
+    $('[data-request-info]').innerHTML = request ? `Linked to website request <a href="${sitePath(`/staff/request/?id=${request.id}`)}"><strong>${esc(request.ref)}</strong></a> · ${esc(request.title ?? '')}${!partyId && request.contact_name ? ` · customer will be created from ${esc(request.contact_company || request.contact_name)}` : ''}` : '';
+    renderLines();
+    renderSide();
+  }
+
+  function partyInfo() {
+    const p = parties.find((x) => x.id === partyId);
+    $('[data-party-info]').innerHTML = p
+      ? `${p.gstin ? `GSTIN ${esc(p.gstin)}` : 'Unregistered (no GSTIN)'} · ${esc(stateName(p.state_code ?? '') || 'state not set')}${p.email ? ` · ${esc(p.email)}` : ''} · balance ${money(p.balance)} · <a href="${sitePath(`/staff/party/?id=${p.id}`)}" target="_blank">open</a>`
+      : (doc.party_name && readonly ? `${esc(doc.party_gstin ?? '')}` : '');
+  }
+
+  const gstOpts = (v: number) => GST_RATES.map((g) => `<option value="${g}"${Number(v) === g ? ' selected' : ''}>${g}%</option>`).join('');
+  function renderLines() {
+    const boq = type === 'boq';
+    const dis = readonly ? 'disabled' : '';
+    $('[data-lines]').innerHTML = lines.map((l, i) => `<tr data-i="${i}">
+      <td class="c-n">${i + 1}</td>
+      <td class="c-desc"><input class="input" list="item-list" data-k="description" value="${esc(l.description)}" placeholder="Description" ${dis} /><input class="input" data-k="make" value="${esc(l.make ?? '')}" placeholder="Make / model (optional)" ${dis} /></td>
+      <td class="w-hsn"><input class="input" data-k="hsn" value="${esc(l.hsn ?? '')}" inputmode="numeric" maxlength="8" ${dis} /></td>
+      <td class="w-qty"><input class="input" type="number" min="0" step="any" data-k="qty" value="${l.qty}" ${dis} /></td>
+      <td class="w-unit"><input class="input" data-k="unit" value="${esc(l.unit ?? 'Nos')}" list="unit-list" ${dis} /></td>
+      <td class="w-rate"><input class="input" type="number" min="0" step="0.01" data-k="rate" value="${l.rate}" ${dis} /></td>
+      <td class="w-pct"><input class="input" type="number" min="0" max="100" step="0.01" data-k="discount_pct" value="${l.discount_pct || ''}" placeholder="0" ${dis} /></td>
+      <td class="w-gst"><select class="input" data-k="gst_rate" ${dis}>${gstOpts(l.gst_rate ?? 18)}</select></td>
+      ${boq ? `<td class="w-rate"><input class="input" type="number" min="0" step="0.01" data-k="cost_rate" value="${l.cost_rate ?? ''}" ${dis} /></td>` : ''}
+      <td class="c-amt" data-amt></td>
+      <td class="c-del">${readonly ? '' : `<button type="button" data-del title="Remove line">×</button>`}</td></tr>`).join('') + `<datalist id="unit-list">${['Nos', 'Pcs', 'Set', 'Mtr', 'Kg', 'Lot', 'Job', 'Box'].map((u) => `<option value="${u}">`).join('')}</datalist>`;
+    recalc();
+  }
+
+  function intra() {
+    if (type === 'purchase') { const p = parties.find((x) => x.id === partyId); return (p?.state_code || settings.company_state_code) === settings.company_state_code; }
+    return ($<HTMLSelectElement>('[data-pos]').value || settings.company_state_code) === settings.company_state_code;
+  }
+
+  function recalc() {
+    const { lines: out, totals: t } = computeDoc(lines as any, { intra: intra(), roundOff: type !== 'purchase' && settings.round_off !== 'no' });
+    $$<HTMLTableRowElement>('[data-lines] tr').forEach((tr, i) => {
+      const l = out[i]; if (!l) return;
+      tr.querySelector('[data-amt]')!.innerHTML = `${money(l.taxable)}<small>+ GST ${money(l.tax)}</small>`;
+    });
+    let total = t.total, ro = t.roundOff;
+    const roIn = F('round_off');
+    if (type === 'purchase' && roIn.value !== '') { ro = num(roIn.value); total = Math.round((t.taxable + t.tax + ro) * 100) / 100; }
+    const tax = intra() ? `<div><span>CGST</span><span>${money(t.cgst)}</span></div><div><span>SGST</span><span>${money(t.sgst)}</span></div>` : `<div><span>IGST</span><span>${money(t.igst)}</span></div>`;
+    const margin = type === 'boq' && t.cost ? `<div><span>Material cost</span><span>${money(t.cost)}</span></div><div class="margin"><span>Margin</span><span>${money(t.taxable - t.cost)} (${t.taxable ? (((t.taxable - t.cost) / t.taxable) * 100).toFixed(1) : 0}%)</span></div>` : '';
+    $('[data-totals]').innerHTML = `
+      <div><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+      ${t.discount ? `<div><span>Discount</span><span>− ${money(t.discount)}</span></div>` : ''}
+      <div><span>Taxable value</span><span>${money(t.taxable)}</span></div>${tax}
+      ${ro ? `<div><span>Round off</span><span>${ro > 0 ? '+' : '−'} ${money(Math.abs(ro))}</span></div>` : ''}
+      <div class="grand"><span>Total</span><span>${money(total)}</span></div>
+      <span class="words">${amountInWords(total)}</span>${margin}`;
+    $('[data-taxmode]').textContent = intra() ? 'Same state: CGST + SGST' : 'Other state: IGST';
+  }
+
+  function act(label: string, cls: string, fn: () => Promise<void> | void, title = '') {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = `btn ${cls} btn--sm`; b.textContent = label; if (title) b.title = title;
+    b.addEventListener('click', async () => {
+      const err = $('[data-error]'); err.hidden = true;
+      b.classList.add('is-busy'); b.disabled = true;
+      try { await fn(); } catch (e: any) { if (e?.message !== 'cancelled') { err.textContent = e.message; err.hidden = false; } }
+      finally { b.classList.remove('is-busy'); b.disabled = false; }
+    });
+    return b;
+  }
+
+  function renderSide() {
+    const box = $('[data-actions]');
+    box.innerHTML = '';
+    const st = doc.status;
+    const add = (b: HTMLButtonElement) => box.appendChild(b);
+    if (!docId || st === 'draft') {
+      if (type === 'purchase') add(act('Save purchase bill', 'btn--red', () => save(false)));
+      else {
+        add(act(`Save & issue ${DOC_LABEL[type].toLowerCase()}`, 'btn--red', () => save(true), 'Gives it a number. Invoices are locked after this.'));
+        if (type === 'quotation' || type === 'invoice') add(act('Save, issue & email client', 'btn--ghost', async () => { await save(true, false); await send(); }));
+        add(act('Save draft', 'btn--ghost', () => save(false)));
+      }
+    } else if (!readonly) add(act(type === 'quotation' && st !== 'issued' ? 'Save as new revision' : 'Save changes', 'btn--red', () => save(false)));
+    if (docId && !['draft', 'cancelled'].includes(st)) {
+      if (type === 'quotation' || type === 'invoice') add(act(st === 'sent' ? 'Email client again' : 'Email to client', 'btn--ghost', send));
+      if (type === 'invoice' || type === 'purchase') if (doc.total - paid > 0.5) add(act(type === 'invoice' ? 'Record receipt' : 'Record payment', 'btn--ghost', recordPayment));
+      if (type === 'boq') add(act('Make quotation from this', 'btn--ghost', () => convert('quotation')));
+      if (type === 'boq' || type === 'quotation') add(act('Make tax invoice from this', 'btn--ghost', () => convert('invoice')));
+    }
+    if (docId && type !== 'purchase') add(act('Print / download PDF', 'btn--ghost', async () => { if (dirty && !readonly) await save(false, false); window.open(sitePath(`/portal/document/?id=${docId}`), '_blank'); }));
+    if (docId) add(act('Make a copy', 'btn--ghost', () => convert(type)));
+    if (docId && st === 'draft' && !doc.number) add(act('Delete draft', 'btn--ghost', async () => { if (!confirm('Delete this draft?')) return; await api(`/erp/docs/${docId}`, { method: 'DELETE' }); location.href = sitePath('/staff/docs/'); }));
+    else if (docId && st !== 'cancelled') add(act('Cancel document', 'btn--ghost', async () => { if (!confirm(`Cancel ${doc.number}? It stays in records as cancelled.`)) return; await api(`/erp/docs/${docId}/cancel`, { body: {} }); toast('Cancelled'); await reload(); }));
+
+    const pc = $('[data-pay-card]');
+    pc.hidden = !(docId && (type === 'invoice' || type === 'purchase') && doc.status !== 'draft');
+    if (!pc.hidden) $('[data-pays]').innerHTML = (payments.length ? payments.map((p) => `<li class="${p.cancelled ? 'is-off' : ''}"><span>${esc(p.number)} · ${fmtD(p.pay_date)}<br><small class="muted">${PAY_LABEL[p.kind]} by ${esc(p.mode)}${p.reference ? ' · ' + esc(p.reference) : ''}${p.tds ? ` · TDS ${money(p.tds)}` : ''}</small></span><strong class="nowrap">${money(p.amount + (p.tds || 0))}</strong></li>`).join('') : '<li class="muted">No payments yet</li>') +
+      `<li><strong>Balance due</strong><strong>${money(doc.total - paid)}</strong></li>`;
+
+    const links: string[] = [];
+    if (request) links.push(`Request <a href="${sitePath(`/staff/request/?id=${request.id}`)}"><strong>${esc(request.ref)}</strong></a>`);
+    if (doc.source_doc_id) links.push(`Made from <a href="${sitePath(`/staff/doc/?id=${doc.source_doc_id}`)}">source document</a>`);
+    if (partyId) links.push(`<a href="${sitePath(`/staff/party/?id=${partyId}`)}">Party ledger</a>`);
+    $('[data-links]').hidden = !links.length;
+    $('[data-links-body]').innerHTML = links.join('');
+  }
+
+  /* ---------------- actions ---------------- */
+
+  function payload(issue: boolean) {
+    const v = (k: string) => F(k)?.value ?? '';
+    return {
+      type, party_id: partyId, request_id: doc.request_id ?? request?.id ?? null, issue,
+      doc_date: v('doc_date') || today(), valid_until: type === 'quotation' ? v('valid_until') || null : null, due_date: ['invoice', 'purchase'].includes(type) ? v('due_date') || null : null,
+      ref_no: type === 'purchase' ? $<HTMLInputElement>('[data-purchase-ref]').value : $$<HTMLInputElement>('[data-f="ref_no"]')[0].value,
+      ref_date: v('ref_date') || null, place_of_supply: isSales() ? $<HTMLSelectElement>('[data-pos]').value : null,
+      subject: v('subject'), ship_to: v('ship_to'), notes: v('notes'), terms: ['quotation', 'invoice'].includes(type) ? v('terms') : undefined,
+      round_off: type === 'purchase' ? v('round_off') : undefined,
+      lines: lines.filter((l) => l.description.trim() || l.rate),
+    };
+  }
+
+  async function save(issue: boolean, notify = true) {
+    const pName = $<HTMLInputElement>('[data-party]').value.trim();
+    if (pName && !parties.find((p) => p.id === partyId && p.name === pName)) {
+      const m = parties.find((p) => p.name.toLowerCase() === pName.toLowerCase());
+      if (m) partyId = m.id; else throw new Error(`"${pName}" is not in your ${partyKind()} list. Use "+ New" to add it.`);
+    }
+    if (issue && type === 'invoice' && !confirm('Issue this tax invoice? It gets the next invoice number and can no longer be edited.')) throw new Error('cancelled');
+    const body = payload(issue);
+    const res = docId ? await api(`/erp/docs/${docId}`, { method: 'PATCH', body }) : await api('/erp/docs', { body });
+    const firstSave = !docId;
+    docId = res.id;
+    dirty = false; $('[data-dirty]').hidden = true;
+    if (firstSave) history.replaceState(null, '', `?id=${docId}`);
+    await reload();
+    if (notify) toast(issue ? `${DOC_LABEL[type]} ${doc.number} issued` : 'Saved');
+  }
+
+  async function reload() {
+    const d = await api(`/erp/docs/${docId}`);
+    doc = d.document; lines = d.lines.map((l: any) => ({ ...l })); payments = d.payments; paid = d.paid; request = d.request; partyId = doc.party_id;
+    if (!parties.find((p) => p.id === partyId)) await loadMasters();
+    render();
+  }
+
+  async function send() {
+    if (dirty && !readonly) await save(false, false);
+    const to = request?.contact_email ?? parties.find((p) => p.id === partyId)?.email ?? '';
+    const r = await formDialog({
+      title: `Email ${DOC_LABEL[type].toLowerCase()} ${doc.number ?? ''}`, submit: 'Send email',
+      body: `${field('To', inp('to', to, 'type="email" required'))}${field('Message (optional)', `<textarea class="input" name="message" rows="4" placeholder="Dear Sir, please find our ${DOC_LABEL[type].toLowerCase()} for your requirement…"></textarea>`)}
+        <p class="fhint">The client gets a link to view it online, download the PDF${type === 'quotation' ? ' and accept it' : ''}.${type === 'quotation' && request ? ' The website request moves to “Quotation sent”.' : ''}</p>`,
+      onSubmit: (d) => api(`/erp/docs/${docId}/send`, { body: d }),
+    });
+    if (r) { toast(`Emailed to ${(r as any).to}`); await reload(); }
+  }
+
+  async function convert(to: string) {
+    if (dirty && !readonly) await save(false, false);
+    const r = await api(`/erp/docs/${docId}/convert`, { body: { to } });
+    location.href = sitePath(`/staff/doc/?id=${r.id}`);
+  }
+
+  async function recordPayment() {
+    const kind = type === 'invoice' ? 'receipt' : 'payment';
+    const due = Math.round((doc.total - paid) * 100) / 100;
+    const r = await formDialog({
+      title: type === 'invoice' ? `Receipt against ${doc.number}` : `Payment for bill ${doc.ref_no}`, submit: 'Save',
+      body: `<div class="row2">${field('Amount received (₹)', inp('amount', due, 'type="number" step="0.01" min="0.01" required'))}${field('Date', inp('pay_date', today(), 'type="date" required'))}</div>
+        <div class="row2">${field('Mode', `<select class="input" name="mode">${['bank', 'upi', 'neft', 'rtgs', 'cheque', 'cash', 'card', 'other'].map((m) => `<option value="${m}">${m.toUpperCase()}</option>`).join('')}</select>`)}${field('Reference (UTR / cheque no.)', inp('reference'))}</div>
+        ${kind === 'receipt' ? field('TDS deducted by customer (₹)', inp('tds', '', 'type="number" step="0.01" min="0"'), 'If the customer deducted TDS, enter it here; it also settles the invoice.') : ''}
+        ${field('Notes', inp('notes'))}`,
+      onSubmit: (d) => api('/erp/payments', { body: { ...d, kind, party_id: partyId, doc_id: docId } }),
+    });
+    if (r) { toast(`Saved ${(r as any).number}`); await reload(); }
+  }
+
+  /* ---------------- events ---------------- */
+
+  function fillFromItem(l: Line, it: any) {
+    l.item_id = it.id; l.description = it.name; l.make = it.make ?? ''; l.hsn = it.hsn ?? ''; l.unit = it.unit ?? 'Nos';
+    l.gst_rate = it.gst_rate; l.rate = type === 'purchase' ? it.purchase_rate : it.sale_rate;
+    if (type === 'boq') l.cost_rate = it.purchase_rate;
+  }
+
+  $('[data-lines]').addEventListener('input', (e) => {
+    const el = e.target as HTMLInputElement;
+    const tr = el.closest('tr'); if (!tr || !el.dataset.k) return;
+    const l = lines[Number(tr.dataset.i)];
+    const k = el.dataset.k as keyof Line;
+    (l as any)[k] = ['qty', 'rate', 'discount_pct', 'gst_rate', 'cost_rate'].includes(k) ? (el.value === '' ? (k === 'cost_rate' ? null : 0) : Number(el.value)) : el.value;
+    markDirty(); recalc();
+  });
+  $('[data-lines]').addEventListener('change', (e) => {
+    const el = e.target as HTMLInputElement;
+    if (el.dataset.k !== 'description') return;
+    const i = Number(el.closest('tr')!.dataset.i);
+    const it = items.find((x) => x.name.toLowerCase() === el.value.trim().toLowerCase());
+    if (it && lines[i].item_id !== it.id) { fillFromItem(lines[i], it); renderLines(); }
+  });
+  $('[data-lines]').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('[data-del]'); if (!b) return;
+    lines.splice(Number(b.closest('tr')!.dataset.i), 1);
+    if (!lines.length) lines.push({ description: '', qty: 1, unit: 'Nos', rate: 0, gst_rate: 18 });
+    markDirty(); renderLines();
+  });
+  function addPicked() {
+    const pick = $<HTMLInputElement>('[data-item-pick]');
+    const v = pick.value.trim().toLowerCase(); if (!v) return;
+    const it = items.find((x) => x.name.toLowerCase() === v || (x.code && x.code.toLowerCase() === v));
+    if (!it) { toast('Item not found. Use “+ New item” to add it.', 'err'); return; }
+    const l: Line = { description: '', qty: 1, rate: 0 };
+    fillFromItem(l, it);
+    const blank = lines.length === 1 && !lines[0].description && !lines[0].rate;
+    if (blank) lines[0] = l; else lines.push(l);
+    pick.value = ''; markDirty(); renderLines();
+    ($$<HTMLInputElement>('[data-lines] [data-k="qty"]').at(-1))?.focus();
+  }
+  $('[data-add-item]').addEventListener('click', addPicked);
+  $('[data-item-pick]').addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') { e.preventDefault(); addPicked(); } });
+  $('[data-item-pick]').addEventListener('change', addPicked);
+  $('[data-add-blank]').addEventListener('click', () => { lines.push({ description: '', qty: 1, unit: 'Nos', rate: 0, gst_rate: 18 }); markDirty(); renderLines(); ($$<HTMLInputElement>('[data-lines] [data-k="description"]').at(-1))?.focus(); });
+  $('[data-new-item]').addEventListener('click', async () => {
+    const r = await newItemDialog();
+    if (!r) return;
+    await loadMasters();
+    const it = items.find((x) => x.id === r.id);
+    if (it) { const l: Line = { description: '', qty: 1, rate: 0 }; fillFromItem(l, it); lines.push(l); markDirty(); renderLines(); }
+  });
+
+  $('[data-party]').addEventListener('change', () => {
+    const v = $<HTMLInputElement>('[data-party]').value.trim().toLowerCase();
+    const p = parties.find((x) => x.name.toLowerCase() === v);
+    partyId = p?.id ?? null;
+    if (p && isSales() && !posTouched) $<HTMLSelectElement>('[data-pos]').value = p.state_code || settings.company_state_code;
+    if (p && type === 'invoice' && p.credit_days != null) F('due_date').value = addDays(F('doc_date').value || today(), p.credit_days);
+    markDirty(); partyInfo(); recalc();
+  });
+  $('[data-new-party]').addEventListener('click', async () => {
+    const r = await newPartyDialog(partyKind());
+    if (!r) return;
+    await loadMasters();
+    partyId = r.id;
+    const p = parties.find((x) => x.id === r.id);
+    $<HTMLInputElement>('[data-party]').value = p?.name ?? '';
+    if (p && isSales()) $<HTMLSelectElement>('[data-pos]').value = p.state_code || settings.company_state_code;
+    markDirty(); partyInfo(); recalc();
+  });
+  $('[data-pos]').addEventListener('change', () => { posTouched = true; markDirty(); recalc(); });
+  $$('[data-f]').forEach((el) => el.addEventListener('input', () => { markDirty(); if ((el as HTMLElement).dataset.f === 'round_off') recalc(); }));
+  window.addEventListener('beforeunload', (e) => { if (dirty && !readonly) { e.preventDefault(); } });
+
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting') { $('[data-title]').textContent = 'Could not open'; $('[data-sub]').textContent = e.message; } });
+</script>

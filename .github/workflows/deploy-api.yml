@@ -5,7 +5,7 @@ name: Deploy API (Cloudflare Worker)
 on:
   push:
     branches: [main]
-    paths: ['worker/**', '.github/workflows/deploy-api.yml']
+    paths: ['worker/**', 'shared/**', '.github/workflows/deploy-api.yml']
   workflow_dispatch:
 
 permissions:

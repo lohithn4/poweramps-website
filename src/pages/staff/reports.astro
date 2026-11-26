@@ -1,0 +1,130 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="GST & reports" active="reports" sub="GSTR-1 and GSTR-3B figures, registers and outstanding. Downloads open in Excel and match the GST offline tool columns.">
+  <div class="toolbar">
+    <div class="seg" data-tabs>
+      <button type="button" data-t="gst">GST returns</button><button type="button" data-t="sales">Sales register</button><button type="button" data-t="purchases">Purchase register</button><button type="button" data-t="receivable">Receivables</button><button type="button" data-t="payable">Payables</button>
+    </div>
+    <div class="toolbar__l" style="justify-content:flex-end">
+      <label data-for="gst" class="switch">Month <input class="input" type="month" data-month /></label>
+      <label data-for="sales purchases" class="switch">From <input class="input" type="date" data-from /></label>
+      <label data-for="sales purchases" class="switch">To <input class="input" type="date" data-to /></label>
+    </div>
+  </div>
+  <div data-body><div class="pcard"><div class="skeleton"></div><div class="skeleton"></div></div></div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, qs } from '../../scripts/ui';
+  import { money, fmtD, download, toCsv, gstDate, rowLink } from '../../scripts/erp';
+  import { today, posLabel } from '../../../shared/calc';
+
+  let tab = qs('tab') ?? 'gst';
+  const month = $<HTMLInputElement>('[data-month]'), from = $<HTMLInputElement>('[data-from]'), to = $<HTMLInputElement>('[data-to]');
+  const t = today();
+  month.value = t.slice(0, 7);
+  from.value = `${t.slice(0, 7)}-01`; to.value = t;
+  const body = $('[data-body]');
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+
+  function table(headers: string[], rows: string[][], numCols: number[] = [], foot?: string[]) {
+    if (!rows.length) return '<p class="muted" style="padding:10px 0">Nothing for this period.</p>';
+    const th = headers.map((h, i) => `<th${numCols.includes(i) ? ' class="num"' : ''}>${h}</th>`).join('');
+    return `<div class="ptable-wrap"><table class="ptable"><thead><tr>${th}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c, i) => `<td${numCols.includes(i) ? ' class="num"' : ''}>${c}</td>`).join('')}</tr>`).join('')}</tbody>${foot ? `<tfoot><tr>${foot.map((c, i) => `<td${numCols.includes(i) ? ' class="num"' : ''}>${c}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
+  }
+  const card = (title: string, inner: string, csv?: string) => `<div class="pcard"><div class="pcard__h"><h2>${title}</h2>${csv ? `<button class="btn btn--ghost btn--sm" type="button" data-csv="${csv}">Download CSV</button>` : ''}</div>${inner}</div>`;
+
+  async function gst() {
+    const g = await api(`/erp/reports/gst?month=${month.value}`);
+    const r1 = g.gstr1, b = g.gstr3b;
+    const label = new Date(month.value + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    const csv: Record<string, () => void> = {
+      b2b: () => download(`GSTR1-${month.value}-b2b.csv`, toCsv(['GSTIN/UIN of Recipient', 'Receiver Name', 'Invoice Number', 'Invoice date', 'Invoice Value', 'Place Of Supply', 'Reverse Charge', 'Applicable % of Tax Rate', 'Invoice Type', 'E-Commerce GSTIN', 'Rate', 'Taxable Value', 'Cess Amount'],
+        r1.b2b.map((x: any) => [x.gstin, x.name, x.number, gstDate(x.date), x.value, x.pos, x.reverse_charge, '', x.type, '', x.rate, x.taxable, 0]))),
+      b2cl: () => download(`GSTR1-${month.value}-b2cl.csv`, toCsv(['Invoice Number', 'Invoice date', 'Invoice Value', 'Place Of Supply', 'Applicable % of Tax Rate', 'Rate', 'Taxable Value', 'Cess Amount', 'E-Commerce GSTIN'],
+        r1.b2cl.map((x: any) => [x.number, gstDate(x.date), x.value, x.pos, '', x.rate, x.taxable, 0, '']))),
+      b2cs: () => download(`GSTR1-${month.value}-b2cs.csv`, toCsv(['Type', 'Place Of Supply', 'Applicable % of Tax Rate', 'Rate', 'Taxable Value', 'Cess Amount', 'E-Commerce GSTIN'],
+        r1.b2cs.map((x: any) => [x.type, x.pos, '', x.rate, x.taxable, 0, '']))),
+      hsnb2b: () => download(`GSTR1-${month.value}-hsn-b2b.csv`, hsnCsv(r1.hsn_b2b)),
+      hsnb2c: () => download(`GSTR1-${month.value}-hsn-b2c.csv`, hsnCsv(r1.hsn_b2c)),
+      docs: () => download(`GSTR1-${month.value}-docs.csv`, toCsv(['Nature of Document', 'Sr. No. From', 'Sr. No. To', 'Total Number', 'Cancelled'], r1.docs.map((x: any) => [x.nature, x.from, x.to, x.total, x.cancelled]))),
+      b3: () => download(`GSTR3B-${month.value}.csv`, toCsv(['Section', 'Description', 'Taxable value', 'IGST', 'CGST', 'SGST'], [
+        ['3.1(a)', 'Outward taxable supplies', b.outward.taxable, b.outward.igst, b.outward.cgst, b.outward.sgst],
+        ...b.inter_state_unregistered.map((x: any) => ['3.2', `Inter-state to unregistered: ${x.pos}`, x.taxable, x.igst, '', '']),
+        ['4(A)(5)', 'ITC: all other inward supplies', b.itc.taxable, b.itc.igst, b.itc.cgst, b.itc.sgst],
+        ['', 'Net tax (output − ITC)', '', b.net.igst, b.net.cgst, b.net.sgst]])),
+    };
+    const hsnCsv = (rows: any[]) => toCsv(['HSN', 'Description', 'UQC', 'Total Quantity', 'Total Value', 'Rate', 'Taxable Value', 'Integrated Tax Amount', 'Central Tax Amount', 'State/UT Tax Amount', 'Cess Amount'],
+      rows.map((h) => [h.hsn, h.description, h.uqc, h.qty, h.value, h.rate, h.taxable, h.igst, h.cgst, h.sgst, 0]));
+    const hsnRows = (rows: any[]) => rows.map((h) => [esc(h.hsn || '—'), esc(h.uqc), String(h.qty), `${h.rate}%`, money(h.taxable), money(h.igst), money(h.cgst), money(h.sgst)]);
+
+    body.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span>Invoices, ${esc(label)}</span><strong>${b.outward.invoices}</strong><small>${money(b.outward.value)} incl. GST</small></div>
+        <div class="stat"><span>Taxable sales</span><strong>${money(b.outward.taxable, 0)}</strong></div>
+        <div class="stat"><span>Output GST</span><strong>${money(b.outward.igst + b.outward.cgst + b.outward.sgst, 0)}</strong><small>IGST ${money(b.outward.igst, 0)} · CGST ${money(b.outward.cgst, 0)} · SGST ${money(b.outward.sgst, 0)}</small></div>
+        <div class="stat"><span>Input tax credit</span><strong>${money(b.itc.igst + b.itc.cgst + b.itc.sgst, 0)}</strong><small>from ${b.itc.count} purchase bill${b.itc.count === 1 ? '' : 's'}</small></div>
+        <div class="stat stat--warn"><span>Net GST payable (est.)</span><strong>${money(b.payable_total, 0)}</strong><small>before cross-utilisation rules</small></div>
+      </div>
+      <p class="notice" style="margin-bottom:18px">Your GSTIN: <b>${esc(g.company_gstin || 'not set')}</b> · Home state ${esc(g.home_state)}. These figures come from invoices and purchase bills entered here. Give the CSV files to your CA or upload them with the GST offline tool. Check purchase bills against GSTR-2B before claiming ITC.</p>
+      ${card('GSTR-1 · B2B (registered customers)', table(['GSTIN', 'Customer', 'Invoice', 'Date', 'Value', 'Rate', 'Taxable', 'IGST', 'CGST', 'SGST'], r1.b2b.map((x: any) => [`<span class="mono-s">${esc(x.gstin)}</span>`, esc(x.name), `<span class="nowrap">${esc(x.number)}</span>`, `<span class="nowrap">${gstDate(x.date)}</span>`, money(x.value), `${x.rate}%`, money(x.taxable), money(x.igst), money(x.cgst), money(x.sgst)]), [4, 6, 7, 8, 9]), 'b2b')}
+      ${card('GSTR-1 · B2C Large (other state, unregistered, over ₹1 lakh)', table(['Invoice', 'Date', 'Value', 'Place of supply', 'Rate', 'Taxable', 'IGST'], r1.b2cl.map((x: any) => [esc(x.number), gstDate(x.date), money(x.value), esc(x.pos), `${x.rate}%`, money(x.taxable), money(x.igst)]), [2, 5, 6]), 'b2cl')}
+      ${card('GSTR-1 · B2C Small (summary)', table(['Place of supply', 'Rate', 'Taxable', 'IGST', 'CGST', 'SGST'], r1.b2cs.map((x: any) => [esc(x.pos), `${x.rate}%`, money(x.taxable), money(x.igst), money(x.cgst), money(x.sgst)]), [2, 3, 4, 5]), 'b2cs')}
+      ${card('GSTR-1 · HSN summary (B2B)', table(['HSN', 'UQC', 'Qty', 'Rate', 'Taxable', 'IGST', 'CGST', 'SGST'], hsnRows(r1.hsn_b2b), [2, 4, 5, 6, 7]), 'hsnb2b')}
+      ${card('GSTR-1 · HSN summary (B2C)', table(['HSN', 'UQC', 'Qty', 'Rate', 'Taxable', 'IGST', 'CGST', 'SGST'], hsnRows(r1.hsn_b2c), [2, 4, 5, 6, 7]), 'hsnb2c')}
+      ${card('GSTR-1 · Documents issued', table(['Nature', 'From', 'To', 'Total', 'Cancelled'], r1.docs.map((x: any) => [esc(x.nature), esc(x.from), esc(x.to), String(x.total), String(x.cancelled)]), [3, 4]), 'docs')}
+      ${card('GSTR-3B summary', table(['Section', 'Description', 'Taxable', 'IGST', 'CGST', 'SGST'], [
+        ['3.1(a)', 'Outward taxable supplies', money(b.outward.taxable), money(b.outward.igst), money(b.outward.cgst), money(b.outward.sgst)],
+        ...b.inter_state_unregistered.map((x: any) => ['3.2', `Inter-state to unregistered · ${esc(x.pos)}`, money(x.taxable), money(x.igst), '', '']),
+        ['4(A)(5)', 'Eligible ITC (purchase bills)', money(b.itc.taxable), money(b.itc.igst), money(b.itc.cgst), money(b.itc.sgst)],
+        ['', '<strong>Net (output − ITC)</strong>', '', money(b.net.igst), money(b.net.cgst), money(b.net.sgst)]], [2, 3, 4, 5]), 'b3')}`;
+    body.querySelectorAll<HTMLButtonElement>('[data-csv]').forEach((btn) => btn.addEventListener('click', () => csv[btn.dataset.csv!]()));
+  }
+
+  async function registerTab(type: 'invoice' | 'purchase') {
+    const r = await api(`/erp/reports/register?type=${type}&from=${from.value}&to=${to.value}`);
+    const live = r.rows.filter((x: any) => x.status !== 'cancelled');
+    const s = (k: string) => live.reduce((a: number, x: any) => a + (x[k] || 0), 0);
+    const p = type === 'purchase';
+    body.innerHTML = card(p ? 'Purchase register' : 'Sales register', table(
+      [p ? 'Our ref' : 'Invoice', 'Date', p ? 'Supplier' : 'Customer', 'GSTIN', p ? 'Bill no.' : 'POS', 'Taxable', 'CGST', 'SGST', 'IGST', 'Total', 'Balance'],
+      r.rows.map((x: any) => [`<a href="${sitePath(`/staff/doc/?id=${x.id}`)}">${esc(x.number)}</a>${x.status === 'cancelled' ? ' <span class="badge badge--muted">Cancelled</span>' : ''}`, fmtD(x.doc_date), esc(x.party_name), `<span class="mono-s">${esc(x.party_gstin ?? '')}</span>`, esc(p ? x.ref_no ?? '' : posLabel(x.place_of_supply)), money(x.taxable), money(x.cgst), money(x.sgst), money(x.igst), money(x.total), x.status === 'cancelled' ? '—' : money(x.total - x.paid)]),
+      [5, 6, 7, 8, 9, 10], ['Total', '', `${live.length} documents`, '', '', money(s('taxable')), money(s('cgst')), money(s('sgst')), money(s('igst')), money(s('total')), money(s('total') - s('paid'))]), 'reg');
+    body.querySelector('[data-csv]')?.addEventListener('click', () => download(`${p ? 'purchase' : 'sales'}-register-${from.value}-to-${to.value}.csv`, toCsv(
+      ['Number', 'Date', 'Party', 'GSTIN', p ? 'Supplier bill no.' : 'Place of supply', 'Status', 'Taxable', 'CGST', 'SGST', 'IGST', 'Round off', 'Total', 'Paid', 'Balance'],
+      r.rows.map((x: any) => [x.number, x.doc_date, x.party_name, x.party_gstin, p ? x.ref_no : posLabel(x.place_of_supply), x.status, x.taxable, x.cgst, x.sgst, x.igst, x.round_off, x.total, x.paid, r2(x.total - x.paid)]))));
+  }
+
+  async function ageing(kind: 'customer' | 'supplier') {
+    const r = await api(`/erp/reports/outstanding?kind=${kind}`);
+    const s = (k: string) => r.rows.reduce((a: number, x: any) => a + (x[k] || 0), 0);
+    body.innerHTML = card(kind === 'customer' ? `Receivables ageing (as of ${fmtD(r.as_of)})` : `Payables ageing (as of ${fmtD(r.as_of)})`, table(
+      ['Party', 'Opening', 'Not due', '1–30 days', '31–60', '61–90', '90+', 'Advance', 'Total'],
+      r.rows.map((x: any) => [`<a href="${sitePath(`/staff/party/?id=${x.id}`)}"><strong>${esc(x.name)}</strong></a><span class="sub">${esc(x.phone ?? '')}</span>`, money(x.opening), money(x.current), money(x.d30), money(x.d60), money(x.d90), `<strong${x.d90plus > 0 ? ' style="color:var(--red-600)"' : ''}>${money(x.d90plus)}</strong>`, x.advance ? money(x.advance) : '', `<strong>${money(x.total)}</strong>`]),
+      [1, 2, 3, 4, 5, 6, 7, 8], ['Total', money(s('opening')), money(s('current')), money(s('d30')), money(s('d60')), money(s('d90')), money(s('d90plus')), money(s('advance')), money(s('total'))]), 'age')
+      + card('Unpaid bills', table(['Party', kind === 'customer' ? 'Invoice' : 'Bill', 'Date', 'Due', 'Days late', 'Total', 'Due now'],
+        r.rows.flatMap((x: any) => x.bills.map((bl: any) => [esc(x.name), `<a href="${sitePath(`/staff/doc/?id=${bl.id}`)}">${esc(kind === 'customer' ? bl.number : bl.ref_no || bl.number)}</a>`, fmtD(bl.date), fmtD(bl.due_date), bl.days_late ? `<strong style="color:var(--red-600)">${bl.days_late}</strong>` : '—', money(bl.total), money(bl.due)])), [4, 5, 6]));
+    body.querySelector('[data-csv]')?.addEventListener('click', () => download(`${kind === 'customer' ? 'receivables' : 'payables'}-${r.as_of}.csv`, toCsv(['Party', 'Phone', 'Email', 'Opening', 'Not due', '1-30', '31-60', '61-90', '90+', 'Advance', 'Total'],
+      r.rows.map((x: any) => [x.name, x.phone, x.email, x.opening, x.current, x.d30, x.d60, x.d90, x.d90plus, x.advance, x.total]))));
+  }
+
+  async function load() {
+    $$<HTMLButtonElement>('[data-tabs] button').forEach((b) => b.classList.toggle('is-active', b.dataset.t === tab));
+    $$<HTMLElement>('[data-for]').forEach((el) => (el.hidden = !el.dataset.for!.split(' ').includes(tab)));
+    history.replaceState(null, '', `?tab=${tab}`);
+    body.innerHTML = '<div class="pcard"><div class="skeleton"></div><div class="skeleton"></div></div>';
+    try {
+      if (tab === 'gst') await gst();
+      else if (tab === 'sales') await registerTab('invoice');
+      else if (tab === 'purchases') await registerTab('purchase');
+      else await ageing(tab === 'payable' ? 'supplier' : 'customer');
+      rowLink(body);
+    } catch (e: any) { if (e.message !== 'redirecting') body.innerHTML = `<p class="form-error">${esc(e.message)}</p>`; }
+  }
+
+  $$<HTMLButtonElement>('[data-tabs] button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.t!; load(); }));
+  [month, from, to].forEach((el) => el.addEventListener('change', load));
+  requireAuth('staff').then(load);
+</script>

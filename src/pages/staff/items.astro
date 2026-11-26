@@ -1,0 +1,67 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Items" active="items" sub="Components, panels and services with HSN, GST, rates and live stock.">
+  <Fragment slot="actions"><button class="btn btn--red btn--sm" type="button" data-new>Add item</button></Fragment>
+  <div class="pcard">
+    <div class="toolbar">
+      <div class="toolbar__l">
+        <input class="input grow" type="search" placeholder="Search name, code, make, HSN, category…" data-q />
+        <select class="input" data-cat><option value="">All categories</option></select>
+        <label class="switch"><input type="checkbox" data-low /> Low stock only</label>
+        <label class="switch"><input type="checkbox" data-inactive /> Show inactive</label>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="button" data-csv>Download CSV</button>
+    </div>
+    <div data-list><div class="skeleton"></div><div class="skeleton"></div></div>
+  </div>
+  <datalist id="item-cats"></datalist>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, esc, qs, toast } from '../../scripts/ui';
+  import { money, newItemDialog, download, toCsv } from '../../scripts/erp';
+
+  let all: any[] = [];
+  const q = $<HTMLInputElement>('[data-q]'), cat = $<HTMLSelectElement>('[data-cat]'), low = $<HTMLInputElement>('[data-low]');
+  if (qs('low')) low.checked = true;
+  const isLow = (i: any) => !i.is_service && i.reorder_level != null && i.stock <= i.reorder_level;
+
+  async function fetchAll() {
+    all = (await api(`/erp/items${$<HTMLInputElement>('[data-inactive]').checked ? '?all=1' : ''}`)).items;
+    const cats = [...new Set(all.map((i) => i.category).filter(Boolean))].sort();
+    const cur = cat.value;
+    cat.innerHTML = '<option value="">All categories</option>' + cats.map((c) => `<option${c === cur ? ' selected' : ''}>${esc(c)}</option>`).join('');
+    $('#item-cats').innerHTML = cats.map((c) => `<option value="${esc(c)}">`).join('');
+    render();
+  }
+
+  function render() {
+    const s = q.value.trim().toLowerCase();
+    const rows = all.filter((i) => (!cat.value || i.category === cat.value) && (!low.checked || isLow(i)) && (!s || [i.name, i.code, i.make, i.hsn, i.category].some((v) => String(v ?? '').toLowerCase().includes(s))));
+    const list = $('[data-list]');
+    if (!all.length) { list.innerHTML = `<div class="pempty"><strong>No items yet</strong>Add components and panels here, or import your stock items from Tally.<br><a class="btn btn--ghost" href="${sitePath('/staff/tally/')}">Import from Tally</a></div>`; return; }
+    if (!rows.length) { list.innerHTML = '<div class="pempty"><strong>No matches</strong>Try a different search.</div>'; return; }
+    const value = rows.reduce((a, i) => a + (i.is_service ? 0 : Math.max(0, i.stock) * i.purchase_rate), 0);
+    list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Item</th><th>HSN</th><th>GST</th><th class="num">Sale rate</th><th class="num">Purchase rate</th><th class="num">Stock</th><th></th></tr></thead><tbody>
+      ${rows.map((i) => `<tr${i.active ? '' : ' style="opacity:.55"'}><td><strong>${esc(i.name)}</strong><span class="sub">${esc([i.code, i.make, i.category].filter(Boolean).join(' · '))}${i.tally_name ? ' · Tally' : ''}</span></td>
+        <td class="mono-s">${esc(i.hsn ?? '—')}</td><td>${i.gst_rate}%</td><td class="num">${money(i.sale_rate)}</td><td class="num">${money(i.purchase_rate)}</td>
+        <td class="num">${i.is_service ? '<span class="muted">service</span>' : `<strong${isLow(i) ? ' style="color:var(--red-600)"' : ''}>${Number(i.stock).toLocaleString('en-IN')}</strong> ${esc(i.unit)}`}</td>
+        <td class="num"><button class="btn btn--ghost btn--sm" type="button" data-edit="${i.id}">Edit</button></td></tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="5">${rows.length} item${rows.length === 1 ? '' : 's'}</td><td class="num" title="Stock value at purchase rate">${money(value, 0)}</td><td></td></tr></tfoot></table></div>`;
+    list.querySelectorAll<HTMLButtonElement>('[data-edit]').forEach((b) => b.addEventListener('click', async () => {
+      const it = all.find((x) => x.id === Number(b.dataset.edit));
+      if (await newItemDialog(it)) { toast('Saved'); await fetchAll(); }
+    }));
+  }
+
+  let t: number | undefined;
+  q.addEventListener('input', () => { clearTimeout(t); t = window.setTimeout(render, 150); });
+  cat.addEventListener('change', render); low.addEventListener('change', render);
+  $('[data-inactive]').addEventListener('change', fetchAll);
+  $('[data-new]').addEventListener('click', async () => { if (await newItemDialog()) { toast('Item added'); await fetchAll(); } });
+  $('[data-csv]').addEventListener('click', () => download('items.csv', toCsv(['Name', 'Code', 'Make', 'Category', 'HSN', 'GST %', 'Unit', 'Sale rate', 'Purchase rate', 'Opening qty', 'Stock', 'Reorder level', 'Service', 'Tally name'],
+    all.map((i) => [i.name, i.code, i.make, i.category, i.hsn, i.gst_rate, i.unit, i.sale_rate, i.purchase_rate, i.opening_qty, i.stock, i.reorder_level, i.is_service ? 'yes' : '', i.tally_name]))));
+  requireAuth('staff').then(fetchAll).catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

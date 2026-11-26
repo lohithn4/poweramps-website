@@ -5,8 +5,9 @@ import site from '../data/site.json';
 import { url, isActive } from '../lib/url';
 import { openMapUrl } from '../lib/location';
 import { getClients } from '../lib/clients';
+import { getTestimonials } from '../lib/testimonials';
 
-const hasClients = (await getClients()).length > 0;
+const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
 const nav = [
   { href: '/panels', label: 'Panels' },
   { href: '/build', label: 'Build a panel' },

@@ -15,6 +15,10 @@ export interface Brand {
   dark: string;
   refPrefix: string;
   addressLine: string;
+  gstin: string;
+  state: string;
+  phone: string;
+  email: string;
   siteUrl: string;
 }
 
@@ -43,6 +47,10 @@ export async function getBrand(env: Env): Promise<Brand> {
     dark: hex(data.dark, '#0c1a3d'),
     refPrefix: s('refPrefix', env.REF_PREFIX || 'REQ').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6) || 'REQ',
     addressLine: s('addressLine', ''),
+    gstin: s('gstin', '').toUpperCase(),
+    state: s('state', ''),
+    phone: s('phone', ''),
+    email: s('email', ''),
     siteUrl: env.SITE_URL,
   };
   // Only cache a successful load so a temporary outage self-heals.

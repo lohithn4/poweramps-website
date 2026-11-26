@@ -1,0 +1,103 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import site from '../../data/site.json';
+import { openMapUrl } from '../../lib/location';
+---
+<Base title="Rate your experience" noindex>
+  <section class="auth">
+    <div class="auth__card" style="max-width:620px">
+      <div data-loading><h1>Loading…</h1></div>
+
+      <form data-form hidden novalidate>
+        <h1>How did we do?</h1>
+        <p class="auth__sub" data-sub></p>
+        <div style="margin-top:22px">
+          <p style="font-weight:600;margin-bottom:10px">How likely are you to recommend {site.name} to a colleague?</p>
+          <div class="rating" role="radiogroup" aria-label="Rating from 0 to 10">
+            {Array.from({ length: 11 }, (_, i) => <label><input type="radio" name="rating" value={i} required /><span>{i}</span></label>)}
+          </div>
+          <div class="rating-legend"><span>Not likely</span><span>Extremely likely</span></div>
+        </div>
+        <label class="field" style="display:grid;gap:6px;margin-top:18px"><span class="flabel" data-comment-label>What went well, and what could we do better?</span><textarea class="input" name="comment" rows="4" maxlength="2000"></textarea></label>
+        <div data-consent-box hidden style="margin-top:16px;padding:16px;border-radius:12px;background:var(--paper);border:1px solid var(--line)">
+          <label class="switch" style="align-items:flex-start"><input type="checkbox" name="consent" style="margin-top:3px" /> <span>You may show my feedback, name and company on the {site.name} website.</span></label>
+          <div class="row2" data-public hidden style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+            <label class="field" style="display:grid;gap:4px"><span class="flabel">Name to show</span><input class="input" name="display_name" maxlength="100" /></label>
+            <label class="field" style="display:grid;gap:4px"><span class="flabel">Role</span><input class="input" name="role" maxlength="100" placeholder="e.g. Plant Head" /></label>
+            <label class="field" style="display:grid;gap:4px"><span class="flabel">Company</span><input class="input" name="company" maxlength="150" /></label>
+            <label class="field" style="display:grid;gap:4px"><span class="flabel">City</span><input class="input" name="city" maxlength="100" /></label>
+          </div>
+        </div>
+        <p class="form-error" data-error hidden style="margin-top:14px"></p>
+        <button class="btn btn--red btn--block" type="submit" style="margin-top:18px">Send feedback</button>
+      </form>
+
+      <div data-done hidden>
+        <h1>Thank you! 🙏</h1>
+        <p class="auth__sub" data-done-msg>Your feedback helps us build better panels.</p>
+        <div data-google hidden style="margin-top:18px">
+          <p>Would you also share a quick review on Google? It really helps other buyers.</p>
+          <a class="btn btn--red" href={openMapUrl} target="_blank" rel="noopener" style="margin-top:10px"><Icon name="pin" size={18} />Review us on Google</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { api } from '../../scripts/api';
+  import { $, esc, qs } from '../../scripts/ui';
+
+  const token = qs('token');
+  const reqId = Number(qs('id')) || 0;
+  const form = $<HTMLFormElement>('[data-form]');
+  const show = (sel: string) => ['[data-loading]', '[data-form]', '[data-done]'].forEach((s) => ($(s).hidden = s !== sel));
+
+  async function init() {
+    if (token) {
+      const r = await api('/feedback/lookup', { body: { token } });
+      if (r.alreadySubmitted) { show('[data-done]'); $('[data-done-msg]').textContent = 'We have already received your feedback for this order. Thank you!'; return; }
+      $('[data-sub]').innerHTML = `For <strong>${esc(r.request.title)}</strong> (${esc(r.request.ref)})`;
+      (form.elements.namedItem('display_name') as HTMLInputElement).value = r.request.contact_name ?? '';
+      (form.elements.namedItem('company') as HTMLInputElement).value = r.request.contact_company ?? '';
+      (form.elements.namedItem('city') as HTMLInputElement).value = r.request.site_location ?? '';
+    } else if (reqId) {
+      const { request: r } = await api(`/requests/${reqId}`);
+      $('[data-sub]').innerHTML = `For <strong>${esc(r.title)}</strong> (${esc(r.ref)})`;
+      (form.elements.namedItem('display_name') as HTMLInputElement).value = r.contact_name ?? '';
+      (form.elements.namedItem('company') as HTMLInputElement).value = r.contact_company ?? '';
+    } else throw new Error('This feedback link is incomplete.');
+    show('[data-form]');
+  }
+
+  form.addEventListener('change', () => {
+    const rating = Number((form.querySelector<HTMLInputElement>('input[name=rating]:checked'))?.value ?? -1);
+    const box = $('[data-consent-box]');
+    box.hidden = rating < 9;
+    $('[data-comment-label]').textContent = rating >= 9 ? 'What did you like most? (shown with your consent)' : rating >= 0 && rating <= 6 ? 'Sorry to hear that. What went wrong? We will follow up.' : 'What went well, and what could we do better?';
+    $('[data-public]').hidden = !(form.elements.namedItem('consent') as HTMLInputElement).checked || rating < 9;
+    $('[data-public]').style.display = $('[data-public]').hidden ? 'none' : 'grid';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = $('[data-error]'); err.hidden = true;
+    const fd = new FormData(form);
+    if (!fd.get('rating')) { err.textContent = 'Please choose a rating from 0 to 10'; err.hidden = false; return; }
+    const rating = Number(fd.get('rating'));
+    const body: Record<string, unknown> = { rating, comment: fd.get('comment'), consent: rating >= 9 && !!fd.get('consent'), display_name: fd.get('display_name'), role: fd.get('role'), company: fd.get('company'), city: fd.get('city') };
+    if (token) body.token = token; else body.request_id = reqId;
+    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    btn.classList.add('is-busy'); btn.disabled = true;
+    try {
+      await api('/feedback', { body });
+      show('[data-done]');
+      $('[data-google]').hidden = rating < 9;
+      if (rating <= 6) $('[data-done-msg]').textContent = 'Thank you for being honest. Someone from our team will get in touch with you.';
+    } catch (ex: any) { err.textContent = ex.message; err.hidden = false; }
+    finally { btn.classList.remove('is-busy'); btn.disabled = false; }
+  });
+
+  init().catch((e) => { show('[data-loading]'); $('[data-loading]').innerHTML = `<h1>Link not valid</h1><p class="auth__sub">${esc(e.message)}</p>`; });
+</script>

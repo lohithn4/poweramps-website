@@ -17,6 +17,8 @@ export interface Env {
   MICROSOFT_CLIENT_SECRET?: string;
   LINKEDIN_CLIENT_ID?: string;
   LINKEDIN_CLIENT_SECRET?: string;
+  GITHUB_DISPATCH_TOKEN?: string;  // optional: lets testimonial approval republish the website at once
+  GITHUB_REPO?: string;            // e.g. owner/repo
 }
 
 export type Role = 'client' | 'staff' | 'admin';
@@ -237,6 +239,8 @@ export async function requireAdmin(req: Request, env: Env): Promise<User> {
   return u;
 }
 
+export const isStaffRole = (u: Pick<User, 'role'> | null | undefined) => !!u && (u.role === 'staff' || u.role === 'admin');
+
 export const publicUser = (u: User) => ({
   id: u.id,
   email: u.email,
@@ -251,7 +255,7 @@ export const publicUser = (u: User) => ({
 
 export async function issueToken(
   env: Env,
-  purpose: 'verify_email' | 'reset_password' | 'confirm_request',
+  purpose: 'verify_email' | 'reset_password' | 'confirm_request' | 'feedback',
   ids: { userId?: number; requestId?: number },
   ttlSeconds: number,
 ): Promise<string> {

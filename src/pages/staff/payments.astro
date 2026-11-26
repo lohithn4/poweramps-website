@@ -1,0 +1,105 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Payments" active="payments" sub="Receipts from customers, payments to suppliers, and loans.">
+  <Fragment slot="actions">
+    <button class="btn btn--ghost btn--sm" type="button" data-new="payment">Pay supplier</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-new="loan_repayment">Loan entry</button>
+    <button class="btn btn--red btn--sm" type="button" data-new="receipt">Record receipt</button>
+  </Fragment>
+  <div class="pcard">
+    <div class="toolbar">
+      <div class="seg" data-kinds><button type="button" data-k="">All</button><button type="button" data-k="receipt">Receipts</button><button type="button" data-k="payment">Payments</button><button type="button" data-k="loan_received">Loans received</button><button type="button" data-k="loan_repayment">Repayments</button></div>
+      <div class="toolbar__l" style="justify-content:flex-end">
+        <input class="input grow" type="search" placeholder="Search number, party, reference…" data-q />
+        <input class="input" type="date" data-from /><input class="input" type="date" data-to />
+      </div>
+    </div>
+    <div data-list><div class="skeleton"></div><div class="skeleton"></div></div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, qs, toast } from '../../scripts/ui';
+  import { money, PAY_LABEL, fmtD, formDialog, field, inp } from '../../scripts/erp';
+  import { today } from '../../../shared/calc';
+
+  let kind = qs('kind') ?? '';
+  const q = $<HTMLInputElement>('[data-q]'), from = $<HTMLInputElement>('[data-from]'), to = $<HTMLInputElement>('[data-to]');
+  const PARTY_FOR: Record<string, string> = { receipt: 'customer', payment: 'supplier', loan_received: 'lender', loan_repayment: 'lender' };
+
+  async function load() {
+    $$<HTMLButtonElement>('[data-kinds] button').forEach((b) => b.classList.toggle('is-active', b.dataset.k === kind));
+    const p = new URLSearchParams();
+    if (kind) p.set('kind', kind);
+    if (q.value.trim()) p.set('q', q.value.trim());
+    if (from.value) p.set('from', from.value);
+    if (to.value) p.set('to', to.value);
+    const { payments } = await api(`/erp/payments?${p}`);
+    const list = $('[data-list]');
+    if (!payments.length) { list.innerHTML = '<div class="pempty"><strong>No entries</strong>Record a receipt or payment to see it here.</div>'; return; }
+    const inflow = (x: any) => x.kind === 'receipt' || x.kind === 'loan_received';
+    const live = payments.filter((x: any) => !x.cancelled);
+    const tin = live.filter(inflow).reduce((a: number, x: any) => a + x.amount, 0), tout = live.filter((x: any) => !inflow(x)).reduce((a: number, x: any) => a + x.amount, 0);
+    list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Number</th><th>Date</th><th>Party</th><th>Against</th><th>Mode / ref</th><th class="num">In</th><th class="num">Out</th><th></th></tr></thead><tbody>
+      ${payments.map((x: any) => `<tr${x.cancelled ? ' style="opacity:.5;text-decoration:line-through"' : ''}>
+        <td><span class="ref">${esc(x.number)}</span><span class="sub">${PAY_LABEL[x.kind]}${x.tally_exported_at ? ' · in Tally' : ''}</span></td>
+        <td class="nowrap">${fmtD(x.pay_date)}</td>
+        <td><a href="${sitePath(`/staff/party/?id=${x.party_id}`)}">${esc(x.party_name)}</a></td>
+        <td>${x.doc_id ? `<a href="${sitePath(`/staff/doc/?id=${x.doc_id}`)}">${esc(x.doc_number)}</a>` : '<span class="muted">On account</span>'}</td>
+        <td>${esc(x.mode.toUpperCase())}<span class="sub">${esc(x.reference ?? '')}${x.tds ? ` · TDS ${money(x.tds)}` : ''}${x.interest ? ` · interest ${money(x.interest)}` : ''}</span></td>
+        <td class="num">${inflow(x) ? money(x.amount) : ''}</td><td class="num">${inflow(x) ? '' : money(x.amount)}</td>
+        <td class="num">${x.cancelled ? '' : `<button class="btn btn--ghost btn--sm" type="button" data-cancel="${x.id}">Cancel</button>`}</td></tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="5">${live.length} active entr${live.length === 1 ? 'y' : 'ies'}</td><td class="num">${money(tin)}</td><td class="num">${money(tout)}</td><td></td></tr></tfoot></table></div>`;
+    list.querySelectorAll<HTMLButtonElement>('[data-cancel]').forEach((b) => b.addEventListener('click', async () => {
+      if (!confirm('Cancel this entry? It will no longer count in balances.')) return;
+      try { await api(`/erp/payments/${b.dataset.cancel}/cancel`, { body: {} }); toast('Cancelled'); await load(); } catch (e: any) { toast(e.message, 'err'); }
+    }));
+  }
+
+  async function newEntry(k: string, partyId?: number) {
+    const pk = PARTY_FOR[k];
+    const { parties } = await api(`/erp/parties?kind=${pk}`);
+    if (!parties.length) { toast(`Add a ${pk} first (Parties page)`, 'err'); return; }
+    const loan = k.startsWith('loan');
+    const r = await formDialog({
+      title: loan ? 'Loan entry' : k === 'receipt' ? 'Record receipt' : 'Pay supplier', submit: 'Save',
+      body: `${loan ? field('Entry', `<select class="input" name="kind"><option value="loan_repayment"${k === 'loan_repayment' ? ' selected' : ''}>Repayment / EMI paid</option><option value="loan_received"${k === 'loan_received' ? ' selected' : ''}>Loan amount received</option></select>`) : `<input type="hidden" name="kind" value="${k}">`}
+        ${field(pk === 'customer' ? 'Customer' : pk === 'supplier' ? 'Supplier' : 'Lender', `<select class="input" name="party_id" required>${parties.map((p: any) => `<option value="${p.id}"${p.id === partyId ? ' selected' : ''}>${esc(p.name)} (balance ${money(p.balance, 0)})</option>`).join('')}</select>`)}
+        ${loan ? '' : field('Against document', `<select class="input" name="doc_id"><option value="">On account (no specific bill)</option></select>`, 'Pick the invoice/bill this settles, so ageing stays accurate')}
+        <div class="row2">${field('Amount (₹)', inp('amount', '', 'type="number" step="0.01" min="0.01" required'))}${field('Date', inp('pay_date', today(), 'type="date" required'))}</div>
+        ${loan ? `<div data-int>${field('Of which interest (₹)', inp('interest', '', 'type="number" step="0.01" min="0"'), 'Interest is an expense; only the rest reduces the loan')}</div>` : ''}
+        ${k === 'receipt' ? field('TDS deducted (₹)', inp('tds', '', 'type="number" step="0.01" min="0"')) : ''}
+        <div class="row2">${field('Mode', `<select class="input" name="mode">${['bank', 'upi', 'neft', 'rtgs', 'cheque', 'cash', 'card', 'other'].map((m) => `<option value="${m}">${m.toUpperCase()}</option>`).join('')}</select>`)}${field('Reference (UTR / cheque no.)', inp('reference'))}</div>
+        ${field('Notes', inp('notes'))}`,
+      onOpen: (f) => {
+        const ps = f.elements.namedItem('party_id') as HTMLSelectElement;
+        const ds = f.elements.namedItem('doc_id') as HTMLSelectElement | null;
+        const kSel = f.elements.namedItem('kind') as HTMLSelectElement;
+        const intBox = f.querySelector<HTMLElement>('[data-int]');
+        if (kSel && intBox) { const sync = () => (intBox.hidden = kSel.value !== 'loan_repayment'); kSel.addEventListener('change', sync); sync(); }
+        if (!ds) return;
+        const fill = async () => {
+          const { documents } = await api(`/erp/docs?type=${k === 'receipt' ? 'invoice' : 'purchase'}&party_id=${ps.value}&status=open`);
+          const open = documents.filter((d: any) => d.status !== 'draft' && d.total - d.paid > 0.5);
+          ds.innerHTML = '<option value="">On account (no specific bill)</option>' + open.map((d: any) => `<option value="${d.id}" data-due="${(d.total - d.paid).toFixed(2)}">${esc(d.type === 'purchase' ? `Bill ${d.ref_no}` : d.number)} · ${fmtD(d.doc_date)} · due ${money(d.total - d.paid)}</option>`).join('');
+          if (open.length === 1) { ds.value = String(open[0].id); (f.elements.namedItem('amount') as HTMLInputElement).value = (open[0].total - open[0].paid).toFixed(2); }
+        };
+        ps.addEventListener('change', fill);
+        ds.addEventListener('change', () => { const o = ds.selectedOptions[0]; if (o?.dataset.due) (f.elements.namedItem('amount') as HTMLInputElement).value = o.dataset.due; });
+        fill();
+      },
+      onSubmit: (d) => api('/erp/payments', { body: d }),
+    });
+    if (r) { toast(`Saved ${(r as any).number}`); await load(); }
+  }
+
+  $$<HTMLButtonElement>('[data-kinds] button').forEach((b) => b.addEventListener('click', () => { kind = b.dataset.k!; load(); }));
+  $$<HTMLButtonElement>('[data-new]').forEach((b) => b.addEventListener('click', () => newEntry(b.dataset.new!)));
+  let t: number | undefined;
+  q.addEventListener('input', () => { clearTimeout(t); t = window.setTimeout(load, 300); });
+  [from, to].forEach((el) => el.addEventListener('change', load));
+  requireAuth('staff').then(async () => { await load(); const n = qs('new'); if (n && PARTY_FOR[n]) newEntry(n, Number(qs('party')) || undefined); })
+    .catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

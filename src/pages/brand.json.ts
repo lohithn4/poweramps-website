@@ -18,6 +18,8 @@ export const GET: APIRoute = ({ site: siteUrl }) => {
     dark: site.brand.dark,
     refPrefix: (site.refPrefix || 'REQ').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'REQ',
     addressLine: [a.locality || a.line1, a.city, a.pincode].filter(Boolean).join(', '),
+    gstin: site.gst,
+    state: a.state,
     email: site.email,
     phone: site.phone,
     siteUrl: new URL(import.meta.env.BASE_URL, siteUrl).href.replace(/\/$/, ''),

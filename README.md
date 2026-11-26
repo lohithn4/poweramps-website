@@ -93,6 +93,24 @@ public/
 
 Local development: `cd worker && npm run migrate:local && npm run dev` (API on :8787), then `npm run dev` in the root (site on :4321, uses `.env.development`).
 
+## Accounts / mini-ERP (staff portal)
+
+All private: stored in the Cloudflare D1 database, never in this repo. Staff menu at `/staff/`:
+
+| Screen | What it does |
+|---|---|
+| **Accounts** | Receivables, overdue, payables, loans, this month's sales, collections and estimated GST |
+| **Quotes & invoices** | BOQ → quotation → GST tax invoice (CGST+SGST or IGST chosen automatically), purchase bills; numbering per financial year (e.g. `PA/26-27/0001`); issued invoices are locked; print / PDF; email to client |
+| **Payments** | Receipts (with TDS), supplier payments, loans received and repayments (interest split) |
+| **Parties** | Customers, suppliers, lenders with live balance and ledger statement |
+| **Items** | HSN, GST %, rates, opening stock; stock = opening + purchases − invoices |
+| **GST & reports** | GSTR-1 (B2B, B2CL, B2CS, HSN B2B/B2C, documents issued) and GSTR-3B summary as CSV in GST offline tool columns; sales/purchase registers; receivable/payable ageing |
+| **Tally** | Import (sync / add only / update only, with preview) from Tally Masters XML or any CSV; export new parties/items and vouchers (sales, purchases, receipts, payments, loans) as Tally XML, then mark as sent |
+| **Feedback** | Ratings sent automatically when an order is marked Delivered; 9–10 with consent can be published as testimonials (website updates daily, or immediately if `GITHUB_DISPATCH_TOKEN` is set on the worker) |
+| **Settings** | Number formats, default terms, bank details, Tally ledger names (admins only) |
+
+Clients see their quotations and invoices in `/portal/`, download PDFs and accept quotations online. E-invoicing (IRN) and direct GST filing need a paid GST Suvidha Provider and are not included.
+
 ## Reusing for another company
 
 Everything company-specific lives in settings and content. See **[WHITE-LABEL.md](WHITE-LABEL.md)**.

@@ -1,0 +1,70 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+import { url } from '../../lib/url';
+---
+<StaffPage title="Accounts" active="accounts" sub="Money owed, collections and this month's GST at a glance.">
+  <Fragment slot="actions">
+    <a class="btn btn--ghost btn--sm" href={url('/staff/doc/?new=quotation')}>New quotation</a>
+    <a class="btn btn--red btn--sm" href={url('/staff/doc/?new=invoice')}>New tax invoice</a>
+  </Fragment>
+
+  <div class="stats" data-stats><div class="stat"><div class="skeleton"></div></div><div class="stat"><div class="skeleton"></div></div><div class="stat"><div class="skeleton"></div></div></div>
+
+  <div class="pgrid">
+    <div class="pcard">
+      <div class="pcard__h"><h2>Recent documents</h2><a class="btn btn--ghost btn--sm" href={url('/staff/docs/')}>All documents</a></div>
+      <div data-recent><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
+    <div class="pstack">
+      <div class="pcard">
+        <div class="pcard__h"><h2>Quick actions</h2></div>
+        <div class="quick">
+          <a class="btn btn--ghost btn--sm" href={url('/staff/doc/?new=boq')}>New BOQ</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/doc/?new=purchase')}>Record purchase bill</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/payments/?new=receipt')}>Record receipt</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/payments/?new=payment')}>Pay supplier</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/payments/?new=loan_repayment')}>Loan repayment</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/reports/')}>GST returns</a>
+          <a class="btn btn--ghost btn--sm" href={url('/staff/tally/')}>Tally import / export</a>
+        </div>
+      </div>
+      <div class="pcard">
+        <div class="pcard__h"><h2>Overdue invoices</h2></div>
+        <div data-overdue><div class="skeleton"></div></div>
+      </div>
+    </div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, esc } from '../../scripts/ui';
+  import { money0, DOC_LABEL, docBadge, payBadge, fmtD, rowLink } from '../../scripts/erp';
+
+  (async () => {
+    await requireAuth('staff');
+    const [s, docs, os] = await Promise.all([api('/erp/summary'), api('/erp/docs?status=open'), api('/erp/reports/outstanding?kind=customer')]);
+    const month = new Date(s.month + '-01').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    $('[data-stats]').innerHTML = `
+      <a class="stat" href="${sitePath('/staff/reports/?tab=receivable')}"><span>Receivable</span><strong>${money0(s.receivable)}</strong><small>owed by customers</small></a>
+      <a class="stat${s.overdue.count ? ' stat--warn' : ''}" href="${sitePath('/staff/reports/?tab=receivable')}"><span>Overdue</span><strong>${money0(s.overdue.amount)}</strong><small>${s.overdue.count} invoice${s.overdue.count === 1 ? '' : 's'} past due</small></a>
+      <a class="stat" href="${sitePath('/staff/reports/?tab=payable')}"><span>Payable</span><strong>${money0(s.payable)}</strong><small>owed to suppliers</small></a>
+      <a class="stat" href="${sitePath('/staff/parties/?kind=lender')}"><span>Loans outstanding</span><strong>${money0(s.loans)}</strong><small>to lenders</small></a>
+      <a class="stat stat--ok" href="${sitePath('/staff/reports/?tab=sales')}"><span>Sales, ${esc(month)}</span><strong>${money0(s.sales_month.taxable)}</strong><small>${s.sales_month.count} invoices · excl. GST</small></a>
+      <a class="stat" href="${sitePath('/staff/payments/?kind=receipt')}"><span>Collected, ${esc(month)}</span><strong>${money0(s.collected_month)}</strong><small>receipts this month</small></a>
+      <a class="stat" href="${sitePath('/staff/reports/')}"><span>GST payable (est.)</span><strong>${money0(Math.max(0, s.gst_estimate))}</strong><small>output tax − input credit</small></a>
+      <a class="stat" href="${sitePath('/staff/docs/?type=quotation')}"><span>Open quotations</span><strong>${s.open_quotes.count}</strong><small>${money0(s.open_quotes.amount)} awaiting acceptance</small></a>
+      ${s.low_stock ? `<a class="stat stat--warn" href="${sitePath('/staff/items/?low=1')}"><span>Low stock</span><strong>${s.low_stock}</strong><small>items at reorder level</small></a>` : ''}
+      ${s.pending_testimonials ? `<a class="stat stat--warn" href="${sitePath('/staff/feedback/')}"><span>Testimonials</span><strong>${s.pending_testimonials}</strong><small>waiting for approval</small></a>` : ''}`;
+
+    const recent = docs.documents.slice(0, 12);
+    $('[data-recent]').innerHTML = recent.length ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Document</th><th>Party</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>
+      ${recent.map((d: any) => `<tr data-href="${sitePath(`/staff/doc/?id=${d.id}`)}"><td><span class="ref">${esc(d.number ?? 'Draft')}</span><span class="sub">${DOC_LABEL[d.type]} · ${fmtD(d.doc_date)}</span></td>
+        <td>${esc(d.party_name ?? '—')}<span class="sub">${esc(d.subject ?? '')}</span></td><td>${docBadge(d.status)} ${payBadge(d)}</td><td class="num">${money0(d.total)}</td></tr>`).join('')}
+      </tbody></table></div>` : `<div class="pempty"><strong>No documents yet</strong>Create a quotation or tax invoice to get started.</div>`;
+    rowLink($('[data-recent]'));
+
+    const late = os.rows.flatMap((r: any) => r.bills.filter((b: any) => b.days_late > 0).map((b: any) => ({ ...b, party: r.name }))).sort((a: any, b: any) => b.days_late - a.days_late).slice(0, 8);
+    $('[data-overdue]').innerHTML = late.length ? `<ul class="pay-list">${late.map((b: any) => `<li><span><a href="${sitePath(`/staff/doc/?id=${b.id}`)}"><strong>${esc(b.number)}</strong></a> · ${esc(b.party)}<br><small class="muted">${b.days_late} days late</small></span><strong class="nowrap">${money0(b.due)}</strong></li>`).join('')}</ul>` : '<p class="muted">Nothing overdue. 🎉</p>';
+  })().catch((e) => { if (e.message !== 'redirecting') $('[data-stats]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

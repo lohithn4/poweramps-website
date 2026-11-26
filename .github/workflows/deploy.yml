@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Daily rebuild (02:00 IST) so newly approved testimonials appear on the website.
+  schedule:
+    - cron: "30 20 * * *"
 
 permissions:
   contents: read

@@ -1,0 +1,73 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+import { url } from '../../lib/url';
+---
+<StaffPage title="Party" active="parties" crumb={{ href: url('/staff/parties/'), label: 'Parties' }} sub="">
+  <Fragment slot="actions"><span data-actions></span></Fragment>
+  <div class="stats" data-stats></div>
+  <div class="pgrid">
+    <div class="pcard">
+      <div class="pcard__h"><h2>Ledger statement</h2><div style="display:flex;gap:8px"><button class="btn btn--ghost btn--sm" type="button" data-csv>CSV</button><button class="btn btn--ghost btn--sm" type="button" data-print>Print</button></div></div>
+      <div data-statement><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
+    <div class="pstack">
+      <div class="pcard"><div class="pcard__h"><h2>Details</h2><button class="btn btn--ghost btn--sm" type="button" data-edit>Edit</button></div><dl class="kv" data-details></dl></div>
+      <div class="pcard"><div class="pcard__h"><h2>Documents</h2></div><div data-docs></div></div>
+    </div>
+  </div>
+</StaffPage>
+
+<style>
+  @media print { :global(.pgrid > .pstack) { display: none !important; } :global(.pgrid) { display: block !important; } }
+</style>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, esc, qs, toast } from '../../scripts/ui';
+  import { money, KIND_LABEL, DOC_LABEL, docBadge, payBadge, fmtD, newPartyDialog, download, toCsv } from '../../scripts/erp';
+  import { stateName } from '../../../shared/calc';
+
+  const id = Number(qs('id'));
+  let data: any;
+  const COLS: Record<string, [string, string]> = { customer: ['Billed', 'Received'], supplier: ['Billed', 'Paid'], lender: ['Borrowed', 'Repaid'] };
+
+  async function load() {
+    data = await api(`/erp/parties/${id}`);
+    const p = data.party;
+    document.title = `${p.name} | Staff | ${document.title.split(' | ').pop()}`;
+    $('[data-title]').textContent = p.name;
+    $('[data-crumb]').textContent = p.name;
+    $('[data-sub]').textContent = `${KIND_LABEL[p.kind]}${p.gstin ? ` · GSTIN ${p.gstin}` : ''}${p.active ? '' : ' · inactive'}`;
+    const actions: string[] = [];
+    if (p.kind === 'customer') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=quotation&party=${id}`)}">New quotation</a>`, `<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=invoice&party=${id}`)}">New invoice</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=receipt&party=${id}`)}">Record receipt</a>`);
+    if (p.kind === 'supplier') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=purchase&party=${id}`)}">Record purchase bill</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=payment&party=${id}`)}">Pay supplier</a>`);
+    if (p.kind === 'lender') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/payments/?new=loan_received&party=${id}`)}">Loan received</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=loan_repayment&party=${id}`)}">Repayment</a>`);
+    $('[data-actions]').innerHTML = `<span style="display:flex;gap:8px;flex-wrap:wrap">${actions.join('')}</span>`;
+
+    const [up, down] = COLS[p.kind];
+    const st = data.statement;
+    const sumUp = st.reduce((a: number, e: any) => a + e.up, 0), sumDown = st.reduce((a: number, e: any) => a + e.down, 0);
+    const label = p.kind === 'customer' ? (p.balance >= 0 ? 'They owe you' : 'Advance from them') : p.kind === 'supplier' ? (p.balance >= 0 ? 'You owe them' : 'Advance paid') : 'Loan outstanding';
+    $('[data-stats]').innerHTML = `<div class="stat${p.balance > 0.5 && p.kind === 'customer' ? ' stat--warn' : ''}"><span>${label}</span><strong>${money(Math.abs(p.balance))}</strong></div>
+      <div class="stat"><span>Opening balance</span><strong>${money(p.opening_balance)}</strong></div>
+      <div class="stat"><span>Total ${up.toLowerCase()}</span><strong>${money(sumUp)}</strong></div>
+      <div class="stat"><span>Total ${down.toLowerCase()}</span><strong>${money(sumDown)}</strong></div>`;
+    $('[data-statement]').innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Date</th><th>Particulars</th><th>Ref</th><th class="num">${up}</th><th class="num">${down}</th><th class="num">Balance</th></tr></thead><tbody>
+      ${st.map((e: any) => `<tr${e.link ? ` data-href="${sitePath(`/staff/doc/?id=${e.link.split(':')[1]}`)}"` : ''}><td class="nowrap">${e.date ? fmtD(e.date) : ''}</td><td>${esc(e.particulars)}</td><td class="mono-s">${esc(e.ref)}</td>
+        <td class="num">${e.up ? money(e.up) : ''}</td><td class="num">${e.down ? money(e.down) : ''}</td><td class="num"><strong>${money(e.balance)}</strong></td></tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="3">Closing balance</td><td class="num">${money(sumUp)}</td><td class="num">${money(sumDown)}</td><td class="num">${money(p.balance)}</td></tr></tfoot></table></div>`;
+    $('[data-statement]').querySelectorAll<HTMLElement>('tr[data-href]').forEach((tr) => tr.addEventListener('click', () => (location.href = tr.dataset.href!)));
+
+    $('[data-details]').innerHTML = [
+      ['Contact', p.contact_person], ['Phone', p.phone], ['Email', p.email], ['GSTIN', p.gstin], ['State', stateName(p.state_code ?? '')],
+      ['Address', [p.address, [p.city, p.pincode].filter(Boolean).join(' - ')].filter(Boolean).join('\n')], ['Credit days', p.credit_days], ['Tally name', p.tally_name], ['Notes', p.notes],
+    ].filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => `<dt>${k}</dt><dd style="white-space:pre-line">${esc(v)}</dd>`).join('') || '<dd class="muted">No details yet</dd>';
+
+    $('[data-docs]').innerHTML = data.documents.length ? `<ul class="pay-list">${data.documents.slice(0, 30).map((d: any) => `<li><span><a href="${sitePath(`/staff/doc/?id=${d.id}`)}"><strong>${esc(d.number ?? 'Draft')}</strong></a> · ${DOC_LABEL[d.type]}<br><small class="muted">${fmtD(d.doc_date)}</small> ${docBadge(d.status)} ${payBadge(d)}</span><strong class="nowrap">${money(d.total)}</strong></li>`).join('')}</ul>` : '<p class="muted">No documents yet.</p>';
+  }
+
+  $('[data-edit]').addEventListener('click', async () => { if (await newPartyDialog(data.party.kind, data.party)) { toast('Saved'); await load(); } });
+  $('[data-print]').addEventListener('click', () => window.print());
+  $('[data-csv]').addEventListener('click', () => download(`ledger-${data.party.name.replace(/\W+/g, '-')}.csv`, toCsv(['Date', 'Particulars', 'Ref', ...COLS[data.party.kind], 'Balance'], data.statement.map((e: any) => [e.date, e.particulars, e.ref, e.up || '', e.down || '', e.balance]))));
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting') { $('[data-title]').textContent = 'Not found'; $('[data-sub]').textContent = e.message; } });
+</script>

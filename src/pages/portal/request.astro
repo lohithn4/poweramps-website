@@ -25,6 +25,14 @@ import { url } from '../../lib/url';
             <div class="pcard__h"><h2>Quotation</h2></div>
             <div data-quote></div>
           </div>
+          <div class="pcard" data-docs-card hidden>
+            <div class="pcard__h"><h2>Documents</h2></div>
+            <div data-docs></div>
+          </div>
+          <div class="pcard" data-fb-card hidden>
+            <div class="pcard__h"><h2>Rate your experience</h2></div>
+            <div data-fb></div>
+          </div>
           <div class="pcard">
             <div class="pcard__h"><h2>Updates</h2></div>
             <ol class="timeline" data-timeline></ol>
@@ -40,14 +48,26 @@ import { url } from '../../lib/url';
 </Base>
 
 <script>
-  import { api, requireAuth } from '../../scripts/api';
+  import { api, requireAuth, sitePath } from '../../scripts/api';
   import { $, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
   import { panelSVG, summaryHTML, compute, normalize } from '../../scripts/panel';
 
   const id = Number(qs('id'));
   async function load() {
     await requireAuth();
-    const { request: r, events, statuses } = await api(`/requests/${id}`);
+    const { request: r, events, statuses, documents = [], feedback } = await api(`/requests/${id}`);
+    const docLabel: Record<string, string> = { quotation: 'Quotation', invoice: 'Tax invoice' };
+    $('[data-docs-card]').hidden = !documents.length;
+    $('[data-docs]').innerHTML = documents.map((d: any) => {
+      const due = d.total - (d.paid || 0);
+      const pay = d.type === 'invoice' && d.status !== 'cancelled' ? (due <= 0.5 ? '<span class="badge badge--done">Paid</span>' : d.paid > 0 ? `<span class="badge badge--amber">Balance ${inr(due)}</span>` : `<span class="badge badge--outline">Due ${d.due_date ? fmtDate(d.due_date) : ''}</span>`) : d.status === 'accepted' ? '<span class="badge badge--green">Accepted</span>' : d.status === 'cancelled' ? '<span class="badge badge--muted">Cancelled</span>' : '';
+      return `<div class="doc-mini"><div><strong>${docLabel[d.type] ?? d.type} ${esc(d.number)}${d.revision ? ` (rev ${d.revision})` : ''}</strong><small>${fmtDate(d.doc_date)} · ${inr(d.total)} incl. GST</small> ${pay}</div><a class="btn btn--ghost btn--sm" href="${sitePath(`/portal/document/?id=${d.id}`)}">View / PDF</a></div>`;
+    }).join('');
+    const fbCard = $('[data-fb-card]');
+    fbCard.hidden = r.status !== 'delivered';
+    if (!fbCard.hidden) $('[data-fb]').innerHTML = feedback
+      ? `<p>You rated us <strong>${feedback.rating}/10</strong>. Thank you for your feedback!</p>`
+      : `<p style="font-size:14.5px;margin-bottom:12px">Your panel has been delivered. How likely are you to recommend us, from 0 to 10?</p><a class="btn btn--red btn--block" href="${sitePath(`/portal/feedback/?id=${id}`)}">Give feedback</a>`;
     document.title = `${r.ref} | ${document.title.split(" | ").pop()}`;
     $('[data-crumb]').textContent = r.ref;
     $('[data-title]').textContent = r.title;
@@ -61,7 +81,18 @@ import { url } from '../../lib/url';
     $('[data-summary]').innerHTML = summaryHTML(cfg, s);
 
     const qc = $('[data-quote-card]');
-    if (r.quote_amount) {
+    if (r.quote_doc_id) {
+      qc.hidden = false;
+      const qd = documents.find((d: any) => d.id === r.quote_doc_id);
+      const canAccept = r.status === 'quoted' && qd && ['issued', 'sent'].includes(qd.status);
+      $('[data-quote]').innerHTML = `<div class="quote-box">
+        <div class="quote-box__amt">${inr(r.quote_amount)} <small>incl. GST</small></div>
+        <p style="margin-top:6px;font-size:14px;color:var(--ink-2)">Quotation ${esc(qd?.number ?? '')}${qd?.revision ? ` (rev ${qd.revision})` : ''} · valid until ${qd?.valid_until ? fmtDate(qd.valid_until) : '—'}</p>
+        <a class="btn btn--ghost btn--block" style="margin-top:12px" href="${sitePath(`/portal/document/?id=${r.quote_doc_id}`)}">View full quotation / download PDF</a>
+        ${canAccept ? `<button class="btn btn--red btn--block" style="margin-top:10px" data-accept>Accept quotation & confirm order</button>` : ''}
+      </div>`;
+      $('[data-quote]').querySelector('[data-accept]')?.addEventListener('click', accept);
+    } else if (r.quote_amount) {
       qc.hidden = false;
       const canAccept = r.status === 'quoted';
       $('[data-quote]').innerHTML = `<div class="quote-box">

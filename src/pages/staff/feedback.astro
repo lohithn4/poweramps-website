@@ -1,0 +1,58 @@
+---
+import StaffPage from '../../components/StaffPage.astro';
+---
+<StaffPage title="Feedback & testimonials" active="feedback" sub="Ratings clients give after delivery. 9–10 ratings where the client agreed to be quoted can be published on the website.">
+  <div class="stats" data-stats></div>
+  <div class="pcard">
+    <div class="toolbar"><div class="seg" data-f><button type="button" data-v="pending">Waiting for approval</button><button type="button" data-v="published">Published</button><button type="button" data-v="">All feedback</button></div></div>
+    <div data-list><div class="skeleton"></div></div>
+  </div>
+</StaffPage>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, $$, esc, fmtDate, toast } from '../../scripts/ui';
+
+  let filter = 'pending';
+  let all: any[] = [];
+  const score = (n: number) => `<span class="score${n <= 6 ? ' score--low' : n <= 8 ? ' score--mid' : ''}">${n}</span>`;
+  const STATUS: Record<string, string> = { received: '<span class="badge badge--muted">Internal</span>', pending: '<span class="badge badge--amber">Waiting for approval</span>', published: '<span class="badge badge--green">On website</span>', hidden: '<span class="badge badge--muted">Hidden</span>' };
+
+  async function load() {
+    const { feedback, stats } = await api('/staff/feedback');
+    all = feedback;
+    $('[data-stats]').innerHTML = `<div class="stat"><span>Responses</span><strong>${stats.count}</strong></div>
+      <div class="stat"><span>Average rating</span><strong>${stats.average ?? '—'}<small style="display:inline;font-size:14px"> / 10</small></strong></div>
+      <div class="stat${stats.nps !== null && stats.nps < 0 ? ' stat--warn' : ' stat--ok'}"><span>Net promoter score</span><strong>${stats.nps ?? '—'}</strong><small>% of 9–10 minus % of 0–6</small></div>
+      <div class="stat"><span>Waiting for approval</span><strong>${feedback.filter((f: any) => f.status === 'pending').length}</strong></div>`;
+    render();
+  }
+
+  function render() {
+    $$<HTMLButtonElement>('[data-f] button').forEach((b) => b.classList.toggle('is-active', b.dataset.v === filter));
+    const rows = all.filter((f) => !filter || f.status === filter);
+    const list = $('[data-list]');
+    if (!rows.length) { list.innerHTML = `<div class="pempty"><strong>Nothing here</strong>${filter === 'pending' ? 'No testimonials are waiting. Clients get a feedback link automatically when an order is marked Delivered.' : 'No feedback yet.'}</div>`; return; }
+    list.innerHTML = rows.map((f) => `<div class="fb-card">
+      ${score(f.rating)}
+      <div><div><strong>${esc(f.display_name || f.contact_name)}</strong>${f.role ? `, ${esc(f.role)}` : ''} · ${esc(f.company || f.contact_company || '')}${f.city ? ` · ${esc(f.city)}` : ''}</div>
+        <div class="meta"><a href="${sitePath(`/staff/request/?id=${f.request_id}`)}">${esc(f.ref)}</a> · ${esc(f.title)} · ${fmtDate(f.created_at)} · ${f.consent ? 'Agreed to be quoted' : 'Private feedback'} ${STATUS[f.status]}</div>
+        ${f.comment ? `<blockquote>“${esc(f.comment)}”</blockquote>` : '<p class="muted" style="margin-top:6px">No comment</p>'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        ${f.consent && f.rating >= 9 && f.status !== 'published' ? `<button class="btn btn--red btn--sm" type="button" data-act="published" data-id="${f.id}">Publish on website</button>` : ''}
+        ${f.status === 'published' || f.status === 'pending' ? `<button class="btn btn--ghost btn--sm" type="button" data-act="hidden" data-id="${f.id}">${f.status === 'published' ? 'Remove from website' : 'Don’t publish'}</button>` : ''}
+        ${f.rating <= 6 ? `<a class="btn btn--ghost btn--sm" href="mailto:${esc(f.contact_email)}?subject=${encodeURIComponent(`Your feedback on ${f.ref}`)}">Follow up</a>` : ''}
+      </div></div>`).join('');
+    list.querySelectorAll<HTMLButtonElement>('[data-act]').forEach((b) => b.addEventListener('click', async () => {
+      b.classList.add('is-busy');
+      try {
+        const r = await api(`/staff/feedback/${b.dataset.id}`, { method: 'PATCH', body: { status: b.dataset.act } });
+        toast(b.dataset.act === 'published' ? (r.republished ? 'Published. The website is updating now.' : 'Approved. It appears on the website at the next daily update (or after any content change).') : 'Removed');
+        await load();
+      } catch (e: any) { toast(e.message, 'err'); b.classList.remove('is-busy'); }
+    }));
+  }
+
+  $$<HTMLButtonElement>('[data-f] button').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.v!; render(); }));
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>
