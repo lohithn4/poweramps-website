@@ -30,4 +30,10 @@ const { light = false } = Astro.props;
     .logo__name { font-size: 23px; }
     .logo__sub { font-size: 8.2px; }
   }
+  @media (max-width: 340px) {
+    .logo { gap: 8px; }
+    .logo :global(.logo__mark) { width: 30px; height: 30px; }
+    .logo__name { font-size: 19px; }
+    .logo__sub { font-size: 6.8px; }
+  }
 </style>

@@ -61,11 +61,6 @@ const DURATION = 5000;
 
   <div class="wrap hero__inner">
     <div class="hero__copy">
-      <a class="hero__promo" href={url('/build/')}>
-        <span class="hero__promo-new">New</span>
-        <span class="hero__promo-text"><strong>Build your own panel online</strong><span class="hero__promo-sub"> · choose every component to suit your site</span></span>
-        <Icon name="arrow" size={16} />
-      </a>
       <span class="eyebrow">{site.hero.eyebrow} · {site.address.city} · Since {site.established}</span>
 
       <h1>
@@ -83,7 +78,7 @@ const DURATION = 5000;
       </p>
 
       <div class="hero__actions">
-        <a class="btn btn--red btn--lg hero__build" href={url('/build/')}><Icon name="layers" size={20} />Build your panel online <Icon name="arrow" size={18} /></a>
+        <a class="btn btn--red btn--lg hero__build has-tip" href={url('/build/')} aria-describedby="tip-hero-build"><Icon name="layers" size={20} />Build your panel online <Icon name="arrow" size={18} /><span class="tip" id="tip-hero-build" role="tooltip"><strong>Build your own panel online</strong> · choose every component to suit your site</span></a>
         <a class="btn btn--ghost" href={url('/panels')}>Browse {panels.length} panels</a>
       </div>
       <p class="hero__buildnote"><Icon name="check" size={15} />Free account · choose every component · quotation in 1–2 working days</p>
@@ -223,7 +218,7 @@ const DURATION = 5000;
 </script>
 
 <style>
-  .hero { position: relative; overflow: hidden; padding-block: clamp(32px, 4vw, 56px) clamp(56px, 7vw, 96px); }
+  .hero { position: relative; overflow: hidden; padding-block: clamp(18px, 2.2vw, 32px) clamp(24px, 3vw, 40px); }
   .hero::after {
     content: '';
     position: absolute; inset: auto 0 0 0; height: 140px;
@@ -234,14 +229,14 @@ const DURATION = 5000;
     position: relative; z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: clamp(32px, 5vw, 72px);
+    gap: clamp(24px, 4vw, 56px);
     align-items: center;
   }
 
   /* ---- Headline with rotating benefit ---- */
   .hero h1 {
-    margin-top: 16px;
-    font-size: clamp(36px, 4.7vw, 62px);
+    margin-top: 10px;
+    font-size: clamp(30px, min(3.7vw, 6.6vh), 52px);
     line-height: 1.04;
     color: #fff;
   }
@@ -255,65 +250,38 @@ const DURATION = 5000;
   }
   .rot__item.is-active { opacity: 1; transform: none; }
 
-  .hero__lead { margin-top: 18px; font-size: clamp(16px, 1.5vw, 18.5px); color: #b7c1d8; max-width: 58ch; }
+  .hero__lead { margin-top: 12px; font-size: clamp(15px, 1.2vw, 17px); color: #b7c1d8; max-width: 58ch; }
   .hero__lead strong { color: #fff; font-weight: 600; }
-  .hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
-  /* Attention bar for the online builder, above the headline */
-  .hero__promo {
-    position: relative; isolation: isolate; overflow: hidden;
-    display: inline-flex; align-items: center; gap: 10px; max-width: 100%;
-    margin-bottom: 20px; padding: 7px 14px 7px 7px; border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--red) 65%, white 10%);
-    background: color-mix(in srgb, var(--red) 16%, transparent);
-    color: #fff; font-size: 15px; line-height: 1.3;
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 55%, transparent);
-    animation: promo-glow 2.8s ease-in-out infinite;
-    transition: background .2s, transform .2s var(--ease);
-  }
-  .hero__promo::after {
-    content: ''; position: absolute; inset: 0; z-index: -1;
-    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 22%) 50%, transparent 70%);
-    transform: translateX(-100%); animation: promo-shine 3.2s ease-in-out infinite;
-  }
-  .hero__promo:hover { background: color-mix(in srgb, var(--red) 28%, transparent); transform: translateY(-1px); }
-  .hero__promo-new { flex: none; padding: 4px 9px; border-radius: 999px; background: var(--red); font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-  .hero__promo-text { min-width: 0; }
-  .hero__promo-sub { color: #dfe5f2; }
-  .hero__promo :global(svg) { flex: none; transition: transform .2s var(--ease); }
-  .hero__promo:hover :global(svg) { transform: translateX(3px); }
-  @keyframes promo-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 50%, transparent); } 50% { box-shadow: 0 0 0 8px transparent; } }
-  @keyframes promo-shine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
-  @media (prefers-reduced-motion: reduce) { .hero__promo, .hero__promo::after { animation: none; } }
-  @media (max-width: 560px) { .hero__promo { font-size: 14px; } .hero__promo-sub { display: none; } }
-  .hero__build { padding: 16px 24px; font-size: 17px; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--red) 70%, transparent); animation: hero-pulse 2.6s ease-in-out infinite; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .hero__build { padding: 13px 20px; font-size: 16px; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--red) 70%, transparent); animation: hero-pulse 2.6s ease-in-out infinite; }
   @keyframes hero-pulse { 0%, 100% { box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--red) 70%, transparent), 0 0 0 0 color-mix(in srgb, var(--red) 45%, transparent); } 50% { box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--red) 70%, transparent), 0 0 0 10px transparent; } }
   @media (prefers-reduced-motion: reduce) { .hero__build { animation: none; } }
-  .hero__buildnote { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: #b7c1d8; }
+  .hero__buildnote { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: #b7c1d8; }
   .hero__buildnote :global(svg) { color: #3ddc84; }
   .hero__trust {
     display: flex; flex-wrap: wrap; gap: 10px 20px;
-    list-style: none; padding: 0; margin: 20px 0 0;
-    font-size: 14px; color: #c9d1e3;
+    list-style: none; padding: 0; margin: 12px 0 0;
+    font-size: 13px; color: #c9d1e3;
   }
   .hero__trust li { display: inline-flex; align-items: center; gap: 8px; }
   .hero__trust :global(svg) { color: var(--live); }
 
   /* ---- Location card ---- */
-  .hero__reach { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .hero__reach { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
   .hero__loc {
     display: flex; align-items: center; gap: 14px;
     width: fit-content; max-width: 100%;
-    padding: 10px 16px 10px 10px;
+    padding: 7px 14px 7px 7px;
     border: 1px solid rgb(255 255 255 / 14%);
     border-radius: 12px;
     background: rgb(255 255 255 / 5%);
     transition: background .2s, border-color .2s;
   }
   .hero__loc:hover { background: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 28%); }
-  .hero__loc-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--red); color: #fff; }
+  .hero__loc-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--red); color: #fff; }
   .hero__loc-text { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
   .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--brand-accent) 50%, white); }
-  .hero__loc-addr { font-size: 15px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hero__loc-addr { font-size: 14px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hero__loc-go {
     display: inline-flex; align-items: center; gap: 6px; flex: none;
     margin-left: 6px; padding-left: 14px;
@@ -331,11 +299,11 @@ const DURATION = 5000;
   }
 
   /* ---- Showcase ---- */
-  .show { position: relative; padding-bottom: 76px; }
+  .show { position: relative; padding-bottom: 56px; }
   .show__frame {
     position: relative;
     aspect-ratio: 1;
-    max-width: 520px;
+    max-width: min(480px, 66vh);
     margin-left: auto;
     border-radius: 20px;
     background: radial-gradient(100% 80% at 50% 10%, #fff 0%, #e7ebf0 100%);
