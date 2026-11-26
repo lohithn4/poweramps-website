@@ -11,7 +11,6 @@ import RatingPlate from '../RatingPlate.astro';
 import site from '../../data/site.json';
 import type { Panel, Category } from '../../lib/panels';
 import { url } from '../../lib/url';
-import { directionsUrl } from '../../lib/location';
 
 interface Props {
   panels: Panel[];
@@ -82,27 +81,6 @@ const DURATION = 5000;
         <a class="btn btn--ghost" href={url('/panels')}>Browse {panels.length} panels</a>
       </div>
       <p class="hero__buildnote"><Icon name="check" size={15} />Free account · choose every component · quotation in 1–2 working days</p>
-
-      <div class="hero__reach">
-      {site.phone && (
-        <a class="hero__loc" href={`tel:${site.phone.replace(/\s/g, '')}`} aria-label={`Call ${site.contactName || site.name} on ${site.phone}`}>
-          <span class="hero__loc-icon"><Icon name="phone" size={18} /></span>
-          <span class="hero__loc-text">
-            <span class="hero__loc-label">{site.contactName ? `Call ${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}` : 'Call us'}</span>
-            <span class="hero__loc-addr">{site.phone}</span>
-          </span>
-          <span class="hero__loc-go"><span class="hero__loc-go-label">Call</span> <Icon name="arrow" size={16} /></span>
-        </a>
-      )}
-      <a class="hero__loc" href={directionsUrl} target="_blank" rel="noopener" aria-label={`Get directions to ${site.name}, ${site.address.line1}, ${site.address.city}`}>
-        <span class="hero__loc-icon"><Icon name="pin" size={18} /></span>
-        <span class="hero__loc-text">
-          <span class="hero__loc-label">Visit our works</span>
-          <span class="hero__loc-addr">{[site.address.line1.split(",")[0], site.address.locality, site.address.city].filter(Boolean).join(", ")}</span>
-        </span>
-        <span class="hero__loc-go"><span class="hero__loc-go-label">Directions</span> <Icon name="arrow" size={16} /></span>
-      </a>
-      </div>
 
       <ul class="hero__trust">
         <li><Icon name="check" size={16} />Built to your spec &amp; brand</li>
@@ -267,38 +245,6 @@ const DURATION = 5000;
   }
   .hero__trust li { display: inline-flex; align-items: center; gap: 8px; }
   .hero__trust :global(svg) { color: var(--live); }
-
-  /* ---- Location card ---- */
-  .hero__reach { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-  .hero__loc {
-    display: flex; align-items: center; gap: 14px;
-    width: fit-content; max-width: 100%;
-    padding: 7px 14px 7px 7px;
-    border: 1px solid rgb(255 255 255 / 14%);
-    border-radius: 12px;
-    background: rgb(255 255 255 / 5%);
-    transition: background .2s, border-color .2s;
-  }
-  .hero__loc:hover { background: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 28%); }
-  .hero__loc-icon { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 9px; background: var(--action); color: #fff; }
-  .hero__loc-text { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
-  .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--action-hi); }
-  .hero__loc-addr { font-size: 14px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hero__loc-go {
-    display: inline-flex; align-items: center; gap: 6px; flex: none;
-    margin-left: 6px; padding-left: 14px;
-    border-left: 1px solid rgb(255 255 255 / 14%);
-    font-size: 14px; font-weight: 600; color: #fff;
-  }
-  .hero__loc-go :global(svg) { transition: transform .25s var(--ease); }
-  .hero__loc:hover .hero__loc-go :global(svg) { transform: translateX(3px); }
-  @media (max-width: 520px) {
-    .hero__loc { width: 100%; gap: 12px; padding-right: 12px; }
-    .hero__loc-text { flex: 1; }
-    .hero__loc-addr { white-space: normal; font-size: 14px; }
-    .hero__loc-go { margin-left: 0; padding-left: 12px; }
-    .hero__loc-go-label { display: none; }
-  }
 
   /* ---- Showcase ---- */
   .show { position: relative; padding-bottom: 56px; }

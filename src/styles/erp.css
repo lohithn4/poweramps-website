@@ -91,7 +91,7 @@ a.stat:hover { border-color: var(--navy-700); }
 .totals .grand { border-bottom: 0; padding-top: 12px; font-size: 20px; font-weight: 800; color: var(--navy-800); }
 .totals .words { display: block; padding: 2px 0 0; border: 0; font-size: 12.5px; color: var(--muted); }
 .totals .margin { color: #15803d; }
-.dside { position: sticky; top: 90px; }
+.dside { position: sticky; top: calc(var(--masthead-h) + 12px); }
 .dactions { display: grid; gap: 8px; margin-top: 16px; }
 .dactions .btn { width: 100%; }
 .pay-list { list-style: none; margin: 0; padding: 0; font-size: 14px; }

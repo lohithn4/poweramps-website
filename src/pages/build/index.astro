@@ -280,7 +280,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .builder { padding-block: 20px 56px; }
   .builder__grid { display: grid; grid-template-columns: 210px minmax(0, 1fr) 380px; gap: 28px; align-items: start; }
 
-  .bsteps { position: sticky; top: 96px; }
+  .bsteps { position: sticky; top: calc(var(--masthead-h) + 12px); }
   .bsteps ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
   .bstep-btn {
     display: flex; align-items: center; gap: 12px; width: 100%;
@@ -368,7 +368,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .bnav [data-next], .bnav [data-submit] { margin-left: auto; }
   .link-reset { border: 0; background: none; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
-  .bside { position: sticky; top: 96px; }
+  .bside { position: sticky; top: calc(var(--masthead-h) + 12px); }
   .bside__card { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); }
   .bside__head { display: flex; align-items: center; justify-content: space-between; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
   .led { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }

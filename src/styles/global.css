@@ -44,6 +44,7 @@
 
   /* Layout */
   --wrap: 1240px;
+  --masthead-h: 95px; /* sticky top bar + header */
   --gutter: clamp(16px, 4vw, 32px);
   --radius: 10px;
   --radius-lg: 16px;
@@ -62,6 +63,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--masthead-h) + 8px);
 }
 
 body {

@@ -17,6 +17,7 @@ const nav = [
 ];
 const path = Astro.url.pathname;
 ---
+<div class="masthead" data-masthead>
 <div class="topbar">
   <div class="wrap topbar__inner">
     <span class="topbar__item topbar__gst">
@@ -84,6 +85,7 @@ const path = Astro.url.pathname;
     </div>
   </nav>
 </header>
+</div>
 
 <script>
   const btn = document.querySelector<HTMLButtonElement>('[data-menu-btn]');
@@ -138,7 +140,7 @@ const path = Astro.url.pathname;
     await logout();
   }));
 
-  const header = document.querySelector('[data-header]');
+  const header = document.querySelector('[data-masthead]');
   const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -146,6 +148,7 @@ const path = Astro.url.pathname;
 
 <style>
   .topbar {
+    --topbar-red: color-mix(in srgb, var(--red) 78%, white); /* readable red on the dark bar */
     background: var(--navy-950);
     color: #aab4cc;
     font-family: var(--font-mono);
@@ -195,7 +198,20 @@ const path = Astro.url.pathname;
   .gstin.is-copied .gstin__num { color: #4ade80; }
   .topbar__since { color: #8d98b3; }
   .topbar__loc { color: #dfe5f2; }
-  .topbar__loc :global(svg) { color: var(--action-hi); }
+  .topbar__loc :global(svg) { color: var(--topbar-red); transform-origin: 50% 100%; animation: pin-hop 2.8s ease-in-out infinite; }
+  .topbar__loc { position: relative; }
+  .topbar__loc::before {
+    content: ''; position: absolute; left: 7px; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
+    background: var(--topbar-red); opacity: 0; pointer-events: none; animation: pin-ring 2.8s ease-out infinite;
+  }
+  .topbar__loc:hover :global(svg) { color: #fff; }
+  @keyframes pin-hop { 0%, 60%, 100% { transform: none; } 70% { transform: translateY(-3px); } 80% { transform: none; } 88% { transform: translateY(-1.5px); } }
+  @keyframes pin-ring { 0%, 62% { opacity: 0; transform: scale(.4); } 70% { opacity: .55; } 100% { opacity: 0; transform: scale(3.2); } }
+  /* Phone icon: red, with a short ring wiggle that runs between the pin hops */
+  .topbar__phone > :global(svg) { color: var(--topbar-red); transform-origin: 50% 50%; animation: phone-ring 2.8s ease-in-out 1.4s infinite; }
+  .topbar__phone:hover > :global(svg) { color: #fff; }
+  @keyframes phone-ring { 0%, 64%, 100% { transform: none; } 68% { transform: rotate(-14deg); } 72% { transform: rotate(12deg); } 76% { transform: rotate(-10deg); } 80% { transform: rotate(6deg); } 84% { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .topbar__loc :global(svg), .topbar__loc::before, .topbar__phone > :global(svg) { animation: none; } }
   .topbar__loc:hover { text-decoration: underline; text-underline-offset: 3px; }
   @media (max-width: 1100px) {
     .topbar__extra { display: none; }
@@ -217,16 +233,15 @@ const path = Astro.url.pathname;
     .header__inner { gap: 12px; }
   }
 
+  .masthead { position: sticky; top: 0; z-index: 50; }
+  .masthead.is-scrolled { box-shadow: 0 6px 24px -12px rgb(13 22 38 / 18%); }
   .header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    position: relative;
     background: rgb(255 255 255 / 92%);
     backdrop-filter: saturate(1.4) blur(12px);
     border-bottom: 1px solid var(--line);
     transition: box-shadow .25s;
   }
-  .header.is-scrolled { box-shadow: 0 6px 24px -12px rgb(13 22 38 / 18%); }
   .header__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 62px; }
 
   .nav { display: flex; gap: 6px; }
@@ -276,7 +291,7 @@ const path = Astro.url.pathname;
   .menu-btn[aria-expanded='true'] :global(.i-open) { display: none; }
   .menu-btn[aria-expanded='true'] :global(.i-close) { display: block; }
 
-  .mnav { border-top: 1px solid var(--line); background: var(--white); }
+  .mnav { border-top: 1px solid var(--line); background: var(--white); max-height: calc(100vh - var(--masthead-h)); max-height: calc(100dvh - var(--masthead-h)); overflow-y: auto; overscroll-behavior: contain; }
   .mnav__inner { display: grid; gap: 4px; padding-block: 12px 20px; }
   .mnav__link {
     display: flex; justify-content: space-between; align-items: center;
