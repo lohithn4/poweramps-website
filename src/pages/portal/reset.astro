@@ -28,7 +28,7 @@ import Base from '../../layouts/Base.astro';
   bindForm($('[data-form]'), async (d) => {
     if (d.password !== d.confirm) throw new Error('The two passwords do not match.');
     const r = await api<{ user: Me }>('/auth/reset', { body: { token: qs('token'), password: d.password } });
-    markSignedIn(true);
+    markSignedIn(true, r.user?.role);
     toast('Password saved. You are signed in.');
     setTimeout(() => (location.href = sitePath(r.user ? homeFor(r.user) : '/portal/')), 900);
   });

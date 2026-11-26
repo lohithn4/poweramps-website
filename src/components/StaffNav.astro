@@ -22,4 +22,13 @@ const tabs: [StaffTab, string, string][] = [
   <span class="snav__sep" aria-hidden="true"></span>
   <a href={url('/admin/')} target="_blank" rel="noopener">Website ↗</a>
   <a href={url('/portal/')}>My account</a>
+  <button type="button" class="snav__out" data-staff-signout>Sign out</button>
 </nav>
+
+<script>
+  document.querySelector<HTMLButtonElement>('[data-staff-signout]')?.addEventListener('click', async (e) => {
+    (e.currentTarget as HTMLButtonElement).disabled = true;
+    const { logout } = await import('../scripts/api');
+    await logout();
+  });
+</script>

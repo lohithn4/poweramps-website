@@ -18,7 +18,7 @@ import { url } from '../../lib/url';
 
   api<{ user: Me }>('/auth/verify', { body: { token: qs('token') } })
     .then(({ user }) => {
-      markSignedIn(true);
+      markSignedIn(true, user?.role);
       $('[data-title]').textContent = 'Email verified ✓';
       $('[data-text]').textContent = `Welcome, ${user.name.split(' ')[0]}! Taking you to your account…`;
       let hasDraft = false;

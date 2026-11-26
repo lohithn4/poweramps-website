@@ -73,7 +73,7 @@ import { url } from '../../lib/url';
     resend.hidden = true;
     try {
       const r = await api<{ user: Me }>('/auth/login', { body: { email: d.email, password: d.password } });
-      markSignedIn(true);
+      markSignedIn(true, r.user?.role);
       go(r.user);
     } catch (e: any) {
       if (e.code === 'unverified') resend.hidden = false;

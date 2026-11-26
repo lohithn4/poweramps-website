@@ -57,7 +57,15 @@ const path = Astro.url.pathname;
     </nav>
 
     <div class="header__cta">
-      <a class="acct" href={url('/portal/login/')} data-acct><Icon name="user" size={18} /><span data-acct-label>Sign in</span></a>
+      <div class="acctm" data-acctm>
+        <a class="acct" href={url('/portal/login/')} data-acct aria-haspopup="menu" aria-expanded="false"><Icon name="user" size={18} /><span data-acct-label>Sign in</span></a>
+        <div class="acctm__menu" role="menu" data-acct-menu hidden>
+          <a role="menuitem" href={url('/portal/')}><Icon name="user" size={16} />My account</a>
+          <a role="menuitem" href={url('/portal/#builds')}><Icon name="layers" size={16} />My panel builds</a>
+          <a role="menuitem" href={url('/staff/')} data-staff-only hidden><Icon name="cog" size={16} />Staff dashboard</a>
+          <button role="menuitem" type="button" data-signout><Icon name="arrow" size={16} />Sign out</button>
+        </div>
+      </div>
       <a class="btn btn--red btn--sm" href={url('/build/')}>Get a quote <Icon name="arrow" size={16} /></a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu-btn>
         <span class="sr-only">Menu</span>
@@ -71,6 +79,7 @@ const path = Astro.url.pathname;
     <div class="wrap mnav__inner">
       {nav.map((item) => <a href={url(item.href)} class="mnav__link">{item.label} <Icon name="arrow" size={18} /></a>)}
       <a href={url('/portal/login/')} class="mnav__link" data-acct>Client / staff sign in <Icon name="user" size={18} /></a>
+      <button type="button" class="mnav__link mnav__signout" data-signout hidden>Sign out <Icon name="arrow" size={18} /></button>
       <a class="btn btn--red btn--block" href={url('/build/')}>Build a panel &amp; get a quote</a>
     </div>
   </nav>
@@ -102,17 +111,32 @@ const path = Astro.url.pathname;
     });
   });
 
-  // Swap "Sign in" for "My account" when a session flag exists (set on login).
-  try {
-    if (localStorage.getItem('portal_signed_in') === '1') {
-      document.querySelectorAll<HTMLAnchorElement>('[data-acct]').forEach((a) => {
-        a.href = a.href.replace('portal/login/', 'portal/');
-        const l = a.querySelector('[data-acct-label]');
-        if (l) l.textContent = 'My account';
-        else a.firstChild!.textContent = 'My account ';
-      });
-    }
-  } catch {}
+  // Signed in (flag set on login): "My account" opens a menu with Sign out; mobile menu gets Sign out.
+  let signedIn = false, role = '';
+  try { signedIn = localStorage.getItem('portal_signed_in') === '1'; role = localStorage.getItem('portal_role') ?? ''; } catch {}
+  if (signedIn) {
+    document.querySelectorAll<HTMLAnchorElement>('[data-acct]').forEach((a) => {
+      a.href = a.href.replace('portal/login/', 'portal/');
+      const l = a.querySelector('[data-acct-label]');
+      if (l) l.textContent = 'My account';
+      else a.firstChild!.textContent = 'My account ';
+    });
+    document.querySelectorAll<HTMLElement>('[data-signout]').forEach((b) => (b.hidden = false));
+    if (role === 'staff' || role === 'admin') document.querySelectorAll<HTMLElement>('[data-staff-only]').forEach((e) => (e.hidden = false));
+
+    const wrap = document.querySelector<HTMLElement>('[data-acctm]');
+    const trigger = wrap?.querySelector<HTMLAnchorElement>('[data-acct]');
+    const menu = wrap?.querySelector<HTMLElement>('[data-acct-menu]');
+    const setOpen = (open: boolean) => { if (menu && trigger) { menu.hidden = !open; trigger.setAttribute('aria-expanded', String(open)); } };
+    trigger?.addEventListener('click', (e) => { e.preventDefault(); setOpen(!!menu?.hidden); });
+    document.addEventListener('click', (e) => { if (wrap && !wrap.contains(e.target as Node)) setOpen(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  }
+  document.querySelectorAll<HTMLButtonElement>('[data-signout]').forEach((b) => b.addEventListener('click', async () => {
+    b.disabled = true;
+    const { logout } = await import('../scripts/api');
+    await logout();
+  }));
 
   const header = document.querySelector('[data-header]');
   const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
@@ -224,6 +248,15 @@ const path = Astro.url.pathname;
   .header__cta { display: flex; align-items: center; gap: 10px; }
   .acct { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 8px; font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
   .acct:hover { background: var(--paper); color: var(--ink); }
+  .acctm { position: relative; }
+  .acctm__menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 1000; min-width: 220px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); box-shadow: var(--shadow); display: grid; }
+  .acctm__menu[hidden] { display: none; }
+  .acctm__menu a, .acctm__menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: none; font: inherit; font-size: 14.5px; font-weight: 500; color: var(--ink-2); text-align: left; cursor: pointer; }
+  .acctm__menu a:hover, .acctm__menu button:hover, .acctm__menu a:focus-visible, .acctm__menu button:focus-visible { background: var(--paper); color: var(--ink); }
+  .acctm__menu a[hidden] { display: none; }
+  .acctm__menu button { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 8px 8px; color: var(--red); }
+  .mnav__signout { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--red); }
+  .mnav__signout[hidden] { display: none; }
   @media (max-width: 880px) { .acct span { display: none; } .acct { padding: 10px; border: 1px solid var(--line); } }
   .menu-btn {
     display: none;

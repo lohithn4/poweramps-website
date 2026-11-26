@@ -38,8 +38,13 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
 }
 
 const FLAG = 'portal_signed_in';
-export const markSignedIn = (on: boolean) => {
-  try { on ? localStorage.setItem(FLAG, '1') : localStorage.removeItem(FLAG); } catch {}
+const ROLE = 'portal_role';
+/** Remembers (per browser) that someone is signed in, and their role, so the static header can show the account menu. */
+export const markSignedIn = (on: boolean, role?: string) => {
+  try {
+    if (on) { localStorage.setItem(FLAG, '1'); if (role) localStorage.setItem(ROLE, role); }
+    else { localStorage.removeItem(FLAG); localStorage.removeItem(ROLE); }
+  } catch {}
 };
 export const looksSignedIn = () => {
   try { return localStorage.getItem(FLAG) === '1'; } catch { return false; }
@@ -49,7 +54,7 @@ let meCache: Promise<Me | null> | null = null;
 export function getMe(force = false): Promise<Me | null> {
   if (!meCache || force) {
     meCache = api<{ user: Me | null }>('/auth/me')
-      .then((r) => { markSignedIn(!!r.user); return r.user; })
+      .then((r) => { markSignedIn(!!r.user, r.user?.role); return r.user; })
       .catch((e) => { if (e.status !== 0) markSignedIn(false); throw e; });
   }
   return meCache;
