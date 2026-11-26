@@ -136,7 +136,10 @@ const DURATION = 5000;
             tabindex={i === 0 ? 0 : -1}
             aria-hidden={i === 0 ? undefined : 'true'}
           >
-            <span class="show__status"><span class="led"></span>{s.cat.data.code}<span class="show__status-name"> · {s.cat.data.title}</span></span>
+            <span class="show__head">
+              <span class="show__status"><span class="led"></span>{s.cat.data.code}<span class="show__status-name"> · {s.cat.data.title}</span></span>
+              <span class="show__title">{shortTitle(s.panel.data.title)}</span>
+            </span>
             <img
               src={url(s.image)}
               alt={s.panel.data.title}
@@ -145,7 +148,6 @@ const DURATION = 5000;
               loading={i === 0 ? 'eager' : 'lazy'}
               fetchpriority={i === 0 ? 'high' : undefined}
             />
-            <span class="show__title">{shortTitle(s.panel.data.title)}</span>
             <span class="show__view">View specs <Icon name="arrow" size={15} /></span>
           </a>
         ))}
@@ -337,15 +339,16 @@ const DURATION = 5000;
 
   .show__slide {
     position: absolute; inset: 0;
-    display: block;
+    display: flex; flex-direction: column;
+    padding: 30px 16px 40px;
     opacity: 0;
     visibility: hidden;
     transition: opacity .6s var(--ease), visibility 0s linear .6s;
   }
   .show__slide.is-active { opacity: 1; visibility: visible; transition: opacity .6s var(--ease), visibility 0s; z-index: 1; }
   .show__slide img {
-    width: 100%; height: 100%; object-fit: contain;
-    padding: 64px 30px 56px;
+    flex: 1; min-height: 0; width: 100%; object-fit: contain;
+    padding: 10px 14px 6px;
     mix-blend-mode: multiply;
     transform: scale(1.06);
     transition: transform 5.5s var(--ease);
@@ -353,8 +356,12 @@ const DURATION = 5000;
   .show__slide.is-active img { transform: scale(1); }
   .hero.is-static .show__slide img { transform: none; }
 
+  .show__head {
+    position: relative; z-index: 2; flex: none;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px;
+  }
   .show__status {
-    position: absolute; top: 34px; left: 16px; z-index: 2;
+    flex: none;
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 10px; border-radius: 6px;
     background: var(--navy-900); color: #fff;
@@ -364,7 +371,7 @@ const DURATION = 5000;
   @keyframes pulse { 50% { opacity: .45; } }
 
   .show__title {
-    position: absolute; top: 38px; right: 18px; left: 52%; z-index: 2;
+    flex: 1 1 150px; min-width: 0;
     text-align: right;
     font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--navy-800);
   }
@@ -376,7 +383,7 @@ const DURATION = 5000;
   .show__view :global(svg) { transition: transform .25s var(--ease); }
   .show__slide:hover .show__view :global(svg) { transform: translateX(3px); }
 
-  .show__plates { position: absolute; z-index: 4; left: 0; bottom: 0; width: min(340px, 78%); }
+  .show__plates { position: absolute; z-index: 4; left: 0; bottom: 0; width: min(320px, 64%); }
   .show__plates :global(.show__plate) {
     position: absolute; left: 0; bottom: 0; width: 100%;
     transform: rotate(-1.5deg) translateY(10px);
@@ -395,8 +402,9 @@ const DURATION = 5000;
   @keyframes flow { to { stroke-dashoffset: -34; } }
 
   @media (max-width: 560px) {
-    .show__status-name, .show__view { display: none; }
-    .show__title { left: 30%; }
+    .show__status-name, .show__view, .show__plates { display: none; }
+    .show { padding-bottom: 0; }
+    .show__slide { padding-bottom: 14px; }
   }
 
   @media (max-width: 960px) {
