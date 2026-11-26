@@ -1,0 +1,152 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import site from '../data/site.json';
+import { getPanels, getCategories } from '../lib/panels';
+import { url } from '../lib/url';
+
+const panels = await getPanels();
+const categories = await getCategories();
+const a = site.address;
+
+const facts = [
+  { label: 'Established', value: String(site.established) },
+  { label: 'Business', value: 'Manufacturer, supplier & service provider' },
+  { label: 'Director', value: site.director },
+  { label: 'Legal status', value: 'Private limited company' },
+  { label: 'Location', value: `${a.city}, ${a.state}` },
+  { label: 'GSTIN', value: site.gst },
+  { label: 'CIN', value: site.cin },
+  { label: 'IEC', value: site.iec },
+];
+
+const values = [
+  { icon: 'cog', title: 'In-house R&D', text: 'An experienced engineering team designs every panel around the application, not a catalogue template.' },
+  { icon: 'shield', title: 'Quality tested', text: 'Our own testing facilities check every panel before it leaves the works.' },
+  { icon: 'layers', title: 'Large product line', text: `${panels.length} panel models across ${categories.length} product lines, from tap-off boxes to DG synchronization.` },
+  { icon: 'truck', title: 'On-time delivery', text: 'Standard panels dispatch in 3–7 days, with customised packaging for safe transit.' },
+] as const;
+
+const gallery = [
+  { src: '/uploads/panels/facility-1.webp', caption: 'Panels ready for dispatch' },
+  { src: '/uploads/panels/facility-2.webp', caption: 'Warehouse & stock' },
+  { src: '/uploads/panels/facility-3.webp', caption: 'Manufacturing team' },
+];
+---
+<Base title="About Us" description={`${site.legalName}: electrical panel manufacturer in ${a.city} since ${site.established}.`}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>About</span>
+      </nav>
+      <h1>Engineering panels in Bengaluru since {site.established}.</h1>
+      <p>{site.legalName} manufactures, supplies and services electrical control and power distribution panels for industry, infrastructure and buildings.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap story">
+      <div class="story__text prose reveal">
+        <span class="eyebrow">Our story</span>
+        <h2 class="story__h">A trusted name for control panels and electrical equipment.</h2>
+        <p>
+          Since {site.established}, {site.name} has manufactured, supplied and serviced electrical panels and control
+          equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization
+          panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.
+        </p>
+        <p>
+          Under the direction of <strong>{site.director}</strong>, our team combines in-house design, fabrication and
+          testing with installation and maintenance services. Every panel is built from quality components sourced from
+          trusted vendors, and we deal transparently and deliver on time.
+        </p>
+        <a class="btn btn--red" href={url('/contact')}>Work with us <Icon name="arrow" size={18} /></a>
+      </div>
+
+      <aside class="facts reveal">
+        <div class="facts__head mono">Company factsheet</div>
+        <dl>
+          {facts.map((f) => (
+            <div><dt>{f.label}</dt><dd>{f.value}</dd></div>
+          ))}
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section--tight values-sec">
+    <div class="wrap">
+      <div class="values">
+        {values.map((v, i) => (
+          <div class="value reveal" style={`transition-delay:${i * 70}ms`}>
+            <span class="value__icon"><Icon name={v.icon} size={22} /></span>
+            <h3>{v.title}</h3>
+            <p>{v.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Infrastructure</span>
+        <h2>Our works &amp; team</h2>
+      </div>
+      <div class="photos">
+        {gallery.map((g, i) => (
+          <figure class="photo reveal" style={`transition-delay:${i * 80}ms`}>
+            <img src={url(g.src)} alt={g.caption} loading="lazy" width="600" height="600" />
+            <figcaption class="mono">{g.caption}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .story { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
+  .story__text { display: grid; gap: 18px; }
+  .story__text > * + * { margin-top: 0; }
+  .story__h { font-size: clamp(28px, 3.4vw, 40px); color: var(--ink); margin: 0; }
+  .story__text .btn { justify-self: start; margin-top: 8px; color: #fff; text-decoration: none; }
+
+  .facts {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .facts__head {
+    padding: 14px 22px;
+    background: var(--navy-900); color: #fff;
+    font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .facts dl { margin: 0; }
+  .facts dl div { display: grid; grid-template-columns: 120px 1fr; gap: 12px; padding: 13px 22px; border-bottom: 1px solid var(--line); }
+  .facts dl div:last-child { border-bottom: 0; }
+  .facts dt { color: var(--muted); font-size: 14px; }
+  .facts dd { margin: 0; font-family: var(--font-mono); font-size: 14px; font-weight: 500; word-break: break-word; }
+
+  .values-sec { background: var(--white); border-block: 1px solid var(--line); }
+  .values { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+  .value__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--red-050); color: var(--red); }
+  .value h3 { margin-top: 16px; font-size: 19px; }
+  .value p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
+
+  .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .photo { margin: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--white); border: 1px solid var(--line); }
+  .photo img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .photo figcaption { padding: 12px 16px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+  @media (max-width: 900px) {
+    .story { grid-template-columns: 1fr; }
+    .values { grid-template-columns: 1fr 1fr; }
+    .photos { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .values, .photos { grid-template-columns: 1fr; }
+  }
+</style>

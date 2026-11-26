@@ -1,0 +1,99 @@
+---
+import { getCollection } from 'astro:content';
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import site from '../data/site.json';
+import { url } from '../lib/url';
+
+const categories = (await getCollection('categories')).sort((a, b) => a.data.order - b.data.order);
+const year = new Date().getFullYear();
+const a = site.address;
+---
+<footer class="footer blueprint on-dark">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <Logo light />
+        <p>{site.tagline}</p>
+        <div class="footer__contact">
+          {site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={16} />{site.phone}</a>}
+          {site.email && <a href={`mailto:${site.email}`}><Icon name="mail" size={16} />{site.email}</a>}
+          <a href={site.indiamart} target="_blank" rel="noopener"><Icon name="external" size={16} />View us on IndiaMART</a>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="footer__h">Panels</h3>
+        <ul class="footer__list">
+          {categories.map((c) => <li><a href={url(`/panels?category=${c.id}`)}>{c.data.title}</a></li>)}
+          <li><a href={url('/panels')}>All panels →</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer__h">Company</h3>
+        <ul class="footer__list">
+          <li><a href={url('/about')}>About us</a></li>
+          <li><a href={url('/#capabilities')}>Capabilities</a></li>
+          <li><a href={url('/#process')}>How we work</a></li>
+          <li><a href={url('/contact')}>Contact & enquiry</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer__h">Works</h3>
+        <address class="footer__addr">
+          {a.line1},<br />
+          {a.line2},<br />
+          {a.city}, {a.state} {a.pincode}<br />
+          {a.country}
+        </address>
+      </div>
+    </div>
+
+    <div class="footer__base">
+      <span>© {year} {site.legalName}</span>
+      <span class="mono">GSTIN {site.gst}</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer { padding-block: 72px 28px; color: #aab4cc; }
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.1fr;
+    gap: 40px;
+  }
+  .footer__brand p { margin-top: 18px; max-width: 34ch; }
+  .footer__contact { display: grid; gap: 10px; margin-top: 22px; }
+  .footer__contact a { display: inline-flex; align-items: center; gap: 10px; color: #dfe5f2; width: fit-content; }
+  .footer__contact a:hover { color: #fff; }
+  .footer__h {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6f7d9c;
+    margin-bottom: 16px;
+  }
+  .footer__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .footer__list a { color: #dfe5f2; }
+  .footer__list a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+  .footer__addr { font-style: normal; line-height: 1.7; color: #dfe5f2; }
+  .footer__base {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+    margin-top: 56px; padding-top: 22px;
+    border-top: 1px solid rgb(255 255 255 / 10%);
+    font-size: 13px;
+  }
+  @media (max-width: 900px) {
+    .footer__grid { grid-template-columns: 1fr 1fr; }
+    .footer__brand { grid-column: 1 / -1; }
+  }
+  @media (max-width: 520px) {
+    .footer__grid { grid-template-columns: 1fr; }
+  }
+</style>

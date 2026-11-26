@@ -1,0 +1,42 @@
+---
+import site from '../data/site.json';
+import { url } from '../lib/url';
+
+interface Props { light?: boolean }
+const { light = false } = Astro.props;
+---
+<a href={url('/')} class:list={['logo', { 'logo--light': light }]} aria-label={`${site.name} home`}>
+  <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
+    <rect x="2" y="2" width="17" height="17" rx="1.5" fill="var(--red)" />
+    <rect x="21" y="2" width="17" height="17" rx="1.5" fill="var(--navy-700)" />
+    <rect x="2" y="21" width="17" height="17" rx="1.5" fill="var(--navy-700)" />
+    <rect x="21" y="21" width="17" height="17" rx="1.5" fill="var(--red)" />
+  </svg>
+  <span class="logo__text">
+    <span class="logo__name">POWERAMPS</span>
+    <span class="logo__sub">Technology Pvt. Ltd.</span>
+  </span>
+</a>
+
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); }
+  .logo__mark { width: 36px; height: 36px; flex: none; }
+  .logo__text { display: grid; line-height: 1; }
+  .logo__name {
+    font-weight: 800;
+    font-stretch: 125%;
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    color: var(--red);
+  }
+  .logo__sub {
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--navy-700);
+  }
+  .logo--light .logo__name { color: #fff; }
+  .logo--light .logo__sub { color: #9fb0d6; }
+</style>

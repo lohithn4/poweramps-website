@@ -1,0 +1,159 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import site from '../data/site.json';
+import { url, isActive } from '../lib/url';
+
+const nav = [
+  { href: '/panels', label: 'Panels' },
+  { href: '/#capabilities', label: 'Capabilities' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+const path = Astro.url.pathname;
+---
+<div class="topbar">
+  <div class="wrap topbar__inner">
+    <span class="topbar__item">
+      <span class="dot" aria-hidden="true"></span>
+      GST verified · Manufacturer since {site.established}
+    </span>
+    <span class="topbar__right">
+      <span class="topbar__item topbar__loc"><Icon name="pin" size={14} />{site.address.city}, {site.address.state}</span>
+      {site.phone && <a class="topbar__item" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={14} />{site.phone}</a>}
+      {site.email && <a class="topbar__item" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
+    </span>
+  </div>
+</div>
+
+<header class="header" data-header>
+  <div class="wrap header__inner">
+    <Logo />
+
+    <nav class="nav" aria-label="Main">
+      {nav.map((item) => (
+        <a href={url(item.href)} class:list={['nav__link', { 'is-active': !item.href.includes('#') && isActive(path, item.href) }]}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="header__cta">
+      <a class="btn btn--red btn--sm" href={url('/contact')}>Get a quote <Icon name="arrow" size={16} /></a>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu-btn>
+        <span class="sr-only">Menu</span>
+        <Icon name="menu" size={24} class="i-open" />
+        <Icon name="close" size={24} class="i-close" />
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-nav" class="mnav" aria-label="Mobile" data-mnav hidden>
+    <div class="wrap mnav__inner">
+      {nav.map((item) => <a href={url(item.href)} class="mnav__link">{item.label} <Icon name="arrow" size={18} /></a>)}
+      <a class="btn btn--red btn--block" href={url('/contact')}>Get a quote</a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-menu-btn]');
+  const nav = document.querySelector<HTMLElement>('[data-mnav]');
+  btn?.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    if (nav) nav.hidden = open;
+  });
+  nav?.querySelectorAll('a').forEach((a) =>
+    a.addEventListener('click', () => {
+      btn?.setAttribute('aria-expanded', 'false');
+      nav.hidden = true;
+    }),
+  );
+  const header = document.querySelector('[data-header]');
+  const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+</script>
+
+<style>
+  .topbar {
+    background: var(--navy-950);
+    color: #aab4cc;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .topbar__inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 36px; }
+  .topbar__right { display: flex; gap: 22px; }
+  .topbar__item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  a.topbar__item:hover { color: #fff; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 3px rgb(34 197 94 / 20%); }
+  @media (max-width: 720px) {
+    .topbar__right { display: none; }
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(255 255 255 / 92%);
+    backdrop-filter: saturate(1.4) blur(12px);
+    border-bottom: 1px solid var(--line);
+    transition: box-shadow .25s;
+  }
+  .header.is-scrolled { box-shadow: 0 6px 24px -12px rgb(13 22 38 / 18%); }
+  .header__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 72px; }
+
+  .nav { display: flex; gap: 6px; }
+  .nav__link {
+    position: relative;
+    padding: 10px 14px;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--ink-2);
+    border-radius: 6px;
+    transition: color .2s, background .2s;
+  }
+  .nav__link:hover { color: var(--ink); background: var(--paper); }
+  .nav__link.is-active { color: var(--navy-700); }
+  .nav__link.is-active::after {
+    content: '';
+    position: absolute;
+    left: 14px; right: 14px; bottom: -15px;
+    height: 2px;
+    background: var(--red);
+  }
+
+  .header__cta { display: flex; align-items: center; gap: 10px; }
+  .menu-btn {
+    display: none;
+    width: 44px; height: 44px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--white);
+    cursor: pointer;
+  }
+  .menu-btn :global(.i-close) { display: none; }
+  .menu-btn[aria-expanded='true'] :global(.i-open) { display: none; }
+  .menu-btn[aria-expanded='true'] :global(.i-close) { display: block; }
+
+  .mnav { border-top: 1px solid var(--line); background: var(--white); }
+  .mnav__inner { display: grid; gap: 4px; padding-block: 12px 20px; }
+  .mnav__link {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 4px;
+    font-size: 18px; font-weight: 600;
+    border-bottom: 1px solid var(--line);
+  }
+  .mnav .btn { margin-top: 12px; }
+
+  @media (max-width: 880px) {
+    .nav { display: none; }
+    .menu-btn { display: grid; }
+  }
+  @media (max-width: 420px) {
+    .header__cta .btn { display: none; }
+  }
+</style>

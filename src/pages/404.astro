@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/url';
+---
+<Base title="Page not found">
+  <section class="nf blueprint on-dark">
+    <div class="wrap nf__inner">
+      <span class="eyebrow">Error 404 · Open circuit</span>
+      <h1>This circuit isn't connected.</h1>
+      <p>The page you're looking for has moved or never existed.</p>
+      <div class="nf__actions">
+        <a class="btn btn--red" href={url('/panels')}>Browse panels <Icon name="arrow" size={18} /></a>
+        <a class="btn btn--ghost" href={url('/')}>Back to home</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf { padding-block: clamp(96px, 14vw, 180px); }
+  .nf__inner { display: grid; gap: 18px; justify-items: start; }
+  .nf h1 { font-size: clamp(36px, 6vw, 68px); color: #fff; }
+  .nf p { color: #aab4cc; font-size: 18px; }
+  .nf__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+</style>

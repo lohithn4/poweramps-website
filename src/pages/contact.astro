@@ -1,0 +1,114 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import EnquiryForm from '../components/EnquiryForm.astro';
+import site from '../data/site.json';
+import { url } from '../lib/url';
+
+const a = site.address;
+const fullAddress = `${a.line1}, ${a.line2}, ${a.city}, ${a.state} ${a.pincode}, ${a.country}`;
+const mapQuery = encodeURIComponent(`${a.line1}, ${a.city} ${a.pincode}`);
+---
+<Base title="Contact & Enquiry" description={`Request a quote for electrical panels from ${site.name}, ${a.city}.`}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>Contact</span>
+      </nav>
+      <h1>Let's talk about your panel.</h1>
+      <p>Share your ratings, SLD or BOQ and we'll come back with a proposal. Standard panels ship in 3–7 days.</p>
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="wrap contact">
+      <div class="contact__form">
+        <h2>Send an enquiry</h2>
+        <EnquiryForm />
+      </div>
+
+      <aside class="contact__side">
+        <div class="info-card">
+          <span class="info-card__icon"><Icon name="pin" /></span>
+          <div>
+            <h3>Works &amp; office</h3>
+            <address>{fullAddress}</address>
+            <a class="link-arrow" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noopener">Get directions <Icon name="arrow" size={16} /></a>
+          </div>
+        </div>
+
+        {site.phone && (
+          <a class="info-card" href={`tel:${site.phone.replace(/\s/g, '')}`}>
+            <span class="info-card__icon"><Icon name="phone" /></span>
+            <div><h3>Call us</h3><p>{site.phone}</p></div>
+          </a>
+        )}
+        {site.whatsapp && (
+          <a class="info-card" href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener">
+            <span class="info-card__icon info-card__icon--wa"><Icon name="whatsapp" /></span>
+            <div><h3>WhatsApp</h3><p>{site.whatsapp}</p></div>
+          </a>
+        )}
+        {site.email && (
+          <a class="info-card" href={`mailto:${site.email}`}>
+            <span class="info-card__icon"><Icon name="mail" /></span>
+            <div><h3>Email</h3><p>{site.email}</p></div>
+          </a>
+        )}
+
+        <a class="info-card" href={site.indiamart} target="_blank" rel="noopener">
+          <span class="info-card__icon"><Icon name="external" /></span>
+          <div><h3>IndiaMART</h3><p>View our verified supplier profile</p></div>
+        </a>
+
+        <div class="map">
+          <iframe
+            title={`Map showing ${site.name}`}
+            src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: clamp(28px, 4vw, 56px); align-items: start; }
+  .contact__form {
+    padding: clamp(24px, 3.5vw, 40px);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    margin-top: -88px;
+    position: relative;
+  }
+  .contact__form h2 { font-size: 26px; margin-bottom: 22px; }
+  .contact__side { display: grid; gap: 12px; }
+  .info-card {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 18px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  a.info-card:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); }
+  .info-card__icon {
+    display: grid; place-items: center; flex: none;
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--red-050); color: var(--red);
+  }
+  .info-card__icon--wa { background: rgb(31 157 85 / 12%); color: #1f9d55; }
+  .info-card h3 { font-size: 16px; font-stretch: 100%; }
+  .info-card p, .info-card address { margin-top: 4px; color: var(--ink-2); font-style: normal; font-size: 15px; }
+  .info-card .link-arrow { margin-top: 10px; font-size: 14px; }
+  .map { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 4 / 3; background: var(--plate); }
+  .map iframe { width: 100%; height: 100%; border: 0; display: block; }
+  @media (max-width: 900px) {
+    .contact { grid-template-columns: 1fr; }
+    .contact__form { margin-top: -48px; }
+  }
+</style>

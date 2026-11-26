@@ -1,0 +1,309 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PanelCard from '../../components/PanelCard.astro';
+import RatingPlate from '../../components/RatingPlate.astro';
+import site from '../../data/site.json';
+import { getPanels, getCategoryMap, type Panel } from '../../lib/panels';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const panels = await getPanels();
+  return panels.map((panel) => ({ params: { slug: panel.id }, props: { panel } }));
+}
+
+interface Props { panel: Panel }
+const { panel } = Astro.props;
+const { Content } = await render(panel);
+const d = panel.data;
+const catMap = await getCategoryMap();
+const category = catMap.get(d.category.id);
+const images = [d.image, ...d.gallery];
+
+const all = await getPanels();
+const related = all.filter((p) => p.id !== panel.id && p.data.category.id === d.category.id).slice(0, 3);
+const more = related.length < 3 ? all.filter((p) => p.id !== panel.id && !related.includes(p)).slice(0, 3 - related.length) : [];
+
+const enquiry = `Hello ${site.name}, I'd like a quote for: ${d.title}`;
+const enquiryHref = url(`/contact?panel=${encodeURIComponent(d.title)}`);
+const waHref = site.whatsapp ? `https://wa.me/${site.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(enquiry)}` : '';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: d.title,
+  description: d.summary,
+  image: images.map((i) => new URL(url(i), Astro.site).href),
+  category: category?.data.title,
+  brand: { '@type': 'Brand', name: site.name },
+  manufacturer: { '@type': 'Organization', name: site.legalName },
+  additionalProperty: d.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
+};
+---
+<Base title={d.title} description={d.summary} image={d.image} jsonLd={jsonLd}>
+  <section class="detail">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span>
+        <a href={url('/panels')}>Panels</a><span aria-hidden="true">/</span>
+        {category && <><a href={url(`/panels?category=${category.id}`)}>{category.data.title}</a><span aria-hidden="true">/</span></>}
+        <span>{d.title}</span>
+      </nav>
+
+      <div class="detail__grid">
+        <!-- Gallery -->
+        <div class="gallery" data-gallery>
+          <div class="gallery__main">
+            {category && <span class="tag gallery__tag">{category.data.code}</span>}
+            <img src={url(images[0])} alt={d.title} width="900" height="900" data-main />
+            {images.length > 1 && (
+              <div class="gallery__nav">
+                <button type="button" data-prev aria-label="Previous image"><Icon name="arrow-left" size={18} /></button>
+                <span class="mono" data-count>1 / {images.length}</span>
+                <button type="button" data-next aria-label="Next image"><Icon name="arrow" size={18} /></button>
+              </div>
+            )}
+          </div>
+          {images.length > 1 && (
+            <div class="gallery__thumbs">
+              {images.map((src, i) => (
+                <button type="button" class:list={['thumb', { 'is-active': i === 0 }]} data-thumb={i} data-src={url(src)} aria-label={`Show image ${i + 1}`}>
+                  <img src={url(src)} alt="" loading="lazy" width="120" height="120" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <!-- Summary -->
+        <div class="info">
+          {category && <span class="eyebrow">{category.data.title}</span>}
+          <h1>{d.title}</h1>
+          <p class="info__summary">{d.summary}</p>
+
+          {d.highlights.length > 0 && <RatingPlate items={d.highlights} serial={`Ref. ${category?.data.code ?? 'PA'}-${String(d.order).padStart(3, '0')}`} />}
+
+          {site.showPrices && d.price && (
+            <p class="price"><span class="mono">Indicative price</span><strong>{d.price}</strong></p>
+          )}
+
+          <div class="info__actions">
+            <a class="btn btn--red" href={enquiryHref}>Request a quote <Icon name="arrow" size={18} /></a>
+            {waHref && <a class="btn btn--wa" href={waHref} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} />WhatsApp</a>}
+            {site.phone && <a class="btn btn--ghost" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={18} />Call</a>}
+          </div>
+
+          <ul class="info__assure">
+            <li><Icon name="cog" size={18} />Built to your ratings &amp; component make</li>
+            <li><Icon name="gauge" size={18} />Factory tested before dispatch</li>
+            <li><Icon name="wrench" size={18} />Installation &amp; maintenance available</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specs-sec">
+    <div class="wrap specs-sec__grid">
+      <div class="specs-sec__main">
+        <div class="block">
+          <h2 class="block__h">Overview</h2>
+          <div class="prose"><Content /></div>
+        </div>
+
+        {d.features.length > 0 && (
+          <div class="block">
+            <h2 class="block__h">Key features</h2>
+            <ul class="features">
+              {d.features.map((f) => <li><span><Icon name="check" size={16} /></span>{f}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {d.applications.length > 0 && (
+          <div class="block">
+            <h2 class="block__h">Applications</h2>
+            <ul class="apps">{d.applications.map((a) => <li class="chip">{a}</li>)}</ul>
+          </div>
+        )}
+      </div>
+
+      {d.specs.length > 0 && (
+        <aside class="block spec-table">
+          <h2 class="block__h">Technical specifications</h2>
+          <table>
+            <tbody>
+              {d.specs.map((s) => (
+                <tr><th scope="row">{s.label}</th><td>{s.value}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p class="spec-note">Ratings shown are for the standard build. All panels can be customised. <a href={enquiryHref}>Ask for a datasheet</a>.</p>
+        </aside>
+      )}
+    </div>
+  </section>
+
+  <section class="section--tight related">
+    <div class="wrap">
+      <div class="section-head section-head--split">
+        <h2>{related.length ? 'Related panels' : 'More panels'}</h2>
+        <a class="link-arrow" href={url('/panels')}>Full catalogue <Icon name="arrow" /></a>
+      </div>
+      <div class="cards">
+        {[...related, ...more].map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((g) => {
+    const main = g.querySelector<HTMLImageElement>('[data-main]')!;
+    const thumbs = [...g.querySelectorAll<HTMLButtonElement>('[data-thumb]')];
+    const count = g.querySelector<HTMLElement>('[data-count]');
+    let i = 0;
+    const show = (n: number) => {
+      if (!thumbs.length) return;
+      i = (n + thumbs.length) % thumbs.length;
+      main.classList.add('is-swapping');
+      setTimeout(() => {
+        main.src = thumbs[i].dataset.src!;
+        main.classList.remove('is-swapping');
+      }, 120);
+      thumbs.forEach((t, k) => t.classList.toggle('is-active', k === i));
+      if (count) count.textContent = `${i + 1} / ${thumbs.length}`;
+    };
+    thumbs.forEach((t, k) => t.addEventListener('click', () => show(k)));
+    g.querySelector('[data-prev]')?.addEventListener('click', () => show(i - 1));
+    g.querySelector('[data-next]')?.addEventListener('click', () => show(i + 1));
+    g.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(i - 1);
+      if (e.key === 'ArrowRight') show(i + 1);
+    });
+  });
+</script>
+
+<style>
+  .detail { padding-block: 28px clamp(48px, 6vw, 80px); background: var(--white); border-bottom: 1px solid var(--line); }
+  .detail__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(28px, 4vw, 64px);
+    margin-top: 24px;
+    align-items: start;
+  }
+
+  .gallery { position: sticky; top: 96px; }
+  .gallery__main {
+    position: relative;
+    aspect-ratio: 1;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: radial-gradient(100% 80% at 50% 0%, #fff 0%, var(--plate) 100%);
+    overflow: hidden;
+  }
+  .gallery__main img {
+    width: 100%; height: 100%; object-fit: contain; padding: 24px;
+    mix-blend-mode: multiply;
+    transition: opacity .15s;
+  }
+  .gallery__main img.is-swapping { opacity: 0; }
+  .gallery__tag { position: absolute; top: 16px; left: 16px; z-index: 1; }
+  .gallery__nav {
+    position: absolute; right: 14px; bottom: 14px;
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 92%);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    font-size: 12px; color: var(--ink-2);
+  }
+  .gallery__nav span { padding: 0 6px; }
+  .gallery__nav button {
+    display: grid; place-items: center;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 0; background: transparent; cursor: pointer;
+  }
+  .gallery__nav button:hover { background: var(--paper); }
+  .gallery__thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px; margin-top: 12px; }
+  .thumb {
+    aspect-ratio: 1; padding: 0;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    background: var(--plate); overflow: hidden; cursor: pointer;
+    transition: border-color .2s;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 6px; mix-blend-mode: multiply; }
+  .thumb:hover { border-color: var(--line-2); }
+  .thumb.is-active { border-color: var(--navy-700); box-shadow: 0 0 0 3px rgb(27 52 120 / 12%); }
+
+  .info { display: grid; gap: 20px; }
+  .info h1 { font-size: clamp(32px, 4.2vw, 50px); }
+  .info__summary { font-size: 18px; color: var(--ink-2); }
+  .price { display: flex; align-items: baseline; gap: 12px; }
+  .price span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .price strong { font-size: 24px; font-stretch: 110%; color: var(--navy-800); }
+  .info__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .info__assure {
+    list-style: none; margin: 4px 0 0; padding: 18px 0 0;
+    display: grid; gap: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 15px; color: var(--ink-2);
+  }
+  .info__assure li { display: flex; align-items: center; gap: 10px; }
+  .info__assure :global(svg) { color: var(--red); flex: none; }
+
+  @media (max-width: 900px) {
+    .detail__grid { grid-template-columns: 1fr; }
+    .gallery { position: static; }
+  }
+
+  .specs-sec { padding-block: clamp(48px, 6vw, 88px); }
+  .specs-sec__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: start; }
+  .specs-sec__main { display: grid; gap: 40px; }
+  .block__h {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; font-family: var(--font-mono); font-weight: 600; font-stretch: 100%;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy-800);
+    margin-bottom: 18px;
+  }
+  .block__h::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .features { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .features li { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; }
+  .features span {
+    display: grid; place-items: center; flex: none;
+    width: 24px; height: 24px; margin-top: 1px; border-radius: 6px;
+    background: rgb(34 197 94 / 12%); color: #15803d;
+  }
+  .apps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .spec-table {
+    position: sticky; top: 96px;
+    padding: 26px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .spec-table table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .spec-table tr { border-bottom: 1px solid var(--line); }
+  .spec-table tr:last-child { border-bottom: 0; }
+  .spec-table th, .spec-table td { padding: 12px 0; text-align: left; vertical-align: top; }
+  .spec-table th { width: 44%; padding-right: 16px; font-weight: 500; color: var(--muted); }
+  .spec-table td { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--ink); }
+  .spec-table tbody tr:nth-child(odd) { background: linear-gradient(90deg, var(--paper), transparent); }
+  .spec-note { margin-top: 18px; font-size: 13px; color: var(--muted); }
+  .spec-note a { color: var(--navy-700); text-decoration: underline; }
+
+  @media (max-width: 900px) {
+    .specs-sec__grid { grid-template-columns: 1fr; }
+    .spec-table { position: static; }
+  }
+
+  .related { background: var(--white); border-top: 1px solid var(--line); }
+  .related h2 { font-size: clamp(26px, 3vw, 34px); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 22px; }
+</style>

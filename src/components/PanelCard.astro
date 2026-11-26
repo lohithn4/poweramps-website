@@ -1,0 +1,139 @@
+---
+import Icon from './Icon.astro';
+import type { Panel, Category } from '../lib/panels';
+import { url } from '../lib/url';
+
+interface Props {
+  panel: Panel;
+  category?: Category;
+  index?: number;
+}
+const { panel, category, index = 0 } = Astro.props;
+const { title, summary, image, highlights } = panel.data;
+const search = [title, summary, category?.data.title, ...highlights.map((h) => h.value)].join(' ').toLowerCase();
+---
+<article
+  class="card reveal"
+  style={`transition-delay:${Math.min(index, 6) * 50}ms`}
+  data-card
+  data-category={panel.data.category.id}
+  data-search={search}
+>
+  <a href={url(`/panels/${panel.id}`)} class="card__link">
+    <div class="card__media">
+      <img src={url(image)} alt={title} loading="lazy" decoding="async" width="600" height="450" />
+      <span class="card__led" aria-hidden="true"></span>
+      {category && <span class="tag card__tag">{category.data.code}</span>}
+    </div>
+    <div class="card__body">
+      {category && <span class="card__cat">{category.data.title}</span>}
+      <h3 class="card__title">{title}</h3>
+      {highlights.length > 0 && (
+        <dl class="card__specs">
+          {highlights.slice(0, 4).map((h) => (
+            <div>
+              <dt>{h.label}</dt>
+              <dd>{h.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <span class="card__more">View specifications <Icon name="arrow" size={16} /></span>
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line-2); }
+  .card__link { display: flex; flex-direction: column; height: 100%; }
+
+  .card__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #fff 0%, var(--plate) 100%);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 14px;
+    mix-blend-mode: multiply;
+    transition: transform .6s var(--ease);
+  }
+  .card:hover .card__media img { transform: scale(1.04); }
+
+  .card__tag { position: absolute; top: 14px; left: 14px; }
+  .card__led {
+    position: absolute;
+    top: 21px; right: 16px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: #c3c9d3;
+    box-shadow: inset 0 1px 1px rgb(0 0 0 / 20%);
+    transition: background .3s, box-shadow .3s;
+  }
+  .card:hover .card__led { background: var(--live); box-shadow: 0 0 0 4px rgb(34 197 94 / 18%), 0 0 12px var(--live); }
+
+  .card__body { display: flex; flex-direction: column; gap: 10px; padding: 20px 22px 22px; flex: 1; }
+  .card__cat {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card__title { font-size: 20px; line-height: 1.2; font-stretch: 108%; }
+
+  .card__specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin: 6px 0 4px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card__specs div { background: var(--paper); padding: 8px 10px; min-width: 0; }
+  .card__specs dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card__specs dd {
+    margin: 2px 0 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card__more {
+    margin-top: auto;
+    padding-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--navy-700);
+  }
+  .card__more :global(svg) { transition: transform .25s var(--ease); }
+  .card:hover .card__more :global(svg) { transform: translateX(4px); }
+</style>

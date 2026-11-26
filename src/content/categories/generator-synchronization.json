@@ -1,0 +1,6 @@
+{
+  "title": "Generator & Synchronization",
+  "code": "GS",
+  "order": 3,
+  "description": "AMF and DG synchronization panels that bring standby generators online automatically and share load between them."
+}

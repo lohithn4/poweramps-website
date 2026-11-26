@@ -1,0 +1,172 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PanelCard from '../../components/PanelCard.astro';
+import { getPanels, getCategories, getCategoryMap } from '../../lib/panels';
+import { url } from '../../lib/url';
+
+const panels = await getPanels();
+const categories = await getCategories();
+const catMap = await getCategoryMap();
+const countFor = (id: string) => panels.filter((p) => p.data.category.id === id).length;
+---
+<Base
+  title="Electrical Panels Catalogue"
+  description="Browse MCC, PLC, VFD, AMF, DG synchronization, fire-fighting, UPS distribution and bus duct tap-off panels with full specifications."
+>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>Panels</span>
+      </nav>
+      <h1>Panel catalogue</h1>
+      <p>{panels.length} panels across {categories.length} product lines. Every one can be customised to your ratings, components and site conditions.</p>
+    </div>
+  </section>
+
+  <section class="catalog">
+    <div class="toolbar" data-toolbar>
+      <div class="wrap toolbar__inner">
+        <div class="filters" role="group" aria-label="Filter by product line">
+          <button type="button" class="filter is-active" data-filter="all" aria-pressed="true">
+            All <span>{panels.length}</span>
+          </button>
+          {categories.map((c) => (
+            <button type="button" class="filter" data-filter={c.id} aria-pressed="false">
+              {c.data.title} <span>{countFor(c.id)}</span>
+            </button>
+          ))}
+        </div>
+        <label class="search">
+          <Icon name="search" size={18} />
+          <span class="sr-only">Search panels</span>
+          <input type="search" placeholder="Search e.g. 415 V, VFD, 25 kA" data-search autocomplete="off" />
+        </label>
+      </div>
+    </div>
+
+    <div class="wrap catalog__body">
+      <p class="result mono" aria-live="polite" data-result>Showing {panels.length} panels</p>
+      <div class="cards" data-grid>
+        {panels.map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i % 6} />)}
+      </div>
+      <div class="empty" data-empty hidden>
+        <Icon name="search" size={28} />
+        <h2>No panels match that search.</h2>
+        <p>Try a different term, or <a href={url('/contact')}>tell us what you need</a>. Most of our panels are built to order.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-card]')];
+  const input = document.querySelector<HTMLInputElement>('[data-search]')!;
+  const result = document.querySelector<HTMLElement>('[data-result]')!;
+  const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+
+  const params = new URLSearchParams(location.search);
+  let category = params.get('category') ?? 'all';
+  if (!buttons.some((b) => b.dataset.filter === category)) category = 'all';
+  input.value = params.get('q') ?? '';
+
+  function apply() {
+    const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const card of cards) {
+      const okCat = category === 'all' || card.dataset.category === category;
+      const hay = card.dataset.search ?? '';
+      const okText = terms.every((t) => hay.includes(t));
+      const visible = okCat && okText;
+      card.hidden = !visible;
+      if (visible) { shown++; card.classList.add('is-in'); }
+    }
+    buttons.forEach((b) => {
+      const on = b.dataset.filter === category;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    result.textContent = `Showing ${shown} panel${shown === 1 ? '' : 's'}`;
+    empty.hidden = shown > 0;
+
+    const next = new URLSearchParams();
+    if (category !== 'all') next.set('category', category);
+    if (input.value.trim()) next.set('q', input.value.trim());
+    const qs = next.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  }
+
+  buttons.forEach((b) => b.addEventListener('click', () => { category = b.dataset.filter!; apply(); }));
+  input.addEventListener('input', apply);
+  apply();
+</script>
+
+<style>
+  .toolbar {
+    position: sticky; top: 72px; z-index: 20;
+    background: rgb(255 255 255 / 94%);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .toolbar__inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 2px; }
+  @media (max-width: 880px) {
+    .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); }
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--white);
+    font-size: 14px; font-weight: 500; color: var(--ink-2);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .filter span {
+    font-family: var(--font-mono); font-size: 11px;
+    padding: 1px 6px; border-radius: 999px;
+    background: var(--paper); color: var(--muted);
+  }
+  .filter:hover { border-color: var(--line-2); color: var(--ink); }
+  .filter.is-active { background: var(--navy-800); border-color: var(--navy-800); color: #fff; }
+  .filter.is-active span { background: rgb(255 255 255 / 16%); color: #fff; }
+
+  .search {
+    position: relative; flex: none; width: min(320px, 100%);
+    display: flex; align-items: center;
+    color: var(--muted);
+  }
+  .search :global(svg) { position: absolute; left: 14px; pointer-events: none; }
+  .search input {
+    width: 100%; min-height: 44px;
+    padding: 0 14px 0 42px;
+    border: 1.5px solid var(--line); border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color .2s, background .2s, box-shadow .2s;
+  }
+  .search input:focus { outline: none; background: var(--white); border-color: var(--navy-600); box-shadow: 0 0 0 4px rgb(36 67 154 / 12%); }
+
+  @media (max-width: 880px) {
+    .toolbar__inner { flex-direction: column-reverse; align-items: stretch; gap: 12px; }
+    .search { width: 100%; }
+  }
+
+  .catalog__body { padding-block: 28px 96px; }
+  .result { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 22px; }
+  .cards :global([hidden]) { display: none; }
+
+  .empty {
+    display: grid; justify-items: center; gap: 10px; text-align: center;
+    padding: 64px 24px;
+    border: 1.5px dashed var(--line-2); border-radius: var(--radius-lg);
+    color: var(--muted);
+  }
+  .empty h2 { font-size: 22px; color: var(--ink); }
+  .empty a { color: var(--navy-700); text-decoration: underline; }
+</style>

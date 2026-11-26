@@ -1,0 +1,528 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PanelCard from '../components/PanelCard.astro';
+import RatingPlate from '../components/RatingPlate.astro';
+import site from '../data/site.json';
+import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
+import { url } from '../lib/url';
+
+const panels = await getPanels();
+const categories = await getCategories();
+const catMap = await getCategoryMap();
+const featured = panels.filter((p) => p.data.featured).slice(0, 6);
+const hero = featured[0] ?? panels[0];
+const heroImage = hero.data.gallery[0] ?? hero.data.image;
+const countFor = (id: string) => panels.filter((p) => p.data.category.id === id).length;
+const years = new Date().getFullYear() - site.established;
+
+const stats = [
+  { value: `${years}+`, label: 'Years building panels', note: `Since ${site.established}` },
+  { value: String(panels.length), label: 'Panel models', note: `${categories.length} product lines` },
+  { value: '6300 A', label: 'Busbar rating', note: 'MCC & synchronizing' },
+  { value: '35 kA', label: 'Fault level', note: 'Short-circuit withstand' },
+];
+
+const capabilities = [
+  {
+    icon: 'cog',
+    title: 'PLC & HMI platforms',
+    text: 'Programmed and tested in-house on the platform your plant already runs.',
+    chips: ['Siemens', 'Schneider', 'Allen Bradley', 'Delta', 'Mitsubishi', 'ABB', 'Omron'],
+  },
+  {
+    icon: 'gauge',
+    title: 'Drives & starters',
+    text: 'DOL, star-delta, soft starter or VFD, sized to each motor.',
+    chips: ['ABB', 'Danfoss', 'Siemens', 'Schneider', 'Delta', 'INVT', 'Fuji', 'Yaskawa'],
+  },
+  {
+    icon: 'layers',
+    title: 'Connectivity',
+    text: 'Panels that report to your SCADA, BMS or remote monitoring.',
+    chips: ['Modbus RTU', 'Modbus TCP', 'Ethernet', 'Profibus', 'Profinet', 'BACnet', 'SCADA'],
+  },
+  {
+    icon: 'shield',
+    title: 'Protection built in',
+    text: 'Every panel is protected against the faults that stop plants.',
+    chips: ['Short circuit', 'Overload', 'Phase failure', 'Single phasing', 'Under-voltage', 'Earth fault', 'Dry run'],
+  },
+] as const;
+
+const steps = [
+  { icon: 'file', title: 'Requirement & design', text: 'We study your SLD, load list or BOQ and propose the panel layout and components.' },
+  { icon: 'layers', title: 'Fabrication', text: 'CRCA / MS enclosures, cut, bent and powder coated to the required IP rating.' },
+  { icon: 'bolt', title: 'Assembly & wiring', text: 'Copper or aluminium busbars, switchgear and control wiring, ferruled and dressed.' },
+  { icon: 'gauge', title: 'Testing', text: 'Insulation, function and logic tests before the panel leaves the works.' },
+  { icon: 'truck', title: 'Delivery', text: 'Packed for transit. Standard panels ship in 3–7 days.' },
+  { icon: 'wrench', title: 'Install & maintain', text: 'On-site installation, commissioning and ongoing maintenance support.' },
+] as const;
+---
+<Base>
+  <!-- ================= HERO ================= -->
+  <section class="hero blueprint on-dark">
+    <svg class="hero__sld" viewBox="0 0 640 520" aria-hidden="true">
+      <g class="sld-lines">
+        <path d="M320 0v70" />
+        <circle cx="320" cy="92" r="22" /><circle cx="320" cy="122" r="22" />
+        <path d="M320 144v46" />
+        <rect x="306" y="190" width="28" height="28" /><path d="M306 218l28-28" />
+        <path d="M320 218v42" />
+        <path d="M40 260h560" class="sld-bus" />
+        <path d="M80 260v70M200 260v70M320 260v70M440 260v70M560 260v70" />
+        <rect x="68" y="330" width="24" height="24" /><rect x="188" y="330" width="24" height="24" /><rect x="308" y="330" width="24" height="24" /><rect x="428" y="330" width="24" height="24" /><rect x="548" y="330" width="24" height="24" />
+        <path d="M80 354v60M200 354v60M320 354v60M440 354v60M560 354v60" />
+        <circle cx="80" cy="436" r="22" /><circle cx="200" cy="436" r="22" /><circle cx="320" cy="436" r="22" /><circle cx="440" cy="436" r="22" /><circle cx="560" cy="436" r="22" />
+      </g>
+      <g class="sld-flow">
+        <path d="M320 0v70M320 144v46M320 218v42M320 260h-240v70M320 260h240v70M320 260v70M320 260h-120v70M320 260h120v70" />
+      </g>
+      <g class="sld-text">
+        <text x="350" y="112">11kV / 433V</text>
+        <text x="66" y="442">M</text><text x="186" y="442">M</text><text x="306" y="442">M</text><text x="426" y="442">M</text><text x="546" y="442">M</text>
+        <text x="40" y="250">415V 3Ø 50Hz</text>
+      </g>
+    </svg>
+
+    <div class="wrap hero__inner">
+      <div class="hero__copy">
+        <span class="eyebrow">LT panel manufacturer · {site.address.city}</span>
+        <h1>Electrical panels engineered for <em>control</em>, <em>power</em> &amp; <em>safety</em>.</h1>
+        <p class="hero__lead">
+          {site.name} designs, builds and services MCC, PLC, VFD, AMF, DG synchronization, fire-fighting
+          and power distribution panels, all wired, tested and backed by our own service team.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--red" href={url('/panels')}>Explore panels <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--ghost" href={url('/contact')}>Request a quote</a>
+        </div>
+        <ul class="hero__trust">
+          <li><Icon name="check" size={16} />In-house design &amp; fabrication</li>
+          <li><Icon name="check" size={16} />Factory tested</li>
+          <li><Icon name="check" size={16} />Installation &amp; service</li>
+        </ul>
+      </div>
+
+      <div class="hero__show">
+        <a class="hero__frame" href={url(`/panels/${hero.id}`)}>
+          <span class="hero__status"><span class="led"></span>Featured · {catMap.get(hero.data.category.id)?.data.code}</span>
+          <img src={url(heroImage)} alt={hero.data.title} width="720" height="720" fetchpriority="high" />
+          <span class="hero__caption">{hero.data.title} <Icon name="arrow" size={16} /></span>
+        </a>
+        <RatingPlate class="hero__plate" items={hero.data.highlights} serial={`No. ${String(hero.data.order).padStart(3, '0')}`} />
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS ================= -->
+  <section class="stats">
+    <div class="wrap stats__grid">
+      {stats.map((s) => (
+        <div class="stat reveal">
+          <span class="stat__value">{s.value}</span>
+          <span class="stat__label">{s.label}</span>
+          <span class="stat__note">{s.note}</span>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ================= CATEGORIES (busbar) ================= -->
+  <section class="section grid-paper">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Product lines</span>
+        <h2>Every product line, fed from one busbar.</h2>
+        <p>Pick a line to see its panels, ratings and specification sheets.</p>
+      </div>
+
+      <div class="bus">
+        <div class="bus__bar" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <em class="bus__label">R · Y · B · 415 V · 50 Hz</em>
+        </div>
+        <ul class="bus__feeders">
+          {categories.map((c, i) => (
+            <li class="reveal" style={`transition-delay:${i * 70}ms`}>
+              <a class="feeder" href={url(`/panels?category=${c.id}`)}>
+                <span class="feeder__drop" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 16l8-8" /></svg>
+                </span>
+                <span class="feeder__card">
+                  <span class="feeder__top">
+                    <span class="tag">{c.data.code}</span>
+                    <span class="feeder__count">{String(countFor(c.id)).padStart(2, '0')} panels</span>
+                  </span>
+                  <span class="feeder__title">{c.data.title}</span>
+                  <span class="feeder__desc">{c.data.description}</span>
+                  <span class="feeder__go">Browse <Icon name="arrow" size={16} /></span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURED ================= -->
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head section-head--split reveal">
+        <div style="display:grid;gap:14px">
+          <span class="eyebrow">Featured panels</span>
+          <h2>Built to order, proven in the field.</h2>
+        </div>
+        <a class="btn btn--ghost" href={url('/panels')}>View all {panels.length} panels <Icon name="arrow" size={18} /></a>
+      </div>
+      <div class="cards">
+        {featured.map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CAPABILITIES ================= -->
+  <section id="capabilities" class="section caps">
+    <div class="wrap caps__grid">
+      <div class="caps__intro reveal">
+        <span class="eyebrow">Capabilities</span>
+        <h2>Brand-neutral engineering, protection by default.</h2>
+        <p>
+          We don't lock you into one switchgear or automation brand. Tell us what your plant
+          standardises on and we'll build around it, or recommend what fits your budget and duty.
+        </p>
+        <a class="link-arrow" href={url('/contact')}>Discuss your specification <Icon name="arrow" /></a>
+      </div>
+      <div class="caps__cards">
+        {capabilities.map((c, i) => (
+          <div class="cap reveal" style={`transition-delay:${i * 80}ms`}>
+            <span class="cap__icon"><Icon name={c.icon} size={22} /></span>
+            <h3>{c.title}</h3>
+            <p>{c.text}</p>
+            <ul class="cap__chips">{c.chips.map((ch) => <li>{ch}</li>)}</ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROCESS ================= -->
+  <section id="process" class="section blueprint on-dark">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">How we work</span>
+        <h2>From single-line diagram to switched-on.</h2>
+        <p>One team handles design, fabrication, testing and service, so you have one point of responsibility.</p>
+      </div>
+      <ol class="steps">
+        {steps.map((s, i) => (
+          <li class="step reveal" style={`transition-delay:${i * 70}ms`}>
+            <span class="step__num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="step__icon"><Icon name={s.icon} size={22} /></span>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section class="section--tight cta-wrap">
+    <div class="wrap">
+      <div class="cta reveal">
+        <div>
+          <span class="eyebrow">Get a quote</span>
+          <h2>Have an SLD, BOQ or motor list?</h2>
+          <p>Send it over. We'll come back with a panel proposal and price.</p>
+        </div>
+        <div class="cta__actions">
+          <a class="btn btn--red" href={url('/contact')}>Send enquiry <Icon name="arrow" size={18} /></a>
+          {site.whatsapp && <a class="btn btn--wa" href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} />WhatsApp</a>}
+          {site.phone && <a class="btn btn--ghost" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={18} />{site.phone}</a>}
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero { position: relative; overflow: hidden; padding-block: clamp(56px, 8vw, 104px) clamp(64px, 9vw, 120px); }
+  .hero::after {
+    content: '';
+    position: absolute; inset: auto 0 0 0; height: 140px;
+    background: linear-gradient(to bottom, transparent, rgb(8 17 41 / 60%));
+    pointer-events: none;
+  }
+  .hero__inner {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+  }
+  .hero h1 {
+    margin-top: 20px;
+    font-size: clamp(38px, 5.8vw, 72px);
+    line-height: 1.02;
+    color: #fff;
+  }
+  .hero h1 em { font-style: normal; color: #ff5258; }
+  .hero__lead { margin-top: 22px; font-size: clamp(17px, 1.6vw, 19px); color: #b7c1d8; max-width: 56ch; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .hero__trust {
+    display: flex; flex-wrap: wrap; gap: 10px 22px;
+    list-style: none; padding: 0; margin: 32px 0 0;
+    font-size: 14px; color: #c9d1e3;
+  }
+  .hero__trust li { display: inline-flex; align-items: center; gap: 8px; }
+  .hero__trust :global(svg) { color: var(--live); }
+
+  .hero__show { position: relative; padding-bottom: 72px; }
+  .hero__frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    max-width: 520px;
+    margin-left: auto;
+    border-radius: 20px;
+    background: radial-gradient(100% 80% at 50% 10%, #fff 0%, #e7ebf0 100%);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / 10%);
+    overflow: hidden;
+    transition: transform .5s var(--ease);
+  }
+  .hero__frame:hover { transform: translateY(-4px); }
+  .hero__frame img { width: 100%; height: 100%; object-fit: contain; padding: 60px 28px 28px; mix-blend-mode: multiply; }
+  .hero__status {
+    position: absolute; top: 16px; left: 16px; z-index: 1;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--navy-900);
+    color: #fff;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .led {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 10px var(--live);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .hero__caption {
+    position: absolute; top: 18px; right: 18px; left: 45%;
+    display: flex; justify-content: flex-end; align-items: center; gap: 6px;
+    text-align: right;
+    font-weight: 600; font-size: 13px; line-height: 1.3; color: var(--navy-800);
+  }
+  .hero__caption :global(svg) { flex: none; transition: transform .25s var(--ease); }
+  .hero__frame:hover .hero__caption :global(svg) { transform: translateX(3px); }
+  .hero__plate {
+    position: absolute;
+    left: 0; bottom: 0;
+    width: min(340px, 78%);
+    transform: rotate(-1.5deg);
+  }
+
+  .hero__sld {
+    position: absolute;
+    right: -60px; top: 40px;
+    width: min(760px, 70vw);
+    opacity: .5;
+    pointer-events: none;
+  }
+  .sld-lines { fill: none; stroke: #2c4a94; stroke-width: 1.5; }
+  .sld-bus { stroke-width: 5; stroke: #35569f; }
+  .sld-flow path {
+    fill: none; stroke: #ff4d55; stroke-width: 2;
+    stroke-dasharray: 3 14;
+    animation: flow 1.6s linear infinite;
+  }
+  .sld-text { fill: #5a75b5; font-family: var(--font-mono); font-size: 12px; }
+  @keyframes flow { to { stroke-dashoffset: -34; } }
+
+  @media (max-width: 960px) {
+    .hero__inner { grid-template-columns: 1fr; }
+    .hero__show { max-width: 520px; width: 100%; margin-inline: auto; }
+    .hero__frame { margin-inline: auto; }
+    .hero__sld { opacity: .28; width: 120vw; right: -30vw; top: auto; bottom: 0; }
+  }
+
+  /* ---------- Stats ---------- */
+  .stats { background: var(--white); border-bottom: 1px solid var(--line); }
+  .stats__grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .stat { display: grid; gap: 4px; padding: 32px 24px; border-left: 1px solid var(--line); }
+  .stat:first-child { border-left: 0; padding-left: 0; }
+  .stat__value { font-size: clamp(30px, 3.6vw, 44px); font-weight: 800; font-stretch: 112%; letter-spacing: -0.02em; color: var(--navy-800); line-height: 1; }
+  .stat__label { font-weight: 600; margin-top: 8px; }
+  .stat__note { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  @media (max-width: 760px) {
+    .stats__grid { grid-template-columns: 1fr 1fr; }
+    .stat { padding: 24px 16px; }
+    .stat:nth-child(odd) { border-left: 0; padding-left: 0; }
+    .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  }
+
+  /* ---------- Busbar categories ---------- */
+  .bus { position: relative; --drop: 56px; }
+  .bus__bar {
+    position: relative;
+    display: grid; gap: 3px;
+    padding: 6px 0;
+  }
+  .bus__bar span { height: 6px; border-radius: 3px; }
+  .bus__bar span:nth-child(1) { background: #d71920; }
+  .bus__bar span:nth-child(2) { background: #f2b705; }
+  .bus__bar span:nth-child(3) { background: #1f4fbf; }
+  .bus__label {
+    position: absolute; right: 0; top: -26px;
+    font-style: normal; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--muted);
+  }
+  .bus__feeders {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+  }
+  .feeder { display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .feeder__drop {
+    position: relative;
+    display: grid; place-items: center;
+    width: 2px; height: var(--drop);
+    background: var(--ink-2);
+  }
+  .feeder__drop::after {
+    content: '';
+    position: absolute; left: -3px; top: 0;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 10px var(--red);
+    opacity: 0;
+  }
+  .feeder:hover .feeder__drop::after { animation: drop .9s var(--ease) infinite; }
+  @keyframes drop { 0% { top: 0; opacity: 1; } 100% { top: calc(100% - 8px); opacity: .2; } }
+  .feeder__drop svg {
+    width: 26px; height: 26px;
+    background: var(--white);
+    fill: none; stroke: var(--ink-2); stroke-width: 1.8;
+    transition: stroke .25s;
+  }
+  .feeder:hover .feeder__drop svg { stroke: var(--red); }
+  .feeder:hover .feeder__drop svg path { d: path('M8 12h8'); }
+  .feeder__drop svg path { transition: d .25s var(--ease); }
+
+  .feeder__card {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; flex: 1;
+    padding: 20px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--navy-800);
+    border-radius: 0 0 12px 12px;
+    transition: border-color .25s, box-shadow .3s, transform .3s var(--ease);
+  }
+  .feeder:hover .feeder__card { border-top-color: var(--red); box-shadow: var(--shadow); transform: translateY(-3px); }
+  .feeder__top { display: flex; justify-content: space-between; align-items: center; }
+  .feeder__count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .feeder__title { font-weight: 700; font-stretch: 110%; font-size: 19px; line-height: 1.2; }
+  .feeder__desc { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .feeder__go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; color: var(--navy-700); }
+
+  @media (max-width: 760px) {
+    .bus { padding-left: 28px; --drop: 28px; }
+    .bus__bar { position: absolute; left: 0; top: 0; bottom: 0; grid-auto-flow: column; padding: 0; }
+    .bus__bar span { width: 5px; height: auto; }
+    .bus__label { display: none; }
+    .bus__feeders { grid-template-columns: 1fr; gap: 14px; }
+    .feeder { flex-direction: row; align-items: stretch; }
+    .feeder__drop { width: var(--drop); height: 2px; align-self: center; flex: none; margin-left: -10px; }
+    .feeder__drop svg { width: 20px; height: 20px; }
+    .feeder__drop::after { display: none; }
+    .feeder__card { border-top: 1px solid var(--line); border-left: 3px solid var(--navy-800); border-radius: 0 12px 12px 0; }
+    .feeder:hover .feeder__card { border-top-color: var(--line); border-left-color: var(--red); }
+  }
+
+  /* ---------- Cards grid ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 22px; }
+
+  /* ---------- Capabilities ---------- */
+  .caps { background: var(--white); border-block: 1px solid var(--line); }
+  .caps__grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(32px, 5vw, 72px); align-items: start; }
+  .caps__intro { position: sticky; top: 120px; display: grid; gap: 18px; }
+  .caps__intro h2 { font-size: clamp(30px, 3.8vw, 44px); }
+  .caps__intro p { color: var(--ink-2); font-size: 17px; }
+  .caps__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .cap {
+    padding: 26px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--white), var(--paper));
+  }
+  .cap__icon {
+    display: grid; place-items: center;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--red-050); color: var(--red);
+  }
+  .cap h3 { margin-top: 18px; font-size: 20px; }
+  .cap p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
+  .cap__chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 16px 0 0; }
+  .cap__chips li {
+    padding: 4px 9px;
+    border-radius: 5px;
+    background: var(--white);
+    border: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-2);
+  }
+  @media (max-width: 960px) {
+    .caps__grid { grid-template-columns: 1fr; }
+    .caps__intro { position: static; }
+  }
+  @media (max-width: 600px) { .caps__cards { grid-template-columns: 1fr; } }
+
+  /* ---------- Process ---------- */
+  .steps {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgb(255 255 255 / 10%);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .step { position: relative; padding: 30px 28px 32px; background: var(--navy-950); transition: background .3s; }
+  .step:hover { background: var(--navy-900); }
+  .step__num { position: absolute; top: 26px; right: 26px; font-family: var(--font-mono); font-size: 13px; color: #5d6c8f; }
+  .step__icon {
+    display: grid; place-items: center;
+    width: 44px; height: 44px; border-radius: 10px;
+    border: 1px solid rgb(255 255 255 / 14%);
+    color: #ff6b70;
+  }
+  .step h3 { margin-top: 20px; font-size: 20px; color: #fff; }
+  .step p { margin-top: 8px; color: #a3aec7; font-size: 15px; }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+
+  /* ---------- CTA ---------- */
+  .cta {
+    position: relative;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px;
+    padding: clamp(28px, 4vw, 48px);
+    border-radius: 20px;
+    background:
+      linear-gradient(120deg, rgb(215 25 32 / 0%) 55%, rgb(215 25 32 / 14%)),
+      var(--white);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .cta::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+    background: linear-gradient(var(--red) 0 33%, #f2b705 33% 66%, #1f4fbf 66%);
+  }
+  .cta h2 { margin-top: 12px; font-size: clamp(26px, 3.4vw, 38px); }
+  .cta p { margin-top: 8px; color: var(--ink-2); font-size: 17px; }
+  .cta__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+</style>
