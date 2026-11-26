@@ -48,6 +48,9 @@ const a = site.address;
           {a.city}, {a.state} {a.pincode}<br />
           {a.country}
         </address>
+        {site.map?.link && (
+          <a class="footer__map" href={site.map.link} target="_blank" rel="noopener"><Icon name="pin" size={15} />View on Google Maps</a>
+        )}
       </div>
     </div>
 
@@ -83,6 +86,8 @@ const a = site.address;
   .footer__list a { color: #dfe5f2; }
   .footer__list a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
   .footer__addr { font-style: normal; line-height: 1.7; color: #dfe5f2; }
+  .footer__map { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; color: #fff; font-weight: 500; }
+  .footer__map:hover { text-decoration: underline; text-underline-offset: 4px; }
   .footer__base {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
     margin-top: 56px; padding-top: 22px;
