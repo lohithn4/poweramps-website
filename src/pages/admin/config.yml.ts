@@ -118,6 +118,33 @@ collections:
       - { label: Description, name: description, widget: text }
       - { label: Sort order, name: order, widget: number, value_type: int, default: 99 }
 
+  - name: clients
+    label: Clients
+    label_singular: Client
+    description: Real customers and testimonials. Add only clients who have agreed to be named. The Clients page and home section appear once at least one is published.
+    folder: src/content/clients
+    extension: json
+    format: json
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    identifier_field: name
+    summary: "{{name}}"
+    media_folder: /public/uploads/clients
+    public_folder: /uploads/clients
+    fields:
+      - { label: Company name, name: name, widget: string }
+      - { label: Logo, name: logo, widget: image, required: false, hint: "PNG or SVG, ideally on a transparent or white background. If empty, the company initials are shown." }
+      - { label: Industry, name: industry, widget: string, required: false, hint: "e.g. Pharmaceuticals, Hospital, Real estate" }
+      - { label: City, name: city, widget: string, required: false }
+      - { label: What we supplied, name: project, widget: string, required: false, hint: "e.g. MCC & VFD panels for 2 MLD STP" }
+      - { label: Testimonial quote, name: quote, widget: text, required: false, hint: "The client's own words. Leave empty to show only their name/logo." }
+      - { label: Person's name, name: person, widget: string, required: false }
+      - { label: Person's role, name: role, widget: string, required: false, hint: "e.g. Maintenance Manager" }
+      - { label: Feature on home page, name: featured, widget: boolean, default: false }
+      - { label: Sort order, name: order, widget: number, value_type: int, default: 99 }
+      - { label: Published, name: published, widget: boolean, default: true, hint: "Turn off to hide without deleting." }
+
   - name: settings
     label: Site settings
     editor:

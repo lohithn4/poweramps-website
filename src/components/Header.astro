@@ -4,10 +4,13 @@ import Icon from './Icon.astro';
 import site from '../data/site.json';
 import { url, isActive } from '../lib/url';
 import { openMapUrl } from '../lib/location';
+import { getClients } from '../lib/clients';
 
+const hasClients = (await getClients()).length > 0;
 const nav = [
   { href: '/panels', label: 'Panels' },
   { href: '/#capabilities', label: 'Capabilities' },
+  ...(hasClients ? [{ href: '/clients', label: 'Clients' }] : []),
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];

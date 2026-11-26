@@ -1,0 +1,96 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ClientLogos from '../components/ClientLogos.astro';
+import Testimonial from '../components/Testimonial.astro';
+import site from '../data/site.json';
+import { getClients } from '../lib/clients';
+import { url } from '../lib/url';
+import { openMapUrl } from '../lib/location';
+
+const clients = await getClients();
+const stories = clients.filter((c) => c.data.quote);
+---
+<Base
+  noindex={clients.length === 0}
+  title="Clients & Testimonials"
+  description={`Companies that trust ${site.name} for their electrical control and power distribution panels.`}
+>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>Clients</span>
+      </nav>
+      <h1>Trusted by plants, buildings &amp; infrastructure.</h1>
+      <p>
+        {clients.length > 0
+          ? `${clients.length} ${clients.length === 1 ? 'company relies' : 'companies rely'} on ${site.name} panels to keep their operations running.`
+          : `Client stories from ${site.name} customers will appear here soon.`}
+      </p>
+    </div>
+  </section>
+
+  {stories.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Testimonials</span>
+          <h2>In our clients' words</h2>
+        </div>
+        <div class="stories">
+          {stories.map((c, i) => <Testimonial client={c} index={i} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {clients.length > 0 && (
+    <section class:list={['section', { 'section--alt': stories.length > 0 }]}>
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Our clients</span>
+          <h2>Companies we've built panels for</h2>
+        </div>
+        <ClientLogos clients={clients} />
+      </div>
+    </section>
+  )}
+
+  <section class="section--tight">
+    <div class="wrap">
+      <div class="industries reveal">
+        <span class="eyebrow">Industries we serve</span>
+        <ul>{(site.industries ?? []).map((i) => <li class="chip">{i}</li>)}</ul>
+      </div>
+
+      <div class="review reveal">
+        <div>
+          <h2>Worked with us?</h2>
+          <p>Your feedback helps other engineers and buyers choose with confidence.</p>
+        </div>
+        <div class="review__actions">
+          <a class="btn btn--red" href={openMapUrl} target="_blank" rel="noopener"><Icon name="pin" size={18} />Review us on Google</a>
+          <a class="btn btn--ghost" href={url('/contact')}>Share feedback</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .stories { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  .section--alt { background: var(--white); border-block: 1px solid var(--line); }
+  .industries { display: grid; gap: 16px; margin-bottom: 40px; }
+  .industries ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .review {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px;
+    padding: clamp(24px, 3.5vw, 40px);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+  }
+  .review h2 { font-size: clamp(24px, 3vw, 32px); }
+  .review p { margin-top: 6px; color: var(--ink-2); }
+  .review__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+</style>

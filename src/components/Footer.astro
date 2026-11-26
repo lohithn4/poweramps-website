@@ -4,9 +4,11 @@ import Logo from './Logo.astro';
 import Icon from './Icon.astro';
 import site from '../data/site.json';
 import { url } from '../lib/url';
+import { getClients } from '../lib/clients';
 
 const categories = (await getCollection('categories')).sort((a, b) => a.data.order - b.data.order);
 const year = new Date().getFullYear();
+const hasClients = (await getClients()).length > 0;
 const a = site.address;
 ---
 <footer class="footer blueprint on-dark">
@@ -34,6 +36,7 @@ const a = site.address;
         <h3 class="footer__h">Company</h3>
         <ul class="footer__list">
           <li><a href={url('/about')}>About us</a></li>
+          {hasClients && <li><a href={url('/clients')}>Clients &amp; testimonials</a></li>}
           <li><a href={url('/#capabilities')}>Capabilities</a></li>
           <li><a href={url('/#process')}>How we work</a></li>
           <li><a href={url('/contact')}>Contact & enquiry</a></li>

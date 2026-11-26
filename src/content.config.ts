@@ -41,4 +41,22 @@ const panels = defineCollection({
   }),
 });
 
-export const collections = { categories, panels };
+/** Real clients & testimonials. Edited in /admin → Clients. Hidden on the site until at least one is published. */
+const clients = defineCollection({
+  loader: glob({ pattern: '**/*.json', base: './src/content/clients' }),
+  schema: z.object({
+    name: z.string(), // company name
+    logo: z.string().optional(),
+    industry: z.string().optional(),
+    city: z.string().optional(),
+    project: z.string().optional(), // what we supplied, e.g. "MCC & VFD panels for STP"
+    quote: z.string().optional(),
+    person: z.string().optional(),
+    role: z.string().optional(),
+    featured: z.boolean().default(false),
+    order: z.number().default(99),
+    published: z.boolean().default(true),
+  }),
+});
+
+export const collections = { categories, panels, clients };

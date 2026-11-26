@@ -1,0 +1,67 @@
+---
+import type { Client } from '../lib/clients';
+import { initials } from '../lib/clients';
+import { url } from '../lib/url';
+
+interface Props {
+  clients: Client[];
+  /** Show industry / city under each name. */
+  details?: boolean;
+}
+const { clients, details = true } = Astro.props;
+---
+<ul class="logos">
+  {clients.map((c, i) => (
+    <li class="logo-tile reveal" style={`transition-delay:${Math.min(i, 8) * 40}ms`}>
+      {c.data.logo ? (
+        <img src={url(c.data.logo)} alt={c.data.name} loading="lazy" />
+      ) : (
+        <span class="logo-tile__mono" aria-hidden="true">{initials(c.data.name)}</span>
+      )}
+      <span class="logo-tile__name">{c.data.name}</span>
+      {details && (c.data.industry || c.data.city) && (
+        <span class="logo-tile__meta">{[c.data.industry, c.data.city].filter(Boolean).join(' · ')}</span>
+      )}
+    </li>
+  ))}
+</ul>
+
+<style>
+  .logos {
+    list-style: none; margin: 0; padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .logo-tile {
+    flex: 1 1 190px;
+    display: grid; justify-items: center; align-content: center; gap: 8px;
+    min-height: 150px;
+    padding: 22px 16px;
+    background: var(--white);
+    text-align: center;
+    transition: background .25s;
+  }
+  .logo-tile:hover { background: var(--paper); }
+  .logo-tile img {
+    max-width: 140px; max-height: 56px; width: auto; height: auto;
+    object-fit: contain;
+    filter: grayscale(1);
+    opacity: .75;
+    transition: filter .3s, opacity .3s;
+  }
+  .logo-tile:hover img { filter: none; opacity: 1; }
+  .logo-tile__mono {
+    display: grid; place-items: center;
+    width: 52px; height: 52px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--navy-800), var(--navy-700));
+    color: #fff;
+    font-weight: 700; font-stretch: 110%; font-size: 18px; letter-spacing: 0.02em;
+  }
+  .logo-tile__name { font-weight: 600; font-size: 15px; line-height: 1.3; color: var(--ink); }
+  .logo-tile__meta { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+</style>
