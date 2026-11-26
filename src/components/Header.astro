@@ -16,12 +16,17 @@ const path = Astro.url.pathname;
 <div class="topbar">
   <div class="wrap topbar__inner">
     <span class="topbar__item topbar__gst">
-      <span class="dot" aria-hidden="true"></span>
-      GST verified · Manufacturer since {site.established}
+      <span class="gst-badge"><Icon name="shield" size={13} />GST verified</span>
+      <button type="button" class="gstin" data-copy={site.gst} title="Click to copy GSTIN" aria-label={`GSTIN ${site.gst}, click to copy`}>
+        <span class="gstin__label">GSTIN</span>
+        <span class="gstin__num">{site.gst}</span>
+        <span class="gstin__done" aria-live="polite"></span>
+      </button>
+      <span class="topbar__since">· Manufacturer since {site.established}</span>
     </span>
     <span class="topbar__right">
       <a class="topbar__item topbar__loc" href={openMapUrl} target="_blank" rel="noopener" title="Open our location in Google Maps">
-        <Icon name="pin" size={14} />Yelachenahalli, Kanakapura Rd, {site.address.city}
+        <Icon name="pin" size={14} /><span class="topbar__loc-long">Yelachenahalli, Kanakapura Rd, </span>{site.address.city}
       </a>
       {site.phone && <a class="topbar__item topbar__extra" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={14} />{site.phone}</a>}
       {site.email && <a class="topbar__item topbar__extra" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
@@ -73,6 +78,18 @@ const path = Astro.url.pathname;
       nav.hidden = true;
     }),
   );
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) => {
+    const done = b.querySelector<HTMLElement>('.gstin__done');
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy ?? '');
+        b.classList.add('is-copied');
+        if (done) done.textContent = 'Copied';
+        setTimeout(() => { b.classList.remove('is-copied'); if (done) done.textContent = ''; }, 1600);
+      } catch {}
+    });
+  });
+
   const header = document.querySelector('[data-header]');
   const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
   onScroll();
@@ -91,16 +108,48 @@ const path = Astro.url.pathname;
   .topbar__right { display: flex; gap: 22px; }
   .topbar__item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
   a.topbar__item:hover { color: #fff; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 3px rgb(34 197 94 / 20%); }
+  .topbar__gst { gap: 10px; }
+  .gst-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px 2px 6px;
+    border-radius: 999px;
+    background: rgb(34 197 94 / 14%);
+    border: 1px solid rgb(34 197 94 / 35%);
+    color: #4ade80;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  }
+  .gstin {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0; border: 0; background: none; cursor: copy;
+    font: inherit; color: #dfe5f2;
+  }
+  .gstin__label { color: #8d98b3; }
+  .gstin__num { color: #fff; font-weight: 600; letter-spacing: 0.04em; }
+  .gstin:hover .gstin__num { text-decoration: underline; text-underline-offset: 3px; }
+  .gstin__done {
+    position: absolute; left: 100%; margin-left: 8px;
+    color: #4ade80; font-size: 11px; white-space: nowrap;
+  }
+  .gstin.is-copied .gstin__num { color: #4ade80; }
+  .topbar__since { color: #8d98b3; }
   .topbar__loc { color: #dfe5f2; }
   .topbar__loc :global(svg) { color: #ff6b70; }
   .topbar__loc:hover { text-decoration: underline; text-underline-offset: 3px; }
-  @media (max-width: 1024px) {
+  @media (max-width: 1100px) {
     .topbar__extra { display: none; }
   }
+  @media (max-width: 900px) {
+    .topbar__since { display: none; }
+  }
   @media (max-width: 720px) {
-    .topbar__gst { display: none; }
-    .topbar__inner { justify-content: center; }
+    .topbar__loc-long { display: none; }
+    .topbar__inner { gap: 8px; }
+    .topbar__gst { gap: 8px; }
+  }
+  @media (max-width: 400px) {
+    .gstin__label { display: none; }
+    .gst-badge { padding: 2px 6px; }
   }
 
   .header {
