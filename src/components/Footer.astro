@@ -19,7 +19,7 @@ const a = site.address;
         <Logo light />
         <p>{site.tagline}</p>
         <div class="footer__contact">
-          {site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={16} />{site.phone}</a>}
+          {site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`} title={site.contactName ? `${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}` : undefined}><Icon name="phone" size={16} />{site.phone}</a>}
           {site.email && <a href={`mailto:${site.email}`}><Icon name="mail" size={16} />{site.email}</a>}
           <a href={site.indiamart} target="_blank" rel="noopener"><Icon name="external" size={16} />View us on IndiaMART</a>
         </div>

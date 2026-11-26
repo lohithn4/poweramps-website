@@ -32,7 +32,13 @@ const path = Astro.url.pathname;
       <a class="topbar__item topbar__loc" href={openMapUrl} target="_blank" rel="noopener" title="Open our location in Google Maps">
         <Icon name="pin" size={14} />{site.address.locality && <span class="topbar__loc-long">{site.address.locality}, </span>}{site.address.city}
       </a>
-      {site.phone && <a class="topbar__item topbar__extra" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={14} />{site.phone}</a>}
+      {site.phone && (
+        <a class="topbar__item topbar__extra topbar__phone" href={`tel:${site.phone.replace(/\s/g, '')}`}
+          aria-label={site.contactName ? `Call ${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}: ${site.phone}` : `Call ${site.phone}`}>
+          <Icon name="phone" size={14} />{site.phone}
+          {site.contactName && <span class="topbar__who" aria-hidden="true">{site.contactName}{site.contactRole && <small>{site.contactRole}</small>}</span>}
+        </a>
+      )}
       {site.email && <a class="topbar__item topbar__extra" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
     </span>
   </div>
@@ -126,6 +132,19 @@ const path = Astro.url.pathname;
   .topbar__right { display: flex; gap: 22px; }
   .topbar__item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
   a.topbar__item:hover { color: #fff; }
+  /* Contact person shown when hovering / focusing the phone number */
+  .topbar__phone { position: relative; }
+  .topbar__who {
+    position: absolute; top: calc(100% + 10px); right: 0; z-index: 1000;
+    display: grid; gap: 2px; padding: 9px 12px; border-radius: 10px;
+    background: var(--white); color: var(--ink); box-shadow: var(--shadow);
+    font-family: var(--font-sans, inherit); font-size: 14px; font-weight: 600; letter-spacing: 0; white-space: nowrap;
+    opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .15s, transform .15s, visibility .15s;
+    pointer-events: none;
+  }
+  .topbar__who::before { content: ''; position: absolute; top: -6px; right: 18px; border: 6px solid transparent; border-top: 0; border-bottom-color: var(--white); }
+  .topbar__who small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .topbar__phone:hover .topbar__who, .topbar__phone:focus-visible .topbar__who { opacity: 1; visibility: visible; transform: none; }
   .topbar__gst { gap: 10px; }
   .gst-badge {
     display: inline-flex; align-items: center; gap: 5px;
