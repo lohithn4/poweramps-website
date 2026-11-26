@@ -14,7 +14,7 @@ const hasClients = (await getClients()).length > 0 || (await getTestimonials()).
 const showFab = !/\/(build|portal|staff|admin)(\/|$)/.test(Astro.url.pathname);
 const a = site.address;
 ---
-<footer class="footer blueprint on-dark">
+<footer class:list={["footer blueprint on-dark", { "footer--fab": showFab }]}>
   <div class="wrap">
     <div class="footer__grid">
       <div class="footer__brand">
@@ -68,18 +68,8 @@ const a = site.address;
 </footer>
 
 {showFab && (
-  <a class="fab" href={url('/build/')} data-fab aria-label="Build your panel online"><Icon name="layers" size={20} /><span>Build your panel</span></a>
+  <a class="fab" href={url('/build/')} title="Build your own panel online and get a quotation"><span class="fab__icon"><Icon name="layers" size={20} /></span><span>Build panel &amp; Quote</span></a>
 )}
-
-<script>
-  // Show the floating button once the visitor scrolls past the first screen.
-  const fab = document.querySelector<HTMLElement>('[data-fab]');
-  if (fab) {
-    const onScroll = () => fab.classList.toggle('is-on', window.scrollY > Math.min(560, window.innerHeight * 0.7));
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
-</script>
 
 <style>
   .fab {
@@ -87,13 +77,26 @@ const a = site.address;
     display: inline-flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 999px;
     background: var(--action); color: #fff; font-weight: 700; font-size: 15.5px;
     box-shadow: 0 14px 34px -10px color-mix(in srgb, var(--action) 80%, transparent), 0 2px 6px rgb(0 0 0 / 18%);
-    opacity: 0; transform: translateY(16px) scale(.96); pointer-events: none; transition: opacity .25s, transform .25s var(--ease, ease);
+    animation: fab-float 3.6s ease-in-out infinite;
   }
-  .fab.is-on { opacity: 1; transform: none; pointer-events: auto; }
-  .fab:hover { filter: brightness(1.07); }
+  /* soft ring that pulses out from the button */
+  .fab::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--action) 55%, transparent);
+    animation: fab-ring 3.6s ease-out infinite;
+  }
+  .fab { isolation: isolate; }
+  .fab__icon { display: inline-grid; animation: fab-tilt 3.6s ease-in-out infinite; }
+  .fab:hover { filter: brightness(1.08); animation-play-state: paused; }
+  .fab:hover .fab__icon, .fab:hover::before { animation-play-state: paused; }
   .fab:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-  @media (prefers-reduced-motion: reduce) { .fab { transition: none; } }
+  @keyframes fab-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes fab-ring { 0%, 40% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--action) 50%, transparent); } 80%, 100% { box-shadow: 0 0 0 12px transparent; } }
+  @keyframes fab-tilt { 0%, 70%, 100% { transform: none; } 78% { transform: rotate(-10deg); } 86% { transform: rotate(6deg); } 92% { transform: none; } }
+  @media (max-width: 480px) { .fab { padding: 12px 16px; font-size: 14.5px; gap: 8px; } }
+  @media (prefers-reduced-motion: reduce) { .fab, .fab::before, .fab__icon { animation: none; } }
   .footer { padding-block: 72px 28px; color: #aab4cc; }
+  .footer--fab { padding-bottom: 92px; }
   .footer__grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1.1fr;
