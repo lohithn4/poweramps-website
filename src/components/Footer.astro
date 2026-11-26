@@ -68,7 +68,7 @@ const a = site.address;
 </footer>
 
 {showFab && (
-  <a class="fab" href={url('/build/')} title="Build your own panel online and get a quotation"><span class="fab__icon"><Icon name="layers" size={20} /></span><span>Build panel &amp; Quote</span></a>
+  <a class="fab has-tip tip-up" href={url('/build/')} aria-describedby="tip-fab"><span class="fab__icon"><Icon name="layers" size={20} /></span><span>Build panel &amp; Quote</span><span class="tip" id="tip-fab" role="tooltip">Customize the panel to your requirements</span></a>
 )}
 
 <style>
@@ -86,6 +86,7 @@ const a = site.address;
     animation: fab-ring 3.6s ease-out infinite;
   }
   .fab { isolation: isolate; }
+  .fab.has-tip { position: fixed; }
   .fab__icon { display: inline-grid; animation: fab-tilt 3.6s ease-in-out infinite; }
   .fab:hover { filter: brightness(1.08); animation-play-state: paused; }
   .fab:hover .fab__icon, .fab:hover::before { animation-play-state: paused; }

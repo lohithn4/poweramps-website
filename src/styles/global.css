@@ -345,9 +345,12 @@ textarea.input { min-height: 120px; resize: vertical; }
 .tip::before { content: ''; position: absolute; top: -6px; left: 50%; margin-left: -6px; border: 6px solid transparent; border-top: 0; border-bottom-color: var(--navy-950, #0b1430); }
 .tip-end .tip { left: auto; right: 0; transform: translateY(-4px); }
 .tip-end .tip::before { left: auto; right: 22px; }
+/* tip above the element, right-aligned (floating button at the bottom of the screen) */
+.tip-up .tip { top: auto; bottom: calc(100% + 10px); left: auto; right: 0; transform: translateY(4px); }
+.tip-up .tip::before { top: auto; bottom: -6px; left: auto; right: 26px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--navy-950, #0b1430); }
 @media (hover: hover) {
   .has-tip:hover .tip { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: .25s, .25s, 0s; }
-  .tip-end.has-tip:hover .tip { transform: none; }
+  .tip-end.has-tip:hover .tip, .tip-up.has-tip:hover .tip { transform: none; }
 }
 .has-tip:focus-visible .tip { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: 0s; }
-.tip-end.has-tip:focus-visible .tip { transform: none; }
+.tip-end.has-tip:focus-visible .tip, .tip-up.has-tip:focus-visible .tip { transform: none; }
