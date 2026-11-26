@@ -22,6 +22,8 @@ const { title, description = site.description, image, jsonLd, noindex: noindexPr
 // Client portal, staff screens and the content editor are private: never in search results.
 const privatePage = /\/(portal|staff|admin)(\/|$)/.test(Astro.url.pathname);
 const noindex = noindexProp || privatePage;
+// Section-by-section scrolling on public pages (off where people fill in forms: builder, portal, staff).
+const snap = !privatePage && !/\/build(\/|$)/.test(Astro.url.pathname);
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.seoTitle}`;
 // Brand colours from site.json → CSS variables (all other colours derive from these).
 const hex = (v: string, d: string) => (/^#[0-9a-f]{3,8}$/i.test(v ?? '') ? v : d);
@@ -60,7 +62,7 @@ const org = {
 };
 ---
 <!doctype html>
-<html lang="en" data-brand={site.name} data-api={import.meta.env.PUBLIC_API_URL || site.apiUrl}>
+<html lang="en" class:list={[{ snap }]} data-brand={site.name} data-api={import.meta.env.PUBLIC_API_URL || site.apiUrl}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -90,6 +92,7 @@ const org = {
     <Footer />
 
     <script>
+      import '../scripts/swipe-pages';
       const els = document.querySelectorAll('.reveal');
       if ('IntersectionObserver' in window) {
         const io = new IntersectionObserver(
