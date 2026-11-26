@@ -26,7 +26,7 @@ function render(m: Mail, b: Brand): string {
       <tr><td style="padding:28px">
         <h1 style="margin:0 0 14px;font-size:22px;line-height:1.3">${esc(m.heading)}</h1>
         <div style="font-size:15px;line-height:1.6;color:#344054">${m.body}</div>
-        ${m.cta ? `<p style="margin:26px 0 8px"><a href="${m.cta.url}" style="display:inline-block;background:${b.accent};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px">${esc(m.cta.label)}</a></p>
+        ${m.cta ? `<p style="margin:26px 0 8px"><a href="${m.cta.url}" style="display:inline-block;background:${b.action};color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px">${esc(m.cta.label)}</a></p>
         <p style="font-size:12px;color:#667085;word-break:break-all">Or open this link: ${m.cta.url}</p>` : ''}
         ${m.footnote ? `<p style="margin-top:22px;font-size:13px;color:#667085">${m.footnote}</p>` : ''}
       </td></tr>

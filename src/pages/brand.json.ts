@@ -15,6 +15,7 @@ export const GET: APIRoute = ({ site: siteUrl }) => {
     wordmarkSub: site.brand.wordmarkSub,
     primary: site.brand.primary,
     accent: site.brand.accent,
+    action: (site.brand as any).action,
     dark: site.brand.dark,
     refPrefix: (site.refPrefix || 'REQ').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'REQ',
     addressLine: [a.locality || a.line1, a.city, a.pincode].filter(Boolean).join(', '),

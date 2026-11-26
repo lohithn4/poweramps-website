@@ -12,6 +12,8 @@ export interface Brand {
   wordmarkSub: string;
   primary: string;
   accent: string;
+  /** Buttons and highlights (calmer than the red accent). */
+  action: string;
   dark: string;
   refPrefix: string;
   addressLine: string;
@@ -44,6 +46,7 @@ export async function getBrand(env: Env): Promise<Brand> {
     wordmarkSub: s('wordmarkSub', ''),
     primary: hex(data.primary, '#024998'),
     accent: hex(data.accent, '#cd030d'),
+    action: hex(data.action, '#1f5fcc'),
     dark: hex(data.dark, '#0c1a3d'),
     refPrefix: s('refPrefix', env.REF_PREFIX || 'REQ').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 6) || 'REQ',
     addressLine: s('addressLine', ''),

@@ -60,7 +60,7 @@ export async function submitFeedback(req: Request, env: Env) {
     to: staffRecipients(env),
     subject: `${low ? 'LOW RATING ' : ''}${rating}/10 feedback for ${r?.ref}`,
     heading: `${r?.contact_name ?? 'A client'} rated ${r?.ref} ${rating}/10`,
-    body: `<p><strong>${esc(r?.title ?? '')}</strong>${r?.contact_company ? ` · ${esc(r.contact_company)}` : ''}</p>${comment ? `<p style="padding:12px 14px;background:#f5f6f8;border-left:3px solid #cd030d;border-radius:6px">${esc(comment)}</p>` : ''}
+    body: `<p><strong>${esc(r?.title ?? '')}</strong>${r?.contact_company ? ` · ${esc(r.contact_company)}` : ''}</p>${comment ? `<p style="padding:12px 14px;background:#f5f6f8;border-left:3px solid #1f5fcc;border-radius:6px">${esc(comment)}</p>` : ''}
       <p>${status === 'pending' ? 'The client agreed to publish this as a testimonial. Approve it in the staff portal to show it on the website.' : low ? 'Please follow up with the client.' : ''}</p>`,
     cta: { label: status === 'pending' ? 'Review testimonial' : 'Open feedback', url: site(env, '/staff/feedback/') },
   });
