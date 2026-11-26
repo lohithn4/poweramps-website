@@ -9,6 +9,7 @@
   //  Secrets (never commit). Set with: npx wrangler secret put <NAME>
   //    RESEND_API_KEY          email sending
   //    SETUP_TOKEN             one-time first-admin creation
+  //    STAFF_NOTIFY_EMAIL      inbox(es) alerted about new requests (comma-separated)
   //    GOOGLE_CLIENT_SECRET    MICROSOFT_CLIENT_SECRET    LINKEDIN_CLIENT_SECRET
   // ==========================================================================
 
@@ -29,7 +30,6 @@
     "ALLOWED_ORIGINS": "https://poweramps.in,https://www.poweramps.in",
     "COOKIE_DOMAIN": ".poweramps.in",            // shared parent domain of site + API
     "EMAIL_FROM": "Poweramps Technology <no-reply@poweramps.in>",  // verified sender domain
-    "STAFF_NOTIFY_EMAIL": "",                    // comma-separated inbox(es) for new requests
     "BRAND_NAME": "Poweramps Technology",        // fallback only, if brand.json is unreachable
     "REF_PREFIX": "PA",                          // fallback only
     // Public OAuth client IDs (not secret). Leave empty to hide a provider.
