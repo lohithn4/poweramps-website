@@ -17,5 +17,10 @@ export default defineConfig({
   site,
   base,
   trailingSlash: 'ignore',
-  integrations: [sitemap({ filter: (page) => hasClients || !page.includes('/clients') })],
+  integrations: [
+    sitemap({
+      // Public pages only: no client portal, staff screens or content editor.
+      filter: (page) => !/\/(portal|staff|admin)(\/|$)/.test(new URL(page).pathname) && (hasClients || !page.includes('/clients')),
+    }),
+  ],
 });

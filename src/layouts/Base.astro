@@ -18,7 +18,10 @@ interface Props {
   jsonLd?: Record<string, unknown>;
   noindex?: boolean;
 }
-const { title, description = site.description, image, jsonLd, noindex = false } = Astro.props;
+const { title, description = site.description, image, jsonLd, noindex: noindexProp = false } = Astro.props;
+// Client portal, staff screens and the content editor are private: never in search results.
+const privatePage = /\/(portal|staff|admin)(\/|$)/.test(Astro.url.pathname);
+const noindex = noindexProp || privatePage;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.seoTitle}`;
 // Brand colours from site.json → CSS variables (all other colours derive from these).
 const hex = (v: string, d: string) => (/^#[0-9a-f]{3,8}$/i.test(v ?? '') ? v : d);
@@ -26,10 +29,15 @@ const brandCss = `html:root{--brand-primary:${hex(site.brand.primary, '#024998')
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL(url(image ?? '/brand/logo.png'), Astro.site).href;
 
+const lat = Number((site as any).map?.lat), lng = Number((site as any).map?.lng);
 const org = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  '@type': 'LocalBusiness',
+  '@id': new URL(url('/#business'), Astro.site).href,
   name: site.legalName,
+  alternateName: site.name,
+  description: site.description,
+  image: new URL(url('/brand/logo.png'), Astro.site).href,
   url: new URL(url('/'), Astro.site).href,
   logo: new URL(url('/brand/logo.png'), Astro.site).href,
   foundingDate: String(site.established),
@@ -41,8 +49,14 @@ const org = {
     postalCode: site.address.pincode,
     addressCountry: 'IN',
   },
+  ...(Number.isFinite(lat) && Number.isFinite(lng) && lat && lng ? { geo: { '@type': 'GeoCoordinates', latitude: lat, longitude: lng } } : {}),
+  ...((site as any).map?.link ? { hasMap: (site as any).map.link } : {}),
   ...(site.phone ? { telephone: site.phone } : {}),
   ...(site.email ? { email: site.email } : {}),
+  ...((site as any).gst ? { taxID: (site as any).gst } : {}),
+  ...((site as any).indiamart ? { sameAs: [(site as any).indiamart] } : {}),
+  areaServed: { '@type': 'Country', name: 'India' },
+  knowsAbout: ['MCC panels', 'PLC panels', 'VFD panels', 'AMF panels', 'DG synchronization panels', 'Fire fighting panels', 'Power distribution panels', 'LT panels'],
 };
 ---
 <!doctype html>
@@ -53,7 +67,7 @@ const org = {
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
     <link rel="sitemap" href={url('/sitemap-index.xml')} />
     <meta name="theme-color" content={hex(site.brand.dark, "#081129")} />
