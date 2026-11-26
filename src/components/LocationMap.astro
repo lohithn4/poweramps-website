@@ -1,0 +1,77 @@
+---
+import Icon from './Icon.astro';
+import site from '../data/site.json';
+import { mapEmbed, directionsUrl, openMapUrl } from '../lib/location';
+
+interface Props {
+  /** Map aspect ratio, e.g. "4 / 3" or "16 / 10". */
+  ratio?: string;
+  /** Load the map immediately instead of when scrolled into view. */
+  eager?: boolean;
+  class?: string;
+}
+const { ratio = '4 / 3', eager = false, class: className, ...rest } = Astro.props;
+const a = site.address;
+---
+<div {...rest} class:list={['loc', className]}>
+  <figure class="map">
+    <iframe
+      title={`Map showing the location of ${site.name}`}
+      src={mapEmbed}
+      loading={eager ? 'eager' : 'lazy'}
+      referrerpolicy="no-referrer-when-downgrade"
+      allowfullscreen
+      style={`aspect-ratio:${ratio}`}
+    ></iframe>
+    <figcaption class="map__card">
+      <svg class="map__mark" viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="18.5" height="18.5" fill="#024998" /><rect x="21.5" width="18.5" height="18.5" fill="#cd030d" />
+        <rect y="21.5" width="18.5" height="18.5" fill="#cd030d" /><rect x="21.5" y="21.5" width="18.5" height="18.5" fill="#024998" />
+      </svg>
+      <span class="map__text">
+        <strong>{site.name}</strong>
+        <span>{a.line1}, {a.city}</span>
+      </span>
+      <a class="map__btn" href={directionsUrl} target="_blank" rel="noopener" aria-label="Get directions in Google Maps">
+        <Icon name="pin" size={16} /> Directions
+      </a>
+    </figcaption>
+  </figure>
+  <a class="map__open" href={openMapUrl} target="_blank" rel="noopener">Open in Google Maps <Icon name="external" size={14} /></a>
+</div>
+
+<style>
+  .loc { display: grid; gap: 10px; }
+  .map {
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--white);
+  }
+  .map iframe { width: 100%; border: 0; display: block; background: var(--plate); }
+  .map__card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 12px 12px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .map__mark { width: 30px; height: 30px; flex: none; shape-rendering: crispEdges; }
+  .map__text { display: grid; gap: 2px; min-width: 0; flex: 1; line-height: 1.25; }
+  .map__text strong { font-size: 14px; color: var(--ink); }
+  .map__text span { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .map__btn {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--navy-700); color: #fff;
+    font-size: 13px; font-weight: 600;
+    transition: background .2s;
+  }
+  .map__btn:hover { background: var(--navy-800); }
+  .map__open {
+    justify-self: end;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--navy-700);
+  }
+  .map__open:hover { text-decoration: underline; text-underline-offset: 3px; }
+</style>
