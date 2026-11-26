@@ -96,7 +96,7 @@ export function normalize(raw: any): PanelConfig {
 }
 
 export const appOf = (id: string) => APPS.find((a) => a.id === id);
-/* ---------------- component configurator ("choose every part", like a custom laptop) ---------------- */
+/* ---------------- component configurator ("choose every part and make") ---------------- */
 
 export interface PartOption { v: string; d?: string; tag?: string }
 export interface PartGroup {

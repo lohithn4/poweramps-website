@@ -111,7 +111,7 @@ import { url } from '../../lib/url';
     const drafts = builds.filter((b: any) => !b.request_id);
     const sent = builds.filter((b: any) => b.request_id);
     if (!builds.length) {
-      box.innerHTML = `<div class="pempty"><strong>Configure your panels online</strong>Choose the application, loads and every component, like customising a laptop. Save as many panels as your project needs and get one quotation for all of them.<br><a class="btn btn--red" href="${sitePath('/build/?new=1')}">Start your first build</a></div>`;
+      box.innerHTML = `<div class="pempty"><strong>Configure your panels online</strong>Choose the application, loads and every component. Save as many panels as your project needs and get one quotation for all of them.<br><a class="btn btn--red" href="${sitePath('/build/?new=1')}">Start your first build</a></div>`;
       return;
     }
     const rows = drafts.map((b: any) => `<tr>
