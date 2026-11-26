@@ -16,7 +16,7 @@ import { url } from '../../lib/url';
           <label class="field"><span class="flabel">Full name *</span><input class="input" name="name" autocomplete="name" required /></label>
           <div class="row2">
             <label class="field"><span class="flabel">Company</span><input class="input" name="company" autocomplete="organization" /></label>
-            <label class="field"><span class="flabel">Phone</span><input class="input" type="tel" name="phone" autocomplete="tel" /></label>
+            <label class="field"><span class="flabel">Phone *</span><input class="input" type="tel" name="phone" autocomplete="tel" required /></label>
           </div>
           <label class="field"><span class="flabel">Work email *</span><input class="input" type="email" name="email" autocomplete="email" required /></label>
           <label class="field"><span class="flabel">Password * <small>(min. 8 characters)</small></span>
@@ -61,7 +61,7 @@ import { url } from '../../lib/url';
   let lastEmail = '';
   bindForm($('[data-register]'), async (d) => {
     if (!d.consent) throw new Error('Please accept the privacy policy to continue.');
-    const r = await api<{ devToken?: string }>('/auth/register', { body: d });
+    const r = await api<{ devToken?: string }>('/auth/register', { body: { ...d, next: qs('next') ?? undefined } });
     lastEmail = d.email;
     $('[data-step-form]').hidden = true;
     $('[data-step-done]').hidden = false;

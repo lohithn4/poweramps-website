@@ -69,7 +69,7 @@ export async function createRequest(req: Request, env: Env) {
 
   const kind = b.kind === 'order' ? 'order' : 'quote';
   const verifiedUser = user && user.email_verified_at ? user : null;
-  if (kind === 'order' && !verifiedUser) throw new HttpError(401, 'Please sign in to place an order', 'unauthenticated');
+  if (!verifiedUser) throw new HttpError(401, 'Please sign up and verify your email to send an enquiry', 'unauthenticated');
 
   const title = str(b.title, 'Title', { required: true, max: 200 });
   // One panel (config/summary) or several (panels[]); the first panel also fills config/summary for older screens.

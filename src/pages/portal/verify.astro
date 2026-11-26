@@ -23,7 +23,11 @@ import { url } from '../../lib/url';
       $('[data-text]').textContent = `Welcome, ${user.name.split(' ')[0]}! Taking you to your account…`;
       let hasDraft = false;
       try { hasDraft = !!JSON.parse(localStorage.getItem('builder_draft_v1') ?? 'null')?.config?.application; } catch {}
-      setTimeout(() => (location.href = sitePath(hasDraft && user.role === 'client' ? '/build/?resume=1' : homeFor(user))), 1300);
+      const next = qs('next') ?? '';
+      // Only same-site paths, e.g. "/build/?app=water" (never another website).
+      const safe = /^\/(?![\/\\])[\w\-./?=&%#]*$/.test(next) ? next : '';
+      if (safe.startsWith('/build')) $('[data-text]').textContent = `Welcome, ${user.name.split(' ')[0]}! Opening the panel builder…`;
+      setTimeout(() => (location.href = sitePath(safe || (hasDraft && user.role === 'client' ? '/build/?resume=1' : homeFor(user)))), 1300);
     })
     .catch((e) => {
       $('[data-title]').textContent = 'Link not valid';

@@ -13,6 +13,7 @@ import site from '../data/site.json';
 import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
 import { url } from '../lib/url';
 import { directionsUrl, openMapUrl } from '../lib/location';
+import { APPS } from '../scripts/panel';
 
 const panels = await getPanels();
 const categories = await getCategories();
@@ -73,6 +74,40 @@ const steps = [
   <Hero panels={panels} categories={categories} />
   <IndustryTicker />
 
+  <!-- ================= PANEL BUILDER LAUNCHER (main call to action) ================= -->
+  <section class="launch blueprint on-dark" id="build">
+    <div class="wrap launch__grid">
+      <div class="launch__copy reveal">
+        <span class="launch__badge"><span class="led" aria-hidden="true"></span>Online panel builder</span>
+        <h2>Build your panel online.<br /><span>Get a quotation in 1–2 days.</span></h2>
+        <p>Pick what the panel is for, add your motors or feeders, and choose every component and make, like configuring a custom laptop. We calculate the ratings and draw your panel as you go.</p>
+        <ol class="launch__steps">
+          <li><b>1</b>Sign up &amp; verify email</li>
+          <li><b>2</b>Configure your panels</li>
+          <li><b>3</b>Send your enquiry</li>
+        </ol>
+        <div class="launch__actions">
+          <a class="btn btn--red btn--lg" href={url('/build/')}>Start building <Icon name="arrow" size={18} /></a>
+          <a class="launch__login" href={url('/portal/login/?next=%2Fbuild%2F')}>Already registered? Log in</a>
+        </div>
+      </div>
+      <div class="launch__apps reveal">
+        <p class="launch__pick mono">What is your panel for? Tap to start</p>
+        <div class="launch__tiles">
+          {APPS.filter((a) => a.id !== 'other').map((a) => (
+            <a class="ltile" href={url(`/build/?app=${a.id}`)}>
+              <span class="ltile__icon" aria-hidden="true">{a.icon}</span>
+              <span class="ltile__t">{a.title}</span>
+              <span class="ltile__d">{a.text}</span>
+              <span class="ltile__go" aria-hidden="true"><Icon name="arrow" size={16} /></span>
+            </a>
+          ))}
+        </div>
+        <a class="launch__other" href={url('/build/?app=other')}>Something else, or not sure? Describe it and we'll design it <Icon name="arrow" size={14} /></a>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= STATS ================= -->
   <section class="stats">
     <div class="wrap stats__grid">
@@ -83,28 +118,6 @@ const steps = [
           <span class="stat__note">{s.note}</span>
         </div>
       ))}
-    </div>
-  </section>
-
-  <!-- ================= CONFIGURE ONLINE ================= -->
-  <section class="section cfgsec">
-    <div class="wrap cfg">
-      <div class="cfg__copy reveal">
-        <span class="eyebrow">Custom panel builder</span>
-        <h2>Configure your panel online, like a custom laptop.</h2>
-        <p>Sign up free, then build one or many panels for your project: pick the application, list your motors or feeders, and choose every component, from the incomer and busbar to meters, starters, PLC and enclosure. Save your builds, get one quotation for all of them, and order when you're ready.</p>
-        <div class="cfg__actions">
-          <a class="btn btn--red" href={url('/portal/register/?next=%2Fbuild%2F')}>Create free account <Icon name="arrow" size={18} /></a>
-          <a class="btn btn--ghost" href={url('/build/')}>Try the builder</a>
-          <a class="cfg__login" href={url('/portal/login/?next=%2Fbuild%2F')}>Already registered? Log in</a>
-        </div>
-      </div>
-      <ol class="cfg__steps reveal">
-        <li><b>1</b><div><strong>Sign up &amp; log in</strong><span>Free account to save and track your builds.</span></div></li>
-        <li><b>2</b><div><strong>Build one or more panels</strong><span>Application, loads and live ratings, with a drawing as you go.</span></div></li>
-        <li><b>3</b><div><strong>Choose every component</strong><span>Incomer, make, busbar, meters, relays, PLC / HMI, sheet steel, IP, add-ons.</span></div></li>
-        <li><b>4</b><div><strong>One quotation, then order</strong><span>We price all your panels together. Accept online and track production.</span></div></li>
-      </ol>
     </div>
   </section>
 
@@ -495,18 +508,31 @@ const steps = [
     font-style: normal; line-height: 1.6; color: var(--ink-2);
   }
   .visit__addr strong { display: block; color: var(--ink); margin-bottom: 2px; }
-  .cfgsec { padding-bottom: 0; }
-  .cfg { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(28px, 4vw, 64px); align-items: center; padding: clamp(24px, 4vw, 48px); border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(135deg, var(--white), var(--paper)); box-shadow: var(--shadow-sm); }
-  .cfg__copy h2 { margin-top: 12px; font-size: clamp(26px, 3.4vw, 40px); }
-  .cfg__copy p { margin-top: 14px; color: var(--ink-2); font-size: 17px; line-height: 1.6; }
-  .cfg__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 24px; }
-  .cfg__login { font-size: 15px; font-weight: 600; color: var(--navy-700); }
-  .cfg__steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-  .cfg__steps li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
-  .cfg__steps b { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 10px; background: var(--red); color: #fff; font-size: 15px; }
-  .cfg__steps strong { display: block; font-size: 16px; }
-  .cfg__steps span { display: block; margin-top: 2px; font-size: 14px; color: var(--ink-2); line-height: 1.45; }
-  @media (max-width: 900px) { .cfg { grid-template-columns: 1fr; } }
+  .launch { padding-block: clamp(44px, 6vw, 80px); background: radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--red) 22%, transparent), transparent 55%), var(--navy-950); }
+  .launch__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(28px, 4vw, 64px); align-items: center; }
+  .launch__badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #dfe5f2; }
+  .launch__badge .led { width: 8px; height: 8px; border-radius: 50%; background: var(--live, #3ddc84); box-shadow: 0 0 8px var(--live, #3ddc84); }
+  .launch h2 { margin-top: 16px; color: #fff; font-size: clamp(30px, 4vw, 48px); line-height: 1.08; }
+  .launch h2 span { color: color-mix(in srgb, var(--red) 75%, white); }
+  .launch__copy > p { margin-top: 16px; color: #b7c1d8; font-size: 17px; line-height: 1.6; max-width: 52ch; }
+  .launch__steps { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 22px 0 0; padding: 0; list-style: none; color: #fff; font-size: 15px; font-weight: 500; }
+  .launch__steps li { display: flex; align-items: center; gap: 8px; }
+  .launch__steps b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--red); font-size: 13px; }
+  .launch__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 28px; }
+  .launch__actions .btn--lg { padding: 16px 26px; font-size: 17px; }
+  .launch__login { color: #dfe5f2; font-weight: 600; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
+  .launch__pick { margin: 0 0 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #9fb0d0; }
+  .launch__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .ltile { position: relative; display: grid; gap: 6px; align-content: start; min-height: 150px; padding: 16px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 16px; background: rgb(255 255 255 / 6%); color: #fff; transition: transform .2s var(--ease), background .2s, border-color .2s; }
+  .ltile:hover, .ltile:focus-visible { transform: translateY(-3px); background: rgb(255 255 255 / 12%); border-color: color-mix(in srgb, var(--red) 70%, white); }
+  .ltile__icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: var(--red); font-family: var(--font-mono); font-weight: 700; font-size: 16px; }
+  .ltile__t { margin-top: 4px; font-weight: 700; font-size: 16px; }
+  .ltile__d { font-size: 13px; line-height: 1.4; color: #b7c1d8; }
+  .ltile__go { position: absolute; top: 16px; right: 16px; color: #9fb0d0; transition: transform .2s var(--ease), color .2s; }
+  .ltile:hover .ltile__go { transform: translateX(3px); color: #fff; }
+  .launch__other { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 14px; color: #dfe5f2; }
+  @media (max-width: 1000px) { .launch__grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .launch__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ltile { min-height: 0; } .ltile__d { display: none; } }
   .visit__phone { margin-top: 12px; align-items: center; font-size: 17px; font-weight: 500; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
   .visit__phone:hover { box-shadow: var(--shadow-sm); }
   .visit__phone strong { font-size: 14px; font-weight: 600; color: var(--ink-2); }

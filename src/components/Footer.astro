@@ -10,6 +10,8 @@ import { getTestimonials } from '../lib/testimonials';
 const categories = (await getCollection('categories')).sort((a, b) => a.data.order - b.data.order);
 const year = new Date().getFullYear();
 const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
+// Floating 'Build your panel' button on public pages (not on the builder, account, staff or editor pages).
+const showFab = !/\/(build|portal|staff|admin)(\/|$)/.test(Astro.url.pathname);
 const a = site.address;
 ---
 <footer class="footer blueprint on-dark">
@@ -65,7 +67,32 @@ const a = site.address;
   </div>
 </footer>
 
+{showFab && (
+  <a class="fab" href={url('/build/')} data-fab aria-label="Build your panel online"><Icon name="layers" size={20} /><span>Build your panel</span></a>
+)}
+
+<script>
+  // Show the floating button once the visitor scrolls past the first screen.
+  const fab = document.querySelector<HTMLElement>('[data-fab]');
+  if (fab) {
+    const onScroll = () => fab.classList.toggle('is-on', window.scrollY > Math.min(560, window.innerHeight * 0.7));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>
+
 <style>
+  .fab {
+    position: fixed; right: clamp(14px, 3vw, 28px); bottom: clamp(14px, 3vw, 28px); z-index: 900;
+    display: inline-flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 999px;
+    background: var(--red); color: #fff; font-weight: 700; font-size: 15.5px;
+    box-shadow: 0 14px 34px -10px color-mix(in srgb, var(--red) 80%, transparent), 0 2px 6px rgb(0 0 0 / 18%);
+    opacity: 0; transform: translateY(16px) scale(.96); pointer-events: none; transition: opacity .25s, transform .25s var(--ease, ease);
+  }
+  .fab.is-on { opacity: 1; transform: none; pointer-events: auto; }
+  .fab:hover { filter: brightness(1.07); }
+  .fab:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .fab { transition: none; } }
   .footer { padding-block: 72px 28px; color: #aab4cc; }
   .footer__grid {
     display: grid;

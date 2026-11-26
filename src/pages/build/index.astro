@@ -15,12 +15,56 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
       <h1>Build your own panel, part by part.</h1>
       <p>Like configuring a custom laptop: pick what the panel is for, list your loads, then choose every component and make. We calculate the ratings and draw it as you go. Save several panels in your account and get one quotation for all of them, then place your order.</p>
       <ol class="bhero__how">
-        <li><b>1</b> Sign up free</li><li><b>2</b> Configure one or more panels</li><li><b>3</b> Get one quotation</li><li><b>4</b> Approve &amp; order</li>
+        <li><b>1</b> Sign up &amp; verify your email</li><li><b>2</b> Configure one or more panels</li><li><b>3</b> Send your enquiry</li><li><b>4</b> Get a quotation &amp; order</li>
       </ol>
     </div>
   </section>
 
-  <section class="builder" data-builder>
+  <p class="bload" data-bload>Loading the panel builder…</p>
+
+  <!-- Shown to visitors who are not signed in: the builder needs a verified account first. -->
+  <section class="bgate" data-gate hidden>
+    <div class="wrap bgate__grid">
+      <div class="bgate__pitch">
+        <span class="eyebrow">Free account · takes a minute</span>
+        <h2>Create your free account to start building</h2>
+        <p data-gate-lead>We ask for a few details first so our engineers can prepare an accurate quotation and reach you. Verify your email and the builder opens straight away.</p>
+        <ul class="bgate__list">
+          <li><Icon name="check" size={18} />Configure one or many panels, part by part</li>
+          <li><Icon name="check" size={18} />Live ratings and a drawing as you build</li>
+          <li><Icon name="check" size={18} />Save your builds and come back any time</li>
+          <li><Icon name="check" size={18} />One quotation for your whole project, usually within 1–2 working days</li>
+        </ul>
+        <p class="bgate__note"><Icon name="shield" size={16} />Your details are only used for your enquiries and orders. No spam.</p>
+      </div>
+
+      <div class="bgate__card">
+        <form class="bgate__form" data-gate-form novalidate>
+          <h3>Your details</h3>
+          <label class="field"><span class="flabel">Full name *</span><input class="input" name="name" autocomplete="name" required /></label>
+          <div class="bgrid2">
+            <label class="field"><span class="flabel">Company</span><input class="input" name="company" autocomplete="organization" /></label>
+            <label class="field"><span class="flabel">Mobile number *</span><input class="input" type="tel" name="phone" autocomplete="tel" required placeholder="+91" /></label>
+          </div>
+          <label class="field"><span class="flabel">Work email *</span><input class="input" type="email" name="email" autocomplete="email" required /></label>
+          <label class="field"><span class="flabel">Create a password * <small>(min. 8 characters)</small></span><input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required /></label>
+          <label class="check"><input type="checkbox" name="consent" required /><span class="bgate__fine">I agree to the <a href={url('/privacy/')} target="_blank">privacy policy</a> and to receive emails about my enquiries and orders.</span></label>
+          <p class="form-error" data-error hidden></p>
+          <button class="btn btn--red btn--block" type="submit">Create account &amp; verify email <Icon name="arrow" size={18} /></button>
+          <p class="bgate__alt">Already registered? <a data-gate-login href={url('/portal/login/?next=%2Fbuild%2F')}>Log in</a></p>
+        </form>
+        <div class="bgate__done" data-gate-done hidden>
+          <span class="bgate__icon"><Icon name="mail" size={28} /></span>
+          <h3>Check your inbox</h3>
+          <p data-gate-done-text></p>
+          <p class="bgate__fine">Didn't get it? Check spam, or <button type="button" class="link-reset" data-gate-resend>send it again</button>.</p>
+          <div data-gate-dev hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="builder" data-builder hidden>
     <div class="wrap"><div class="bacct" data-bacct></div></div>
     <div class="wrap builder__grid">
       <!-- Step navigation -->
@@ -381,6 +425,31 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
 
 <!-- Styles for parts the builder script adds after load (scoped styles do not reach them). -->
 <style is:global>
+  /* sign-up gate */
+  .bload { padding: 60px 16px; text-align: center; color: var(--muted); }
+  .bload[hidden] { display: none; }
+  .bgate { padding-block: clamp(32px, 5vw, 64px); }
+  .bgate[hidden] { display: none; }
+  .bgate__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
+  .bgate__pitch h2 { margin-top: 12px; font-size: clamp(26px, 3.2vw, 38px); }
+  .bgate__pitch > p { margin-top: 12px; color: var(--ink-2); font-size: 17px; line-height: 1.6; }
+  .bgate__list { display: grid; gap: 12px; margin: 22px 0 0; padding: 0; list-style: none; }
+  .bgate__list li { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; }
+  .bgate__list svg { flex: none; margin-top: 2px; color: #1f9d55; }
+  .bgate__note { display: flex; gap: 8px; align-items: center; margin-top: 22px; font-size: 14px; color: var(--muted); }
+  .bgate__card { padding: clamp(22px, 3vw, 32px); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: 18px; background: var(--white); box-shadow: var(--shadow); }
+  .bgate__form { display: grid; gap: 14px; }
+  .bgate__form h3, .bgate__done h3 { font-size: 20px; margin: 0; }
+  .bgate__form .bgrid2 { margin-bottom: 0; }
+  .bgate__form .flabel small { text-transform: none; letter-spacing: 0; }
+  .bgate__fine { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
+  .bgate__alt { margin: 0; text-align: center; font-size: 14.5px; color: var(--ink-2); }
+  .bgate__alt a { font-weight: 600; color: var(--navy-700); }
+  .bgate__done { display: grid; gap: 12px; justify-items: start; }
+  .bgate__done[hidden] { display: none; }
+  .bgate__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--red-050); color: var(--red); }
+  .bgate__done .link-reset { color: var(--navy-700); font-weight: 600; text-decoration: underline; }
+  @media (max-width: 900px) { .bgate__grid { grid-template-columns: 1fr; } .bgate__card { order: -1; } }
   /* how it works (hero) */
   .bhero__how { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 22px 0 0; padding: 0; list-style: none; color: #dfe5f2; font-size: 15px; }
   .bhero__how li { display: flex; align-items: center; gap: 8px; }

@@ -8,7 +8,7 @@ import { getBrand } from './brand';
 
 const link = (env: Env, path: string) => `${env.SITE_URL}${path}`;
 
-async function sendVerification(env: Env, user: { id: number; email: string; name: string }) {
+async function sendVerification(env: Env, user: { id: number; email: string; name: string }, next = '') {
   const token = await issueToken(env, 'verify_email', { userId: user.id }, 3 * 86400);
   const brand = await getBrand(env);
   await sendMail(env, {
@@ -16,7 +16,7 @@ async function sendVerification(env: Env, user: { id: number; email: string; nam
     subject: `Verify your email: ${brand.name} client portal`,
     heading: `Welcome, ${user.name.split(' ')[0]}!`,
     body: `<p>Please confirm your email address to activate your ${esc(brand.name)} client account. You can then build panels, request quotes and track your orders.</p>`,
-    cta: { label: 'Verify my email', url: link(env, `/portal/verify/?token=${token}`) },
+    cta: { label: next.startsWith('/build') ? 'Verify & start building' : 'Verify my email', url: link(env, `/portal/verify/?token=${token}${next ? `&next=${encodeURIComponent(next)}` : ''}`) },
     footnote: 'This link expires in 3 days. If you did not create an account, you can ignore this email.',
   });
   return token;
@@ -38,7 +38,8 @@ export async function register(req: Request, env: Env) {
   const b = await readJson(req);
   const email = emailField(b.email);
   const name = str(b.name, 'Name', { required: true, min: 2, max: 100 });
-  const phone = str(b.phone, 'Phone', { max: 30 });
+  const phone = str(b.phone, 'Phone', { required: true, max: 30 });
+  if (phone.replace(/\D/g, '').length < 10) throw new HttpError(400, 'Please enter a valid phone number (at least 10 digits)');
   const company = str(b.company, 'Company', { max: 150 });
   const pw = passwordField(b.password);
   const hash = await hashPassword(pw);
@@ -56,7 +57,7 @@ export async function register(req: Request, env: Env) {
       .run();
     id = Number(r.meta.last_row_id);
   }
-  const token = await sendVerification(env, { id, email, name });
+  const token = await sendVerification(env, { id, email, name }, b.next ? safeNext(b.next) : '');
   return json({ ok: true, message: 'Check your inbox to verify your email.', ...(isDev(env) ? { devToken: token } : {}) }, 201);
 }
 
@@ -76,7 +77,7 @@ export async function resendVerification(req: Request, env: Env) {
   const b = await readJson(req);
   const email = emailField(b.email);
   const user = await env.DB.prepare('SELECT id, email, name, email_verified_at FROM users WHERE email = ?').bind(email).first<User>();
-  if (user && !user.email_verified_at) await sendVerification(env, user);
+  if (user && !user.email_verified_at) await sendVerification(env, user, b.next ? safeNext(b.next) : '');
   return json({ ok: true, message: 'If that account needs verifying, a new link is on its way.' });
 }
 

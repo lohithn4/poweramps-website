@@ -419,18 +419,71 @@ refresh();
 showStep();
 save();
 
+/* ---------- access: the builder is for signed-in clients with a verified email ---------- */
+const gate = $('[data-gate]');
+function showGate() {
+  ($('[data-bload]') as HTMLElement).hidden = true;
+  root.hidden = true;
+  gate.hidden = false;
+  const app = appOf(params.get('app') ?? '');
+  if (app) $('[data-gate-lead]').innerHTML = `You chose <strong>${esc(app.title)}</strong>. Create your free account and verify your email, and the builder opens with it ready to configure.`;
+}
+function showBuilder() {
+  ($('[data-bload]') as HTMLElement).hidden = true;
+  gate.hidden = true;
+  root.hidden = false;
+}
+/** Where the verification email should bring them back to (keeps the chosen application). */
+const returnTo = () => `/build/${params.get('app') ? `?app=${encodeURIComponent(params.get('app')!)}` : ''}`;
+$<HTMLAnchorElement>('[data-gate-login]').href = sitePath(`/portal/login/?next=${encodeURIComponent(returnTo())}`);
+
+let gateEmail = '';
+$<HTMLFormElement>('[data-gate-form]').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.currentTarget as HTMLFormElement;
+  const err = $('[data-error]', f);
+  err.hidden = true;
+  const d = Object.fromEntries(new FormData(f)) as Record<string, string>;
+  const fail = (m: string) => { err.textContent = m; err.hidden = false; };
+  if (!d.name?.trim()) return fail('Please enter your name.');
+  if ((d.phone ?? '').replace(/\D/g, '').length < 10) return fail('Please enter a valid mobile number.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email ?? '')) return fail('Please enter a valid email address.');
+  if ((d.password ?? '').length < 8) return fail('The password needs at least 8 characters.');
+  if (!d.consent) return fail('Please accept the privacy policy to continue.');
+  const btn = f.querySelector<HTMLButtonElement>('button[type=submit]')!;
+  btn.disabled = true; btn.classList.add('is-busy');
+  try {
+    const r = await api<{ devToken?: string }>('/auth/register', { body: { name: d.name, company: d.company, phone: d.phone, email: d.email, password: d.password, consent: true, next: returnTo() } });
+    gateEmail = d.email;
+    f.hidden = true;
+    $('[data-gate-done]').hidden = false;
+    $('[data-gate-done-text]').innerHTML = `We've sent a verification link to <strong>${esc(d.email)}</strong>. Click it and the panel builder opens straight away.`;
+    if (r.devToken && location.hostname === 'localhost') {
+      const dev = $('[data-gate-dev]');
+      dev.hidden = false;
+      dev.innerHTML = `<a class="btn btn--ghost btn--sm" href="${sitePath(`/portal/verify/?token=${r.devToken}&next=${encodeURIComponent(returnTo())}`)}">Dev only: verify now</a>`;
+    }
+  } catch (ex: any) {
+    fail(ex.code === 'exists' ? 'You already have an account with this email. Please log in instead.' : ex.message);
+  } finally { btn.disabled = false; btn.classList.remove('is-busy'); }
+});
+$('[data-gate-resend]').addEventListener('click', async () => {
+  if (!gateEmail) return;
+  try { await api('/auth/resend', { body: { email: gateEmail, next: returnTo() } }); toast('Sent again. Please check your inbox.'); } catch (e: any) { toast(e.message, 'err'); }
+});
+
 getMe().then(async (u) => {
   me = u;
+  if (!me) { showGate(); return; }
+  showBuilder();
   renderAcct();
-  if (me) {
-    await loadBuilds();
-    const want = Number(params.get('build'));
-    if (want) await editBuild(want);
-    else if (params.get('new')) await newPanel();
-  }
+  await loadBuilds();
+  const want = Number(params.get('build'));
+  if (want) await editBuild(want);
+  else if (params.get('new')) await newPanel();
   renderProj();
   if (draft.step === STEPS - 1) renderReview();
-}).catch(() => { me = null; renderAcct(); renderProj(); });
+}).catch(() => { me = null; showGate(); });
 
 /* ---------- My builds: save several panels, quote them together ---------- */
 interface Build { id: number; name: string; title: string; quantity: number; config: PanelConfig; summary: unknown; request_id: number | null; request_ref?: string | null; updated_at: string }
