@@ -35,7 +35,7 @@ const path = Astro.url.pathname;
       {site.phone && (
         <a class="topbar__item topbar__phone" href={`tel:${site.phone.replace(/\s/g, '')}`}
           aria-label={site.contactName ? `Call ${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}: ${site.phone}` : `Call ${site.phone}`}>
-          <Icon name="phone" size={14} />{site.phone}
+          <Icon name="phone" size={14} /><span class="topbar__num">{site.phone}</span><span class="topbar__num-c">{site.phone.replace(/\s/g, '')}</span>
           {site.contactName && <span class="topbar__who" aria-hidden="true">{site.contactName}{site.contactRole && <small>{site.contactRole}</small>}</span>}
         </a>
       )}
@@ -214,14 +214,22 @@ const path = Astro.url.pathname;
     .topbar__inner { gap: 8px; }
     .topbar__gst { gap: 8px; }
   }
-  /* Phones: GSTIN + phone number; location moves out (it is in the footer and Contact page) */
+  /* Phone number: spaced on wide screens, digits run together on phones to save room */
+  .topbar__num-c { display: none; }
+  /* Phones: GSTIN, location (city) and phone all on one line */
   @media (max-width: 480px) {
     .topbar { font-size: 11px; letter-spacing: 0; }
-    .topbar__right { gap: 12px; }
+    .topbar__inner { gap: 6px; }
+    .topbar__right { gap: 10px; }
+    .topbar__item, .gstin, .gstin__num { gap: 4px; }
     .gstin__label { display: none; }
+    .topbar__num { display: none; }
+    .topbar__num-c { display: inline; }
   }
-  @media (max-width: 420px) {
-    .topbar__loc { display: none; }
+  @media (max-width: 359px) {
+    .topbar { font-size: 10px; }
+    .topbar__right { gap: 8px; }
+    .topbar__item :global(svg), .gstin__num :global(svg) { width: 12px; height: 12px; }
   }
   @media (max-width: 359px) {
     .header__inner { gap: 12px; }
