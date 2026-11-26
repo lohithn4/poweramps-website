@@ -387,13 +387,13 @@ function showDone(k: 'quote' | 'order', res: { ref: string; id?: number; needsCo
   if (res.needsConfirmation) {
     $('[data-done-title]', root).textContent = 'Almost done: check your email';
     $('[data-done-text]', root).innerHTML = `We've sent a confirmation link to <strong>${esc(draft.contact.email)}</strong>. Click it to confirm your request, and our engineers will start on your quotation.`;
-    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--red" href="${sitePath(`/portal/register/?email=${encodeURIComponent(draft.contact.email)}`)}">Create an account to track it</a><a class="btn btn--ghost" href="${sitePath('/panels')}">Browse panels</a>`;
+    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--primary" href="${sitePath(`/portal/register/?email=${encodeURIComponent(draft.contact.email)}`)}">Create an account to track it</a><a class="btn btn--ghost" href="${sitePath('/panels')}">Browse panels</a>`;
   } else {
     $('[data-done-title]', root).textContent = k === 'order' ? 'Order placed. Thank you!' : 'Quote request sent';
     $('[data-done-text]', root).textContent = k === 'order'
       ? 'Our team will review your order and send the order acknowledgement with final price and delivery date. You can track every stage in your portal.'
       : 'Our engineers will review your requirement and send your quotation, usually within 1–2 working days. You can track it in your portal.';
-    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--red" href="${sitePath(`/portal/request/?id=${res.id}`)}">Track this ${k}</a><a class="btn btn--ghost" href="${sitePath('/build/?new=1')}">Build another panel</a><a class="btn btn--ghost" href="${sitePath('/portal/#builds')}">My builds</a>`;
+    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--primary" href="${sitePath(`/portal/request/?id=${res.id}`)}">Track this ${k}</a><a class="btn btn--ghost" href="${sitePath('/build/?new=1')}">Build another panel</a><a class="btn btn--ghost" href="${sitePath('/portal/#builds')}">My builds</a>`;
   }
   done.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -588,7 +588,7 @@ function renderAcct() {
   const el = $('[data-bacct]', root);
   el.innerHTML = me
     ? `<p>Signed in as <strong>${esc(me.name)}</strong>. Save each panel to <strong>My builds</strong>, add as many panels as your project needs, then request one quotation for all of them.</p><div class="bacct__btns"><a class="btn btn--ghost btn--sm" href="${sitePath('/portal/#builds')}">My builds</a></div>`
-    : `<p><strong>Sign up free to save your builds.</strong> Configure several panels for one project, come back any time, and get a single quotation for all of them. You can also send one panel as a guest.</p><div class="bacct__btns"><a class="btn btn--red btn--sm" href="${signupUrl()}">Create free account</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
+    : `<p><strong>Sign up free to save your builds.</strong> Configure several panels for one project, come back any time, and get a single quotation for all of them. You can also send one panel as a guest.</p><div class="bacct__btns"><a class="btn btn--primary btn--sm" href="${signupUrl()}">Create free account</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
 }
 
 function updateProjState() {
@@ -605,7 +605,7 @@ function renderProj() {
   const el = $('[data-proj]', root);
   if (!me) {
     el.innerHTML = `<h3>Save &amp; quote several panels</h3><p>Create a free account to save this panel, build more panels for the same project and get one quotation for all of them.</p>
-      <div class="bproj__btns"><a class="btn btn--red btn--sm" href="${signupUrl()}">Sign up free</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
+      <div class="bproj__btns"><a class="btn btn--primary btn--sm" href="${signupUrl()}">Sign up free</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
     return;
   }
   const drafts = builds.filter((b) => !b.request_id);
@@ -613,14 +613,14 @@ function renderProj() {
   const inQuote = requestPanels().length;
   el.innerHTML = `<h3>My builds</h3>
     <div class="bproj__cur"><div><small class="mono">Editing</small><b data-proj-name></b></div><span class="bproj__state" data-proj-state></span></div>
-    <div class="bproj__btns"><button type="button" class="btn btn--red btn--sm" data-b-save>Save panel</button><button type="button" class="btn btn--ghost btn--sm" data-b-new>+ Add panel</button></div>
+    <div class="bproj__btns"><button type="button" class="btn btn--primary btn--sm" data-b-save>Save panel</button><button type="button" class="btn btn--ghost btn--sm" data-b-new>+ Add panel</button></div>
     ${drafts.length ? `<div class="bproj__list">${drafts.map((b) => `<div class="bproj__item${b.id === draft.buildId ? ' is-current' : ''}">
         <input type="checkbox" data-b-sel="${b.id}" ${selected.has(b.id) || b.id === draft.buildId ? 'checked' : ''} ${b.id === draft.buildId ? 'disabled' : ''} title="Include in quotation" aria-label="Include ${esc(b.name)} in the quotation">
         <div><strong>${esc(b.name)}</strong><small>${esc(b.title)} · Qty ${b.quantity}</small></div>
         <div class="bproj__acts">${b.id === draft.buildId ? '<span class="bproj__state">On screen</span>' : `<button type="button" data-b-edit="${b.id}">Edit</button>`}<button type="button" data-b-dup="${b.id}">Copy</button><button type="button" data-b-del="${b.id}">Delete</button></div>
       </div>`).join('')}</div>` : '<p style="margin-top:12px">Saved panels appear here. Tick the ones to include in your quotation.</p>'}
     ${sent.length ? `<div class="bproj__list">${sent.map((b) => `<div class="bproj__item"><div class="bproj__sent"><strong>${esc(b.name)}</strong><small>Sent in ${esc(b.request_ref ?? '')} · <a href="${sitePath(`/portal/request/?id=${b.request_id}`)}">track</a> · <button type="button" class="link-reset" data-b-dup="${b.id}" style="color:var(--navy-700);font-weight:600">reuse</button></small></div></div>`).join('')}</div>` : ''}
-    ${inQuote > 1 ? `<button type="button" class="btn btn--red btn--block btn--sm bproj__go" data-b-review>Review ${inQuote} panels &amp; request quote</button>` : ''}`;
+    ${inQuote > 1 ? `<button type="button" class="btn btn--primary btn--block btn--sm bproj__go" data-b-review>Review ${inQuote} panels &amp; request quote</button>` : ''}`;
   updateProjState();
 }
 

@@ -9,7 +9,7 @@ settings and content files, so a new company is a configuration exercise, not a 
 | What | Where | Edited via |
 |---|---|---|
 | Company name, legal name, tagline, SEO title | `src/data/site.json` | `/admin` → Site settings |
-| Logo text, optional logo image, **brand colours** (whole theme, favicon, emails) | `site.json` → `brand` | `/admin` → Site settings → Brand |
+| Logo text, optional logo image, **brand colours** (whole theme, favicon, emails; `action` = buttons and highlights, `accent` = logo, NEW tags and warnings) | `site.json` → `brand` | `/admin` → Site settings → Brand |
 | Address, locality, map pin, phone, WhatsApp, email | `site.json` | `/admin` → Site settings |
 | GSTIN, CIN, IEC, marketplace link | `site.json` | `/admin` → Site settings |
 | Order reference prefix (e.g. `PA` → `PA-2026-0001`) | `site.json` → `refPrefix` | `/admin` → Site settings |

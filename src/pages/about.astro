@@ -50,7 +50,7 @@ const gallery = [
         <span class="eyebrow">Our story</span>
         <h2 class="story__h">A trusted name for control panels and electrical equipment.</h2>
         {site.about.story.map((p) => <p>{p}</p>)}
-        <a class="btn btn--red" href={url('/contact')}>Work with us <Icon name="arrow" size={18} /></a>
+        <a class="btn btn--primary" href={url('/contact')}>Work with us <Icon name="arrow" size={18} /></a>
       </div>
 
       <aside class="facts reveal">
@@ -123,7 +123,7 @@ const gallery = [
 
   .values-sec { background: var(--white); border-block: 1px solid var(--line); }
   .values { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
-  .value__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--red-050); color: var(--red); }
+  .value__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--action-050); color: var(--action); }
   .value h3 { margin-top: 16px; font-size: 19px; }
   .value p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
 

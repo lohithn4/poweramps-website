@@ -31,7 +31,7 @@ import StaffPage from '../../components/StaffPage.astro';
         <label class="switch"><input type="radio" name="mode" value="update" /> <span><b>Only update existing</b> (e.g. balances, phone numbers)</span></label>
       </div>
       <p class="fhint" style="margin-bottom:14px">Matching: by Tally name, then name, then GSTIN (parties) or code (items). Empty cells never erase existing details.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn--ghost" type="button" data-preview>Preview changes</button><button class="btn btn--red" type="button" data-apply disabled>Apply</button></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn--ghost" type="button" data-preview>Preview changes</button><button class="btn btn--primary" type="button" data-apply disabled>Apply</button></div>
       <div data-result style="margin-top:16px"></div>
     </div>
 
@@ -59,7 +59,7 @@ import StaffPage from '../../components/StaffPage.astro';
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
           <button class="btn btn--ghost" type="button" data-ex="masters">1. Download masters (new parties/items)</button>
-          <button class="btn btn--red" type="button" data-ex="vouchers">2. Download vouchers</button>
+          <button class="btn btn--primary" type="button" data-ex="vouchers">2. Download vouchers</button>
         </div>
         <div data-ex-result></div>
       </div>
@@ -322,7 +322,7 @@ import StaffPage from '../../components/StaffPage.astro';
     }
     const total = pending.doc_ids.length + pending.payment_ids.length;
     $('[data-ex-result]').innerHTML = `<div class="notice" style="margin-top:12px">${part === 'masters' ? `Masters file has ${c.parties} new part${c.parties === 1 ? 'y' : 'ies'}${c.items ? ` and ${c.items} item(s)` : ''}.` : `Vouchers file has ${c.documents} bill/invoice${c.documents === 1 ? '' : 's'} and ${c.payments} payment entr${c.payments === 1 ? 'y' : 'ies'}.`}
-      ${total ? `<div style="margin-top:10px"><button class="btn btn--red btn--sm" type="button" data-mark>Mark ${total} entr${total === 1 ? 'y' : 'ies'} as sent to Tally</button> <span class="fhint">Only after Tally confirms a successful import.</span></div>` : ''}</div>`;
+      ${total ? `<div style="margin-top:10px"><button class="btn btn--primary btn--sm" type="button" data-mark>Mark ${total} entr${total === 1 ? 'y' : 'ies'} as sent to Tally</button> <span class="fhint">Only after Tally confirms a successful import.</span></div>` : ''}</div>`;
     $('[data-ex-result]').querySelector('[data-mark]')?.addEventListener('click', async (e) => {
       await guarded(e.currentTarget as HTMLButtonElement, async () => {
         const res = await api('/erp/tally/mark', { body: pending });

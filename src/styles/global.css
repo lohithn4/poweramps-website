@@ -9,6 +9,7 @@
   --brand-primary: #024998;
   --brand-accent: #cd030d;
   --brand-dark: #081129;
+  --brand-action: #1f5fcc;   /* buttons, links, highlights (calmer than the red accent) */
   --navy-950: var(--brand-dark);
   --navy-900: color-mix(in srgb, var(--brand-dark) 88%, var(--brand-primary));
   --navy-800: color-mix(in srgb, var(--brand-dark) 62%, var(--brand-primary));
@@ -17,6 +18,11 @@
   --red: var(--brand-accent);
   --red-600: color-mix(in srgb, var(--brand-accent) 82%, black);
   --red-050: color-mix(in srgb, var(--brand-accent) 8%, white);
+  /* Action colour: everything clickable or highlighted. Red is kept for the logo, NEW tags and warnings. */
+  --action: var(--brand-action);
+  --action-600: color-mix(in srgb, var(--brand-action) 80%, black);
+  --action-050: color-mix(in srgb, var(--brand-action) 8%, white);
+  --action-hi: color-mix(in srgb, var(--brand-action) 45%, white); /* on dark backgrounds */
 
   /* Neutrals */
   --ink: #0d1626;
@@ -87,7 +93,7 @@ h1, h2, h3, h4 {
 p { margin: 0; text-wrap: pretty; }
 
 :focus-visible {
-  outline: 2px solid var(--red);
+  outline: 2px solid var(--action);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -117,7 +123,7 @@ p { margin: 0; text-wrap: pretty; }
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--red);
+  color: var(--action);
 }
 .eyebrow::before {
   content: '';
@@ -125,12 +131,12 @@ p { margin: 0; text-wrap: pretty; }
   height: 2px;
   background: currentColor;
 }
-.on-dark .eyebrow { color: color-mix(in srgb, var(--brand-accent) 62%, white); }
+.on-dark .eyebrow { color: var(--action-hi); }
 
 .mono { font-family: var(--font-mono); }
 
-.section { padding-block: clamp(36px, 4.5vw, 64px); }
-.section--tight { padding-block: clamp(28px, 3.5vw, 44px); }
+.section { padding-block: clamp(28px, 3.5vw, 48px); }
+.section--tight { padding-block: clamp(22px, 2.8vw, 36px); }
 
 .section-head {
   display: grid;
@@ -180,8 +186,8 @@ p { margin: 0; text-wrap: pretty; }
 .btn:active { transform: translateY(0); }
 .btn svg { width: 18px; height: 18px; flex: none; }
 
-.btn--red { --btn-bg: var(--red); }
-.btn--red:hover { --btn-bg: var(--red-600); }
+.btn--primary { --btn-bg: var(--action); }
+.btn--primary:hover { --btn-bg: var(--action-600); }
 .btn--ghost { --btn-bg: transparent; --btn-fg: var(--ink); --btn-bd: var(--line-2); }
 .btn--ghost:hover { --btn-bd: var(--navy-700); }
 .on-dark .btn--ghost { --btn-fg: #fff; --btn-bd: rgb(255 255 255 / 28%); }
@@ -255,7 +261,7 @@ p { margin: 0; text-wrap: pretty; }
 
 .page-hero {
   position: relative;
-  padding-block: clamp(28px, 3.5vw, 48px) clamp(24px, 3vw, 36px);
+  padding-block: clamp(16px, 2vw, 28px) clamp(18px, 2.2vw, 28px);
   overflow: hidden;
 }
 .page-hero h1 { font-size: clamp(30px, 3.8vw, 46px); margin-top: 10px; }

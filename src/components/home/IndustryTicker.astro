@@ -37,14 +37,14 @@ const items: string[] = site.industries ?? [];
     position: relative; z-index: 2;
     display: flex; align-items: center; gap: 10px; flex: none;
     padding: 0 22px 0 max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
-    background: var(--red);
+    background: var(--action);
     color: #fff;
     font-family: var(--font-mono); font-size: 12px; font-weight: 600;
     letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
   }
   .ticker__label::after {
     content: ''; position: absolute; right: -14px; top: 0; bottom: 0; width: 14px;
-    background: var(--red);
+    background: var(--action);
     clip-path: polygon(0 0, 100% 50%, 0 100%);
   }
   .ticker__dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: blink 1.6s ease-in-out infinite; }

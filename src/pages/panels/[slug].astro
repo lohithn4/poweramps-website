@@ -91,7 +91,7 @@ const jsonLd = {
           )}
 
           <div class="info__actions">
-            <a class="btn btn--red" href={buildHref}>Customise &amp; get a quote <Icon name="arrow" size={18} /></a>
+            <a class="btn btn--primary" href={buildHref}>Customise &amp; get a quote <Icon name="arrow" size={18} /></a>
             <a class="btn btn--ghost" href={enquiryHref}>Quick enquiry</a>
             {waHref && <a class="btn btn--wa" href={waHref} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} />WhatsApp</a>}
             {site.phone && <a class="btn btn--ghost" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={18} />Call</a>}
@@ -256,7 +256,7 @@ const jsonLd = {
     font-size: 15px; color: var(--ink-2);
   }
   .info__assure li { display: flex; align-items: center; gap: 10px; }
-  .info__assure :global(svg) { color: var(--red); flex: none; }
+  .info__assure :global(svg) { color: var(--action); flex: none; }
 
   @media (max-width: 900px) {
     .detail__grid { grid-template-columns: 1fr; }

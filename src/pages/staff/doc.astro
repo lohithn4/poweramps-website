@@ -242,13 +242,13 @@ import { url } from '../../lib/url';
     const st = doc.status;
     const add = (b: HTMLButtonElement) => box.appendChild(b);
     if (!docId || st === 'draft') {
-      if (type === 'purchase') add(act('Save purchase bill', 'btn--red', () => save(false)));
+      if (type === 'purchase') add(act('Save purchase bill', 'btn--primary', () => save(false)));
       else {
-        add(act(`Save & issue ${DOC_LABEL[type].toLowerCase()}`, 'btn--red', () => save(true), 'Gives it a number. Invoices are locked after this.'));
+        add(act(`Save & issue ${DOC_LABEL[type].toLowerCase()}`, 'btn--primary', () => save(true), 'Gives it a number. Invoices are locked after this.'));
         if (type === 'quotation' || type === 'invoice') add(act('Save, issue & email client', 'btn--ghost', async () => { await save(true, false); await send(); }));
         add(act('Save draft', 'btn--ghost', () => save(false)));
       }
-    } else if (!readonly) add(act(type === 'quotation' && st !== 'issued' ? 'Save as new revision' : 'Save changes', 'btn--red', () => save(false)));
+    } else if (!readonly) add(act(type === 'quotation' && st !== 'issued' ? 'Save as new revision' : 'Save changes', 'btn--primary', () => save(false)));
     if (docId && !['draft', 'cancelled'].includes(st)) {
       if (type === 'quotation' || type === 'invoice') add(act(st === 'sent' ? 'Email client again' : 'Email to client', 'btn--ghost', send));
       if (type === 'invoice' || type === 'purchase') if (doc.total - paid > 0.5) add(act(type === 'invoice' ? 'Record receipt' : 'Record payment', 'btn--ghost', recordPayment));

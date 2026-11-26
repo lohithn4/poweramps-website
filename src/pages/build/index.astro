@@ -50,7 +50,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
           <label class="field"><span class="flabel">Create a password * <small>(min. 8 characters)</small></span><input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required /></label>
           <label class="check"><input type="checkbox" name="consent" required /><span class="bgate__fine">I agree to the <a href={url('/privacy/')} target="_blank">privacy policy</a> and to receive emails about my enquiries and orders.</span></label>
           <p class="form-error" data-error hidden></p>
-          <button class="btn btn--red btn--block" type="submit">Create account &amp; verify email <Icon name="arrow" size={18} /></button>
+          <button class="btn btn--primary btn--block" type="submit">Create account &amp; verify email <Icon name="arrow" size={18} /></button>
           <p class="bgate__alt">Already registered? <a data-gate-login href={url('/portal/login/?next=%2Fbuild%2F')}>Log in</a></p>
         </form>
         <div class="bgate__done" data-gate-done hidden>
@@ -220,8 +220,8 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
           <div class="bnav">
             <button type="button" class="btn btn--ghost" data-prev><Icon name="arrow-left" size={18} />Back</button>
             <button type="button" class="link-reset" data-reset>Start over</button>
-            <button type="button" class="btn btn--red" data-next>Next <Icon name="arrow" size={18} /></button>
-            <button type="button" class="btn btn--red" data-submit hidden>Review & confirm <Icon name="arrow" size={18} /></button>
+            <button type="button" class="btn btn--primary" data-next>Next <Icon name="arrow" size={18} /></button>
+            <button type="button" class="btn btn--primary" data-submit hidden>Review & confirm <Icon name="arrow" size={18} /></button>
           </div>
         </form>
 
@@ -262,7 +262,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
       <label class="check"><input type="checkbox" data-confirm-check /><span data-confirm-label>I confirm the requirements above are correct.</span></label>
       <div class="confirm__actions">
         <button type="button" class="btn btn--ghost" data-confirm-cancel>Go back</button>
-        <button type="button" class="btn btn--red" data-confirm-ok disabled>Submit</button>
+        <button type="button" class="btn btn--primary" data-confirm-ok disabled>Submit</button>
       </div>
     </form>
   </dialog>
@@ -273,7 +273,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
 </script>
 
 <style>
-  .bhero { padding-block: clamp(24px, 3vw, 40px); }
+  .bhero { padding-block: clamp(16px, 2vw, 28px) clamp(18px, 2.2vw, 30px); }
   .bhero h1 { margin-top: 10px; font-size: clamp(28px, 3.6vw, 44px); color: #fff; }
   .bhero p { margin-top: 10px; max-width: 70ch; color: #b7c1d8; font-size: 16px; }
 
@@ -318,11 +318,11 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   }
   .appcard__t { font-weight: 700; font-size: 16px; margin-top: 6px; }
   .appcard__d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
-  .appcard__check { position: absolute; top: 12px; right: 12px; display: none; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--red); color: #fff; }
-  .appcard:has(input:checked) { border-color: var(--red); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 10%, transparent); }
-  .appcard:has(input:checked) .appcard__icon { background: var(--red); color: #fff; }
+  .appcard__check { position: absolute; top: 12px; right: 12px; display: none; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--action); color: #fff; }
+  .appcard:has(input:checked) { border-color: var(--action); box-shadow: 0 0 0 4px color-mix(in srgb, var(--action) 10%, transparent); }
+  .appcard:has(input:checked) .appcard__icon { background: var(--action); color: #fff; }
   .appcard:has(input:checked) .appcard__check { display: grid; }
-  .appcard:has(input:focus-visible) { outline: 2px solid var(--red); outline-offset: 2px; }
+  .appcard:has(input:focus-visible) { outline: 2px solid var(--action); outline-offset: 2px; }
 
   .bfield { border: 0; padding: 0; margin: 0 0 22px; min-width: 0; }
   .bfield legend, .flabel { display: block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -332,7 +332,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .pill span { display: inline-block; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14.5px; font-weight: 500; transition: all .15s; }
   .pill:hover span { border-color: var(--line-2); }
   .pill input:checked + span { border-color: var(--navy-700); background: color-mix(in srgb, var(--brand-primary) 6%, transparent); color: var(--navy-800); box-shadow: inset 0 0 0 1px var(--navy-700); }
-  .pill input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+  .pill input:focus-visible + span { outline: 2px solid var(--action); outline-offset: 2px; }
   .bfield .input { margin-top: 10px; }
 
   .optgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
@@ -409,7 +409,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
     .bsteps ol { display: none; }
     .bsteps__mobile { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
     .bsteps__bar { display: block; height: 6px; margin-top: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
-    .bsteps__bar span { display: block; height: 100%; background: var(--red); transition: width .3s var(--ease); }
+    .bsteps__bar span { display: block; height: 100%; background: var(--action); transition: width .3s var(--ease); }
   }
   @media (max-width: 900px) {
     .builder__grid { grid-template-columns: 1fr; }
@@ -428,7 +428,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   /* sign-up gate */
   .bload { padding: 60px 16px; text-align: center; color: var(--muted); }
   .bload[hidden] { display: none; }
-  .bgate { padding-block: clamp(24px, 3vw, 40px); }
+  .bgate { padding-block: clamp(18px, 2.2vw, 30px); }
   .bgate[hidden] { display: none; }
   .bgate__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 64px); align-items: start; }
   .bgate__pitch h2 { margin-top: 12px; font-size: clamp(26px, 3.2vw, 38px); }
@@ -437,7 +437,7 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .bgate__list li { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; }
   .bgate__list svg { flex: none; margin-top: 2px; color: #1f9d55; }
   .bgate__note { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 14px; color: var(--muted); }
-  .bgate__card { padding: clamp(22px, 3vw, 32px); border: 1px solid var(--line); border-top: 4px solid var(--red); border-radius: 18px; background: var(--white); box-shadow: var(--shadow); }
+  .bgate__card { padding: clamp(22px, 3vw, 32px); border: 1px solid var(--line); border-top: 4px solid var(--action); border-radius: 18px; background: var(--white); box-shadow: var(--shadow); }
   .bgate__form { display: grid; gap: 14px; }
   .bgate__form h3, .bgate__done h3 { font-size: 20px; margin: 0; }
   .bgate__form .bgrid2 { margin-bottom: 0; }
@@ -447,17 +447,17 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .bgate__alt a { font-weight: 600; color: var(--navy-700); }
   .bgate__done { display: grid; gap: 12px; justify-items: start; }
   .bgate__done[hidden] { display: none; }
-  .bgate__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--red-050); color: var(--red); }
+  .bgate__icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--action-050); color: var(--action); }
   .bgate__done .link-reset { color: var(--navy-700); font-weight: 600; text-decoration: underline; }
   @media (max-width: 900px) { .bgate__grid { grid-template-columns: minmax(0, 1fr); } .bgate__card { order: -1; } }
   /* how it works (hero) */
   .bhero__how { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 14px 0 0; padding: 0; list-style: none; color: #dfe5f2; font-size: 14.5px; }
   .bhero__how li { display: flex; align-items: center; gap: 8px; }
-  .bhero__how b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font-size: 13px; }
+  .bhero__how b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--action); color: #fff; font-size: 13px; }
 
   /* account banner */
   .bacct:empty { display: none; }
-  .bacct { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-top: 22px; padding: 14px 18px; border: 1px solid var(--line); border-left: 4px solid var(--red); border-radius: 14px; background: var(--white); box-shadow: var(--shadow-sm); }
+  .bacct { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-top: 22px; padding: 14px 18px; border: 1px solid var(--line); border-left: 4px solid var(--action); border-radius: 14px; background: var(--white); box-shadow: var(--shadow-sm); }
   .bacct p { margin: 0; font-size: 15px; color: var(--ink-2); }
   .bacct strong { color: var(--ink); }
   .bacct__btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -466,9 +466,9 @@ const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'
   .cfg-sec { padding: 18px 18px 2px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
   .cfg-sec[hidden] { display: none; }
   .cfg-sec__t { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-  .cfg-sec__t::before { content: ''; width: 4px; height: 16px; border-radius: 2px; background: var(--red); }
+  .cfg-sec__t::before { content: ''; width: 4px; height: 16px; border-radius: 2px; background: var(--action); }
   .cfg-hint { margin: -2px 0 8px; font-size: 13px; color: var(--muted); }
-  .pill__tag { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--red-050); color: var(--red); font-size: 11px; font-style: normal; font-weight: 600; }
+  .pill__tag { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--action-050); color: var(--action); font-size: 11px; font-style: normal; font-weight: 600; }
 
   /* my builds tray */
   .bproj { margin-top: 14px; }

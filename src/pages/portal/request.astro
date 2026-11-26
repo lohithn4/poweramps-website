@@ -67,7 +67,7 @@ import { url } from '../../lib/url';
     fbCard.hidden = r.status !== 'delivered';
     if (!fbCard.hidden) $('[data-fb]').innerHTML = feedback
       ? `<p>You rated us <strong>${feedback.rating}/10</strong>. Thank you for your feedback!</p>`
-      : `<p style="font-size:14.5px;margin-bottom:12px">Your panel has been delivered. How likely are you to recommend us, from 0 to 10?</p><a class="btn btn--red btn--block" href="${sitePath(`/portal/feedback/?id=${id}`)}">Give feedback</a>`;
+      : `<p style="font-size:14.5px;margin-bottom:12px">Your panel has been delivered. How likely are you to recommend us, from 0 to 10?</p><a class="btn btn--primary btn--block" href="${sitePath(`/portal/feedback/?id=${id}`)}">Give feedback</a>`;
     document.title = `${r.ref} | ${document.title.split(" | ").pop()}`;
     $('[data-crumb]').textContent = r.ref;
     $('[data-title]').textContent = r.title;
@@ -94,7 +94,7 @@ import { url } from '../../lib/url';
         <div class="quote-box__amt">${inr(r.quote_amount)} <small>incl. GST</small></div>
         <p style="margin-top:6px;font-size:14px;color:var(--ink-2)">Quotation ${esc(qd?.number ?? '')}${qd?.revision ? ` (rev ${qd.revision})` : ''} · valid until ${qd?.valid_until ? fmtDate(qd.valid_until) : '—'}</p>
         <a class="btn btn--ghost btn--block" style="margin-top:12px" href="${sitePath(`/portal/document/?id=${r.quote_doc_id}`)}">View full quotation / download PDF</a>
-        ${canAccept ? `<button class="btn btn--red btn--block" style="margin-top:10px" data-accept>Accept quotation & confirm order</button>` : ''}
+        ${canAccept ? `<button class="btn btn--primary btn--block" style="margin-top:10px" data-accept>Accept quotation & confirm order</button>` : ''}
       </div>`;
       $('[data-quote]').querySelector('[data-accept]')?.addEventListener('click', accept);
     } else if (r.quote_amount) {
@@ -104,7 +104,7 @@ import { url } from '../../lib/url';
         <div class="quote-box__amt">${inr(r.quote_amount)} <small>+ GST as applicable</small></div>
         <p style="margin-top:6px;font-size:14px;color:var(--ink-2)">For ${r.quantity} panel${r.quantity > 1 ? 's' : ''} · valid ${r.quote_validity_days} days from ${fmtDate(r.quoted_at)}</p>
         ${r.quote_note ? `<p style="margin-top:10px;font-size:14.5px;white-space:pre-line">${esc(r.quote_note)}</p>` : ''}
-        ${canAccept ? `<button class="btn btn--red btn--block" style="margin-top:14px" data-accept>Accept quotation & confirm order</button>` : ''}
+        ${canAccept ? `<button class="btn btn--primary btn--block" style="margin-top:14px" data-accept>Accept quotation & confirm order</button>` : ''}
       </div>`;
       $('[data-quote]').querySelector('[data-accept]')?.addEventListener('click', accept);
     }

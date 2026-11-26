@@ -10,7 +10,8 @@
     "logoImage": "",
     "primary": "#024998",
     "accent": "#cd030d",
-    "dark": "#081129"
+    "dark": "#081129",
+    "action": "#1f5fcc"
   },
   "refPrefix": "PA",
   "apiUrl": "https://api.poweramps.in",

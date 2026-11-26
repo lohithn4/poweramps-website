@@ -169,7 +169,8 @@ collections:
               - { label: Logo text (small line), name: wordmarkSub, widget: string, required: false, hint: "e.g. TECHNOLOGY PVT. LTD." }
               - { label: Logo symbol image (optional), name: logoImage, widget: image, required: false, hint: "Square image. Leave empty to use the 4-square mark in your brand colours." }
               - { label: Primary colour, name: primary, widget: color, hint: "Links, highlights, logo squares" }
-              - { label: Accent colour, name: accent, widget: color, hint: "Buttons and call-to-action colour" }
+              - { label: Accent colour, name: accent, widget: color, hint: "Logo second colour, NEW tags and warnings" }
+              - { label: Action colour, name: action, widget: color, required: false, hint: "Buttons, links and highlights" }
               - { label: Dark colour, name: dark, widget: color, hint: "Dark sections, header bar, email header" }
           - { label: Order reference prefix, name: refPrefix, widget: string, hint: "2–6 letters, e.g. PA → PA-2026-0001", pattern: ["^[A-Za-z0-9]{1,6}$", "1–6 letters or digits"] }
           - { label: Portal API address, name: apiUrl, widget: string, hint: "Where the client/staff portal backend runs, e.g. https://api.yourdomain.in" }

@@ -87,7 +87,7 @@ const steps = [
           <li><b>3</b>Send your enquiry</li>
         </ol>
         <div class="launch__actions">
-          <a class="btn btn--red btn--lg" href={url('/build/')}>Start building <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--primary btn--lg" href={url('/build/')}>Start building <Icon name="arrow" size={18} /></a>
           <a class="launch__login" href={url('/portal/login/?next=%2Fbuild%2F')}>Already registered? Log in</a>
         </div>
       </div>
@@ -271,7 +271,7 @@ const steps = [
           </a>
         )}
         <div class="visit__actions">
-          <a class="btn btn--red" href={directionsUrl} target="_blank" rel="noopener"><Icon name="pin" size={18} />Get directions</a>
+          <a class="btn btn--primary" href={directionsUrl} target="_blank" rel="noopener"><Icon name="pin" size={18} />Get directions</a>
           <a class="btn btn--ghost" href={openMapUrl} target="_blank" rel="noopener">Open in Google Maps <Icon name="external" size={16} /></a>
         </div>
       </div>
@@ -290,7 +290,7 @@ const steps = [
           {site.phone && site.contactName && <p class="cta__who">Or call {site.contactName}{site.contactRole && ` (${site.contactRole})`} directly on <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>.</p>}
         </div>
         <div class="cta__actions">
-          <a class="btn btn--red" href={url('/contact')}>Send enquiry <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--primary" href={url('/contact')}>Send enquiry <Icon name="arrow" size={18} /></a>
           {site.whatsapp && <a class="btn btn--wa" href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} />WhatsApp</a>}
           {site.phone && <a class="btn btn--ghost" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={18} />{site.phone}</a>}
         </div>
@@ -375,8 +375,8 @@ const steps = [
     content: '';
     position: absolute; left: -3px; top: 0;
     width: 8px; height: 8px; border-radius: 50%;
-    background: var(--red);
-    box-shadow: 0 0 10px var(--red);
+    background: var(--action);
+    box-shadow: 0 0 10px var(--action);
     opacity: 0;
   }
   .feeder:hover .feeder__drop::after { animation: drop .9s var(--ease) infinite; }
@@ -387,7 +387,7 @@ const steps = [
     fill: none; stroke: var(--ink-2); stroke-width: 1.8;
     transition: stroke .25s;
   }
-  .feeder:hover .feeder__drop svg { stroke: var(--red); }
+  .feeder:hover .feeder__drop svg { stroke: var(--action); }
   .feeder:hover .feeder__drop svg path { d: path('M8 12h8'); }
   .feeder__drop svg path { transition: d .25s var(--ease); }
 
@@ -401,7 +401,7 @@ const steps = [
     border-radius: 0 0 12px 12px;
     transition: border-color .25s, box-shadow .3s, transform .3s var(--ease);
   }
-  .feeder:hover .feeder__card { border-top-color: var(--red); box-shadow: var(--shadow); transform: translateY(-3px); }
+  .feeder:hover .feeder__card { border-top-color: var(--action); box-shadow: var(--shadow); transform: translateY(-3px); }
   .feeder__top { display: flex; justify-content: space-between; align-items: center; }
   .feeder__count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
   .feeder__title { font-weight: 700; font-stretch: 110%; font-size: 19px; line-height: 1.2; }
@@ -409,7 +409,7 @@ const steps = [
   .feeder__ex { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 6px; }
   .feeder__ex li { position: relative; padding-left: 16px; font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
   .feeder__ex li::before { content: ''; position: absolute; left: 0; top: .5em; width: 7px; height: 7px; border-radius: 2px; background: var(--navy-700); }
-  .feeder:hover .feeder__ex li::before { background: var(--red); }
+  .feeder:hover .feeder__ex li::before { background: var(--action); }
   .feeder__go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; color: var(--navy-700); }
 
   @media (max-width: 760px) {
@@ -423,7 +423,7 @@ const steps = [
     .feeder__drop svg { width: 20px; height: 20px; }
     .feeder__drop::after { display: none; }
     .feeder__card { border-top: 1px solid var(--line); border-left: 3px solid var(--navy-800); border-radius: 0 12px 12px 0; }
-    .feeder:hover .feeder__card { border-top-color: var(--line); border-left-color: var(--red); }
+    .feeder:hover .feeder__card { border-top-color: var(--line); border-left-color: var(--action); }
   }
 
   /* ---------- Cards grid ---------- */
@@ -450,7 +450,7 @@ const steps = [
     display: grid; place-items: center;
     width: 44px; height: 44px;
     border-radius: 10px;
-    background: var(--red-050); color: var(--red);
+    background: var(--action-050); color: var(--action);
   }
   .cap h3 { margin-top: 12px; font-size: 18px; }
   .cap p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
@@ -485,7 +485,7 @@ const steps = [
     display: grid; place-items: center;
     width: 44px; height: 44px; border-radius: 10px;
     border: 1px solid rgb(255 255 255 / 14%);
-    color: color-mix(in srgb, var(--brand-accent) 62%, white);
+    color: var(--action-hi);
   }
   .step h3 { margin-top: 12px; font-size: 18px; color: #fff; }
   .step p { margin-top: 8px; color: #a3aec7; font-size: 15px; }
@@ -502,30 +502,30 @@ const steps = [
     display: flex; gap: 14px; align-items: flex-start;
     padding: 18px;
     border: 1px solid var(--line);
-    border-left: 3px solid var(--red);
+    border-left: 3px solid var(--action);
     border-radius: 12px;
     background: var(--paper);
     font-style: normal; line-height: 1.6; color: var(--ink-2);
   }
   .visit__addr strong { display: block; color: var(--ink); margin-bottom: 2px; }
-  .launch { padding-block: clamp(28px, 3.5vw, 48px); background: radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--red) 22%, transparent), transparent 55%), var(--navy-950); }
+  .launch { padding-block: clamp(22px, 2.8vw, 36px); background: radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--action) 22%, transparent), transparent 55%), var(--navy-950); }
   .launch__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(28px, 4vw, 64px); align-items: center; }
   .launch__badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #dfe5f2; }
   .launch__badge .led { width: 8px; height: 8px; border-radius: 50%; background: var(--live, #3ddc84); box-shadow: 0 0 8px var(--live, #3ddc84); }
   .launch h2 { margin-top: 10px; color: #fff; font-size: clamp(26px, 3vw, 38px); line-height: 1.08; }
-  .launch h2 span { color: color-mix(in srgb, var(--red) 75%, white); }
+  .launch h2 span { color: color-mix(in srgb, var(--action) 75%, white); }
   .launch__copy > p { margin-top: 10px; color: #b7c1d8; font-size: 16px; line-height: 1.55; max-width: 52ch; }
   .launch__steps { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 14px 0 0; padding: 0; list-style: none; color: #fff; font-size: 14.5px; font-weight: 500; }
   .launch__steps li { display: flex; align-items: center; gap: 8px; }
-  .launch__steps b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--red); font-size: 13px; }
+  .launch__steps b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--action); font-size: 13px; }
   .launch__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 18px; }
   .launch__actions .btn--lg { padding: 13px 22px; font-size: 16px; }
   .launch__login { color: #dfe5f2; font-weight: 600; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
   .launch__pick { margin: 0 0 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #9fb0d0; }
   .launch__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
   .ltile { position: relative; display: grid; gap: 4px; align-content: start; min-height: 0; padding: 12px 14px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 16px; background: rgb(255 255 255 / 6%); color: #fff; transition: transform .2s var(--ease), background .2s, border-color .2s; }
-  .ltile:hover, .ltile:focus-visible { transform: translateY(-3px); background: rgb(255 255 255 / 12%); border-color: color-mix(in srgb, var(--red) 70%, white); }
-  .ltile__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--red); font-family: var(--font-mono); font-weight: 700; font-size: 16px; }
+  .ltile:hover, .ltile:focus-visible { transform: translateY(-3px); background: rgb(255 255 255 / 12%); border-color: color-mix(in srgb, var(--action) 70%, white); }
+  .ltile__icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--action); font-family: var(--font-mono); font-weight: 700; font-size: 16px; }
   .ltile__t { margin-top: 4px; font-weight: 700; font-size: 16px; }
   .ltile__d { font-size: 13px; line-height: 1.4; color: #b7c1d8; }
   .ltile__go { position: absolute; top: 16px; right: 16px; color: #9fb0d0; transition: transform .2s var(--ease), color .2s; }
@@ -537,11 +537,11 @@ const steps = [
   .visit__phone:hover { box-shadow: var(--shadow-sm); }
   .visit__phone strong { font-size: 14px; font-weight: 600; color: var(--ink-2); }
   .cta .cta__who { font-size: 15px; }
-  .cta__who a { color: var(--red); font-weight: 600; white-space: nowrap; }
+  .cta__who a { color: var(--action); font-weight: 600; white-space: nowrap; }
   .visit__addr-icon {
     display: grid; place-items: center; flex: none;
     width: 40px; height: 40px; border-radius: 10px;
-    background: var(--red-050); color: var(--red);
+    background: var(--action-050); color: var(--action);
   }
   .visit__actions { display: flex; flex-wrap: wrap; gap: 10px; }
   @media (max-width: 900px) { .visit__grid { grid-template-columns: 1fr; } }

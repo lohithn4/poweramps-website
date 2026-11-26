@@ -115,7 +115,7 @@
 .toast.is-in { opacity: 1; transform: translate(-50%, 0); }
 
 /* Portal layout */
-.portal { padding-block: 32px 96px; min-height: 60vh; }
+.portal { padding-block: 20px 56px; min-height: 60vh; }
 .portal-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
 .portal-head h1 { font-size: clamp(26px, 3.4vw, 36px); }
 .portal-head p { margin-top: 4px; color: var(--ink-2); }
@@ -169,7 +169,7 @@
 .switch input { width: 16px; height: 16px; accent-color: var(--navy-700); }
 
 /* Auth pages */
-.auth { min-height: calc(100vh - 220px); display: grid; place-items: center; padding: 48px 16px 80px;
+.auth { display: grid; justify-items: center; align-content: start; padding: clamp(20px, 3vw, 40px) 16px clamp(32px, 4vw, 56px);
   background: radial-gradient(60% 50% at 20% 0%, color-mix(in srgb, var(--brand-primary) 8%, transparent), transparent), radial-gradient(50% 40% at 100% 100%, color-mix(in srgb, var(--brand-accent) 6%, transparent), transparent), var(--paper); }
 .auth__card { width: 100%; max-width: 440px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: clamp(24px, 4vw, 36px); box-shadow: var(--shadow); }
 .auth__card h1 { font-size: 28px; }

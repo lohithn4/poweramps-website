@@ -39,9 +39,9 @@ import { url } from '../../lib/url';
     $('[data-crumb]').textContent = p.name;
     $('[data-sub]').textContent = `${KIND_LABEL[p.kind]}${p.gstin ? ` · GSTIN ${p.gstin}` : ''}${p.active ? '' : ' · inactive'}`;
     const actions: string[] = [];
-    if (p.kind === 'customer') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=quotation&party=${id}`)}">New quotation</a>`, `<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=invoice&party=${id}`)}">New invoice</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=receipt&party=${id}`)}">Record receipt</a>`);
-    if (p.kind === 'supplier') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=purchase&party=${id}`)}">Record purchase bill</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=payment&party=${id}`)}">Pay supplier</a>`);
-    if (p.kind === 'lender') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/payments/?new=loan_received&party=${id}`)}">Loan received</a>`, `<a class="btn btn--red btn--sm" href="${sitePath(`/staff/payments/?new=loan_repayment&party=${id}`)}">Repayment</a>`);
+    if (p.kind === 'customer') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=quotation&party=${id}`)}">New quotation</a>`, `<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=invoice&party=${id}`)}">New invoice</a>`, `<a class="btn btn--primary btn--sm" href="${sitePath(`/staff/payments/?new=receipt&party=${id}`)}">Record receipt</a>`);
+    if (p.kind === 'supplier') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/doc/?new=purchase&party=${id}`)}">Record purchase bill</a>`, `<a class="btn btn--primary btn--sm" href="${sitePath(`/staff/payments/?new=payment&party=${id}`)}">Pay supplier</a>`);
+    if (p.kind === 'lender') actions.push(`<a class="btn btn--ghost btn--sm" href="${sitePath(`/staff/payments/?new=loan_received&party=${id}`)}">Loan received</a>`, `<a class="btn btn--primary btn--sm" href="${sitePath(`/staff/payments/?new=loan_repayment&party=${id}`)}">Repayment</a>`);
     $('[data-actions]').innerHTML = `<span style="display:flex;gap:8px;flex-wrap:wrap">${actions.join('')}</span>`;
 
     const [up, down] = COLS[p.kind];

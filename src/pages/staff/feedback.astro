@@ -39,7 +39,7 @@ import StaffPage from '../../components/StaffPage.astro';
         <div class="meta"><a href="${sitePath(`/staff/request/?id=${f.request_id}`)}">${esc(f.ref)}</a> · ${esc(f.title)} · ${fmtDate(f.created_at)} · ${f.consent ? 'Agreed to be quoted' : 'Private feedback'} ${STATUS[f.status]}</div>
         ${f.comment ? `<blockquote>“${esc(f.comment)}”</blockquote>` : '<p class="muted" style="margin-top:6px">No comment</p>'}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-        ${f.consent && f.rating >= 9 && f.status !== 'published' ? `<button class="btn btn--red btn--sm" type="button" data-act="published" data-id="${f.id}">Publish on website</button>` : ''}
+        ${f.consent && f.rating >= 9 && f.status !== 'published' ? `<button class="btn btn--primary btn--sm" type="button" data-act="published" data-id="${f.id}">Publish on website</button>` : ''}
         ${f.status === 'published' || f.status === 'pending' ? `<button class="btn btn--ghost btn--sm" type="button" data-act="hidden" data-id="${f.id}">${f.status === 'published' ? 'Remove from website' : 'Don’t publish'}</button>` : ''}
         ${f.rating <= 6 ? `<a class="btn btn--ghost btn--sm" href="mailto:${esc(f.contact_email)}?subject=${encodeURIComponent(`Your feedback on ${f.ref}`)}">Follow up</a>` : ''}
       </div></div>`).join('');

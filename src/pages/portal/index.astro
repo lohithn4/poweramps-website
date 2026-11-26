@@ -13,14 +13,14 @@ import { url } from '../../lib/url';
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <a class="btn btn--ghost" data-staff-link href={url('/staff/')} hidden><Icon name="cog" size={18} />Staff dashboard</a>
-          <a class="btn btn--red" href={url('/build/')}><Icon name="layers" size={18} />Build a new panel</a>
+          <a class="btn btn--primary" href={url('/build/')}><Icon name="layers" size={18} />Build a new panel</a>
         </div>
       </div>
 
       <div class="pgrid">
         <div class="pstack">
           <div class="pcard" id="builds">
-            <div class="pcard__h"><h2>My panel builds</h2><a class="btn btn--red btn--sm" href={url('/build/?new=1')}>+ Build a panel</a></div>
+            <div class="pcard__h"><h2>My panel builds</h2><a class="btn btn--primary btn--sm" href={url('/build/?new=1')}>+ Build a panel</a></div>
             <div data-builds><div class="skeleton"></div></div>
           </div>
           <div class="pcard">
@@ -90,7 +90,7 @@ import { url } from '../../lib/url';
     const { requests, statuses } = await api('/requests');
     const list = $('[data-list]');
     if (!requests.length) {
-      list.innerHTML = `<div class="pempty"><strong>No requests yet</strong>Design your panel in a few minutes and get a clear quotation.<br><a class="btn btn--red" href="${sitePath('/build/')}">Build your first panel</a></div>`;
+      list.innerHTML = `<div class="pempty"><strong>No requests yet</strong>Design your panel in a few minutes and get a clear quotation.<br><a class="btn btn--primary" href="${sitePath('/build/')}">Build your first panel</a></div>`;
     } else {
       list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Reference</th><th>Panel</th><th>Status</th><th>Quote</th><th>Updated</th></tr></thead><tbody>
         ${requests.map((r: any) => `<tr data-href="${sitePath(`/portal/request/?id=${r.id}`)}">
@@ -111,7 +111,7 @@ import { url } from '../../lib/url';
     const drafts = builds.filter((b: any) => !b.request_id);
     const sent = builds.filter((b: any) => b.request_id);
     if (!builds.length) {
-      box.innerHTML = `<div class="pempty"><strong>Configure your panels online</strong>Choose the application, loads and every component. Save as many panels as your project needs and get one quotation for all of them.<br><a class="btn btn--red" href="${sitePath('/build/?new=1')}">Start your first build</a></div>`;
+      box.innerHTML = `<div class="pempty"><strong>Configure your panels online</strong>Choose the application, loads and every component. Save as many panels as your project needs and get one quotation for all of them.<br><a class="btn btn--primary" href="${sitePath('/build/?new=1')}">Start your first build</a></div>`;
       return;
     }
     const rows = drafts.map((b: any) => `<tr>
@@ -121,7 +121,7 @@ import { url } from '../../lib/url';
         <td class="nowrap"><a class="btn btn--ghost btn--sm" href="${sitePath(`/build/?build=${b.id}`)}">Edit</a> <button class="btn btn--ghost btn--sm" type="button" data-del="${b.id}">Delete</button></td></tr>`).join('');
     box.innerHTML = (drafts.length
       ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th style="width:32px"></th><th>Panel</th><th>Qty</th><th>Saved</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn btn--red" type="button" data-quote-sel>Request quotation for selected</button><a class="btn btn--ghost" href="${sitePath('/build/?new=1')}">+ Add another panel</a></div>`
+         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn btn--primary" type="button" data-quote-sel>Request quotation for selected</button><a class="btn btn--ghost" href="${sitePath('/build/?new=1')}">+ Add another panel</a></div>`
       : '<p class="muted">No unsent builds. Start a new one, or reuse a sent panel from the builder.</p>')
       + (sent.length ? `<p class="fhint" style="margin-top:14px">Already sent: ${sent.slice(0, 8).map((b: any) => `<a href="${sitePath(`/portal/request/?id=${b.request_id}`)}">${esc(b.name)} (${esc(b.request_ref ?? '')})</a>`).join(' · ')}</p>` : '');
     box.querySelectorAll<HTMLButtonElement>('[data-del]').forEach((btn) => btn.addEventListener('click', async () => {

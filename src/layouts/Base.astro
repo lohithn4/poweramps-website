@@ -22,7 +22,7 @@ const { title, description = site.description, image, jsonLd, noindex = false } 
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.seoTitle}`;
 // Brand colours from site.json → CSS variables (all other colours derive from these).
 const hex = (v: string, d: string) => (/^#[0-9a-f]{3,8}$/i.test(v ?? '') ? v : d);
-const brandCss = `html:root{--brand-primary:${hex(site.brand.primary, '#024998')};--brand-accent:${hex(site.brand.accent, '#cd030d')};--brand-dark:${hex(site.brand.dark, '#081129')}}`;
+const brandCss = `html:root{--brand-primary:${hex(site.brand.primary, '#024998')};--brand-accent:${hex(site.brand.accent, '#cd030d')};--brand-dark:${hex(site.brand.dark, '#081129')};--brand-action:${hex((site.brand as any).action, '#1f5fcc')}}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL(url(image ?? '/brand/logo.png'), Astro.site).href;
 

@@ -45,7 +45,7 @@ export function formDialog(opts: { title: string; body: string; submit?: string;
       <div class="edlg__h"><h2>${esc(opts.title)}</h2><button type="button" class="edlg__x" aria-label="Close" data-x>×</button></div>
       <div class="edlg__b">${opts.body}</div>
       <p class="form-error" data-error hidden></p>
-      <div class="edlg__f"><button type="button" class="btn btn--ghost btn--sm" data-x>Cancel</button><button type="submit" class="btn btn--red btn--sm">${esc(opts.submit ?? 'Save')}</button></div>
+      <div class="edlg__f"><button type="button" class="btn btn--ghost btn--sm" data-x>Cancel</button><button type="submit" class="btn btn--primary btn--sm">${esc(opts.submit ?? 'Save')}</button></div>
     </form>`;
     document.body.appendChild(dlg);
     const form = dlg.querySelector('form')!;
