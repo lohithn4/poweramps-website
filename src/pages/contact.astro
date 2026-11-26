@@ -40,7 +40,7 @@ const a = site.address;
         {site.phone && (
           <a class="info-card" href={`tel:${site.phone.replace(/\s/g, '')}`}>
             <span class="info-card__icon"><Icon name="phone" /></span>
-            <div><h3>Call us</h3><p>{site.phone}</p></div>
+            <div><h3>Call us</h3><p>{site.phone}</p>{site.contactName && <p class="info-card__who">{site.contactName}{site.contactRole && `, ${site.contactRole}`}</p>}</div>
           </a>
         )}
         {site.whatsapp && (
@@ -98,6 +98,7 @@ const a = site.address;
   .info-card h3 { font-size: 16px; font-stretch: 100%; }
   .info-card p, .info-card address { margin-top: 4px; color: var(--ink-2); font-style: normal; font-size: 15px; }
   .info-card .link-arrow { margin-top: 10px; font-size: 14px; }
+  .info-card p.info-card__who { margin-top: 2px; font-size: 13px; color: var(--ink-3, var(--ink-2)); }
   @media (max-width: 900px) {
     .contact { grid-template-columns: 1fr; }
     .contact__form { margin-top: -48px; }

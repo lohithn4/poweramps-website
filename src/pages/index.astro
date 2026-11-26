@@ -226,6 +226,15 @@ const steps = [
             {site.address.city}, {site.address.state} {site.address.pincode}
           </span>
         </address>
+        {site.phone && (
+          <a class="visit__addr visit__phone" href={`tel:${site.phone.replace(/\s/g, '')}`}>
+            <span class="visit__addr-icon"><Icon name="phone" size={20} /></span>
+            <span>
+              {site.contactName && <strong>{site.contactName}{site.contactRole && `, ${site.contactRole}`}</strong>}
+              {site.phone}
+            </span>
+          </a>
+        )}
         <div class="visit__actions">
           <a class="btn btn--red" href={directionsUrl} target="_blank" rel="noopener"><Icon name="pin" size={18} />Get directions</a>
           <a class="btn btn--ghost" href={openMapUrl} target="_blank" rel="noopener">Open in Google Maps <Icon name="external" size={16} /></a>
@@ -243,6 +252,7 @@ const steps = [
           <span class="eyebrow">Get a quote</span>
           <h2>Have an SLD, BOQ or motor list?</h2>
           <p>Send it over. We'll come back with a panel proposal and price.</p>
+          {site.phone && site.contactName && <p class="cta__who">Or call {site.contactName}{site.contactRole && ` (${site.contactRole})`} directly on <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>.</p>}
         </div>
         <div class="cta__actions">
           <a class="btn btn--red" href={url('/contact')}>Send enquiry <Icon name="arrow" size={18} /></a>
@@ -463,6 +473,11 @@ const steps = [
     font-style: normal; line-height: 1.6; color: var(--ink-2);
   }
   .visit__addr strong { display: block; color: var(--ink); margin-bottom: 2px; }
+  .visit__phone { margin-top: 12px; align-items: center; font-size: 17px; font-weight: 500; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
+  .visit__phone:hover { box-shadow: var(--shadow-sm); }
+  .visit__phone strong { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  .cta .cta__who { font-size: 15px; }
+  .cta__who a { color: var(--red); font-weight: 600; white-space: nowrap; }
   .visit__addr-icon {
     display: grid; place-items: center; flex: none;
     width: 40px; height: 40px; border-radius: 10px;

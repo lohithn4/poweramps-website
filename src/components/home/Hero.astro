@@ -82,6 +82,17 @@ const DURATION = 5000;
         <a class="btn btn--ghost" href={url('/panels')}>Browse {panels.length} panels</a>
       </div>
 
+      <div class="hero__reach">
+      {site.phone && (
+        <a class="hero__loc" href={`tel:${site.phone.replace(/\s/g, '')}`} aria-label={`Call ${site.contactName || site.name} on ${site.phone}`}>
+          <span class="hero__loc-icon"><Icon name="phone" size={18} /></span>
+          <span class="hero__loc-text">
+            <span class="hero__loc-label">{site.contactName ? `Call ${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}` : 'Call us'}</span>
+            <span class="hero__loc-addr">{site.phone}</span>
+          </span>
+          <span class="hero__loc-go"><span class="hero__loc-go-label">Call</span> <Icon name="arrow" size={16} /></span>
+        </a>
+      )}
       <a class="hero__loc" href={directionsUrl} target="_blank" rel="noopener" aria-label={`Get directions to ${site.name}, ${site.address.line1}, ${site.address.city}`}>
         <span class="hero__loc-icon"><Icon name="pin" size={18} /></span>
         <span class="hero__loc-text">
@@ -90,6 +101,7 @@ const DURATION = 5000;
         </span>
         <span class="hero__loc-go"><span class="hero__loc-go-label">Directions</span> <Icon name="arrow" size={16} /></span>
       </a>
+      </div>
 
       <ul class="hero__trust">
         <li><Icon name="check" size={16} />Built to your spec &amp; brand</li>
@@ -249,10 +261,10 @@ const DURATION = 5000;
   .hero__trust :global(svg) { color: var(--live); }
 
   /* ---- Location card ---- */
+  .hero__reach { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
   .hero__loc {
     display: flex; align-items: center; gap: 14px;
     width: fit-content; max-width: 100%;
-    margin-top: 20px;
     padding: 10px 16px 10px 10px;
     border: 1px solid rgb(255 255 255 / 14%);
     border-radius: 12px;

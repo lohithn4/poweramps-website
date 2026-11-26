@@ -191,6 +191,8 @@ collections:
                 field: { label: Paragraph, name: paragraph, widget: text }
           - { label: Year established, name: established, widget: number, value_type: int }
           - { label: Director, name: director, widget: string }
+          - { label: Contact person, name: contactName, widget: string, required: false, hint: "Shown next to the phone number, e.g. on the home and contact pages" }
+          - { label: Contact person role, name: contactRole, widget: string, required: false, hint: "e.g. Director, Sales Manager" }
           - { label: Phone, name: phone, widget: string, required: false, hint: "e.g. +91 98450 00000" }
           - { label: WhatsApp number, name: whatsapp, widget: string, required: false, hint: "With country code, e.g. 919845000000" }
           - { label: Email, name: email, widget: string, required: false }
