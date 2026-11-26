@@ -21,5 +21,10 @@
   "iec": "AAHCP3915D",
   "indiamart": "https://www.indiamart.com/powerampstechnology/",
   "formEndpoint": "",
-  "showPrices": false
+  "showPrices": false,
+  "map": {
+    "lat": "",
+    "lng": "",
+    "link": ""
+  }
 }

@@ -151,6 +151,14 @@ collections:
           - { label: IndiaMART URL, name: indiamart, widget: string }
           - { label: Form endpoint (optional), name: formEndpoint, widget: string, required: false, hint: "Paste a Formspree URL to receive enquiries by email. Leave empty to use email / WhatsApp links." }
           - { label: Show prices, name: showPrices, widget: boolean, default: false }
+          - label: Map location
+            name: map
+            widget: object
+            hint: "In Google Maps, right-click the exact spot of the factory and click the numbers at the top (e.g. 12.89740, 77.57142) to copy them. Paste the first number as Latitude and the second as Longitude."
+            fields:
+              - { label: Latitude, name: lat, widget: string, required: false, hint: "e.g. 12.89740" }
+              - { label: Longitude, name: lng, widget: string, required: false, hint: "e.g. 77.57142" }
+              - { label: Google Maps link (optional), name: link, widget: string, required: false, hint: "Share link of your Google Business listing, e.g. https://maps.app.goo.gl/..." }
 `;
 
   return new Response(yaml, { headers: { 'Content-Type': 'text/yaml; charset=utf-8' } });

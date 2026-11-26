@@ -7,7 +7,21 @@ import { url } from '../lib/url';
 
 const a = site.address;
 const fullAddress = `${a.line1}, ${a.line2}, ${a.city}, ${a.state} ${a.pincode}, ${a.country}`;
-const mapQuery = encodeURIComponent(`${a.line1}, ${a.city} ${a.pincode}`);
+
+// Exact pin from Site settings → Map location. Falls back to the locality
+// (not the street address, which makes Google show unrelated businesses).
+const lat = String(site.map?.lat ?? '').trim();
+const lng = String(site.map?.lng ?? '').trim();
+const hasPin = /^-?\d+(\.\d+)?$/.test(lat) && /^-?\d+(\.\d+)?$/.test(lng);
+const point = `${lat},${lng}`;
+const area = encodeURIComponent(`Yelachenahalli, Kanakapura Road, ${a.city} ${a.pincode}`);
+const mapEmbed = hasPin
+  ? `https://maps.google.com/maps?q=${point}&z=17&hl=en&output=embed`
+  : `https://maps.google.com/maps?q=${area}&z=15&hl=en&output=embed`;
+const directionsUrl = hasPin
+  ? `https://www.google.com/maps/dir/?api=1&destination=${point}`
+  : `https://www.google.com/maps/dir/?api=1&destination=${area}`;
+const openMapUrl = site.map?.link || (hasPin ? `https://www.google.com/maps/search/?api=1&query=${point}` : `https://www.google.com/maps/search/?api=1&query=${area}`);
 ---
 <Base title="Contact & Enquiry" description={`Request a quote for electrical panels from ${site.name}, ${a.city}.`}>
   <section class="page-hero blueprint on-dark">
@@ -33,7 +47,7 @@ const mapQuery = encodeURIComponent(`${a.line1}, ${a.city} ${a.pincode}`);
           <div>
             <h3>Works &amp; office</h3>
             <address>{fullAddress}</address>
-            <a class="link-arrow" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`} target="_blank" rel="noopener">Get directions <Icon name="arrow" size={16} /></a>
+            <a class="link-arrow" href={directionsUrl} target="_blank" rel="noopener">Get directions <Icon name="arrow" size={16} /></a>
           </div>
         </div>
 
@@ -61,14 +75,29 @@ const mapQuery = encodeURIComponent(`${a.line1}, ${a.city} ${a.pincode}`);
           <div><h3>IndiaMART</h3><p>View our verified supplier profile</p></div>
         </a>
 
-        <div class="map">
+        <figure class="map">
           <iframe
-            title={`Map showing ${site.name}`}
-            src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+            title={`Map showing the location of ${site.name}`}
+            src={mapEmbed}
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen
           ></iframe>
-        </div>
+          <figcaption class="map__card">
+            <svg class="map__mark" viewBox="0 0 40 40" aria-hidden="true">
+              <rect width="18.5" height="18.5" fill="#024998" /><rect x="21.5" width="18.5" height="18.5" fill="#cd030d" />
+              <rect y="21.5" width="18.5" height="18.5" fill="#cd030d" /><rect x="21.5" y="21.5" width="18.5" height="18.5" fill="#024998" />
+            </svg>
+            <span class="map__text">
+              <strong>{site.name}</strong>
+              <span>{a.line1}, {a.city}</span>
+            </span>
+            <a class="map__btn" href={directionsUrl} target="_blank" rel="noopener" aria-label="Get directions in Google Maps">
+              <Icon name="pin" size={16} /> Directions
+            </a>
+          </figcaption>
+        </figure>
+        <a class="map__open" href={openMapUrl} target="_blank" rel="noopener">Open in Google Maps <Icon name="external" size={14} /></a>
       </aside>
     </div>
   </section>
@@ -105,8 +134,39 @@ const mapQuery = encodeURIComponent(`${a.line1}, ${a.city} ${a.pincode}`);
   .info-card h3 { font-size: 16px; font-stretch: 100%; }
   .info-card p, .info-card address { margin-top: 4px; color: var(--ink-2); font-style: normal; font-size: 15px; }
   .info-card .link-arrow { margin-top: 10px; font-size: 14px; }
-  .map { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 4 / 3; background: var(--plate); }
-  .map iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .map {
+    position: relative;
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--white);
+  }
+  .map iframe { width: 100%; aspect-ratio: 4 / 3; border: 0; display: block; background: var(--plate); }
+  .map__card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 12px 12px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .map__mark { width: 30px; height: 30px; flex: none; shape-rendering: crispEdges; }
+  .map__text { display: grid; gap: 2px; min-width: 0; flex: 1; line-height: 1.25; }
+  .map__text strong { font-size: 14px; color: var(--ink); }
+  .map__text span { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .map__btn {
+    display: inline-flex; align-items: center; gap: 6px; flex: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--navy-700); color: #fff;
+    font-size: 13px; font-weight: 600;
+    transition: background .2s;
+  }
+  .map__btn:hover { background: var(--navy-800); }
+  .map__open {
+    justify-self: end;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: var(--navy-700);
+  }
+  .map__open:hover { text-decoration: underline; text-underline-offset: 3px; }
   @media (max-width: 900px) {
     .contact { grid-template-columns: 1fr; }
     .contact__form { margin-top: -48px; }
