@@ -14,12 +14,15 @@ export const SETTING_KEYS = [
   'quotation_validity_days', 'invoice_due_days', 'round_off',
   'terms_quotation', 'terms_invoice', 'invoice_footer', 'signatory',
   'bank_name', 'bank_account_name', 'bank_account', 'bank_ifsc', 'bank_branch', 'upi_id',
-  'tally_company', 'tally_inventory', 'tally_sales_ledger', 'tally_purchase_ledger',
+  'tally_company', 'tally_version', 'tally_inventory', 'tally_sales_ledger', 'tally_purchase_ledger',
   'tally_cgst_out', 'tally_sgst_out', 'tally_igst_out', 'tally_cgst_in', 'tally_sgst_in', 'tally_igst_in',
   'tally_round_off', 'tally_bank_ledger', 'tally_cash_ledger', 'tally_interest_ledger', 'tally_tds_ledger',
   'tally_debtors_group', 'tally_creditors_group', 'tally_loans_group',
   'tally_sales_vch', 'tally_purchase_vch', 'tally_receipt_vch', 'tally_payment_vch',
 ] as const;
+/** Tally releases whose XML layouts differ: Prime 3.0+ moved GST/address details into dated lists. */
+export const TALLY_VERSIONS = ['prime3', 'prime1', 'erp9', 'legacy'] as const;
+export type TallyVersion = (typeof TALLY_VERSIONS)[number];
 export type Settings = Record<(typeof SETTING_KEYS)[number], string> & { company_gstin: string; company_name: string };
 
 async function defaults(env: Env): Promise<Settings> {
@@ -56,6 +59,7 @@ async function defaults(env: Env): Promise<Settings> {
     signatory: 'Authorised Signatory',
     bank_name: '', bank_account_name: '', bank_account: '', bank_ifsc: '', bank_branch: '', upi_id: '',
     tally_company: '',
+    tally_version: 'prime3',
     tally_inventory: 'no',
     tally_sales_ledger: 'Sales',
     tally_purchase_ledger: 'Purchase',
@@ -93,6 +97,7 @@ export async function saveSettings(req: Request, env: Env) {
     if (!(k in b)) continue;
     const v = typeof b[k] === 'string' ? (b[k] as string).trim() : String(b[k] ?? '');
     if (v.length > 4000) throw new HttpError(400, `${k} is too long`);
+    if (k === 'tally_version' && !(TALLY_VERSIONS as readonly string[]).includes(v)) throw new HttpError(400, 'Unknown Tally version');
     if (k.endsWith('_pattern') && v && !/\{N+\}/.test(v)) throw new HttpError(400, 'Number formats must contain a counter like {NNNN}');
     if (k.endsWith('_pattern') && v.replace(/\{FY\}/g, '00-00').replace(/\{YYYY\}/g, '0000').replace(/\{(N+)\}/g, (_, n) => '0'.repeat(n.length)).length > 16)
       throw new HttpError(400, 'GST rules allow at most 16 characters in a document number');

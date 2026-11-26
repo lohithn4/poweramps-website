@@ -2,22 +2,19 @@
 import StaffPage from '../../components/StaffPage.astro';
 ---
 <StaffPage title="Tally import & export" active="tally" sub="Bring customers, suppliers, loans and stock items in from Tally or Excel, and send invoices and payments back to Tally.">
+  <div class="pcard tv-card"><label class="field" style="margin:0"><span class="flabel">Your Tally version</span><select class="input" data-tv><option value="prime3">TallyPrime 3.0 or later (3.x, 4.x, 5.x, 6.x…)</option><option value="prime1">TallyPrime 1.x or 2.x</option><option value="erp9">Tally.ERP 9 (Release 6 or later, with GST)</option><option value="legacy">Older: Tally 9, Tally 7.2, or ERP 9 before GST</option></select></label><p class="fhint" style="margin:8px 0 0">Not sure? In TallyPrime press <code>F1</code> (Help) → <b>About</b> to see the release. Tally.ERP 9 shows <b>Tally.ERP 9 Series A Release …</b> in the bottom-left corner. Instructions and export files below follow this choice.</p></div>
   <div class="toolbar"><div class="seg" data-tabs><button type="button" data-t="import" class="is-active">Import / sync into this system</button><button type="button" data-t="export">Send to Tally</button></div></div>
 
   <div data-pane="import" class="pstack">
     <div class="pcard">
       <div class="pcard__h"><h2>1. Choose a file</h2><span style="display:flex;gap:8px"><button class="btn btn--ghost btn--sm" type="button" data-tpl="parties">Parties template</button><button class="btn btn--ghost btn--sm" type="button" data-tpl="items">Items template</button></span></div>
       <label class="dropzone" data-drop>
-        <input type="file" accept=".xml,.csv,.txt" data-file />
-        <strong>Drop a Tally XML or CSV file here, or click to choose</strong>
-        <span class="muted" style="font-size:14px">Tally <b>Masters</b> export (XML) · or any CSV, including Excel “Save as CSV”. The file is read on this computer; nothing is saved until you click Apply.</span>
+        <input type="file" accept=".xml,.csv,.txt,.xlsx,.xls" data-file />
+        <strong>Drop a Tally XML, Excel or CSV file here, or click to choose</strong>
+        <span class="muted" style="font-size:14px">Tally <b>Masters</b> export (XML) from any Tally version · Excel (.xlsx) · CSV. The file is read on this computer; nothing is saved until you click Apply.</span>
       </label>
-      <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600">How to export from Tally</summary>
-        <ol class="howto">
-          <li><b>TallyPrime:</b> open the company → press <code>Alt+E</code> (Export) → <b>Masters</b>. Set <b>Type of Masters: All Masters</b> and <b>Format: XML (Data Interchange)</b> → <b>Send</b>. Note the file path shown.</li>
-          <li><b>Tally.ERP 9:</b> Gateway → Display → List of Accounts → <code>Alt+E</code> → Format: <b>XML</b> → Yes.</li>
-          <li>For current balances, export <b>Sundry Debtors</b> / <b>Sundry Creditors</b> (Group Summary) to Excel, save as CSV and import with mode “Only update existing”.</li>
-        </ol>
+      <details style="margin-top:14px" open><summary style="cursor:pointer;font-weight:600">How to export from <span data-tv-name>Tally</span></summary>
+        <ol class="howto" data-howto-from></ol>
       </details>
     </div>
 
@@ -68,13 +65,8 @@ import StaffPage from '../../components/StaffPage.astro';
       </div>
     </div>
     <div class="pcard">
-      <div class="pcard__h"><h2>How to import into Tally</h2></div>
-      <ol class="howto">
-        <li>Check the Tally ledger names in <a href="../settings/">Settings → Tally</a> match your Tally company (Sales, Output CGST, Bank Account…). Create any missing ledgers in Tally once.</li>
-        <li><b>TallyPrime:</b> Gateway of Tally → <code>Alt+O</code> (Import) → <b>Masters</b> → choose the masters file. Then <code>Alt+O</code> → <b>Transactions</b> → choose the vouchers file.<br><b>Tally.ERP 9:</b> Gateway → Import of Data → Masters, then Vouchers.</li>
-        <li>If Tally asks about duplicates, choose <b>Ignore duplicates</b> for masters.</li>
-        <li>Once Tally shows the import was successful, come back here and click <b>Mark as sent to Tally</b>, so the next export only has new entries.</li>
-      </ol>
+      <div class="pcard__h"><h2>How to import into <span data-tv-name>Tally</span></h2></div>
+      <ol class="howto" data-howto-into></ol>
     </div>
   </div>
 </StaffPage>
@@ -83,8 +75,73 @@ import StaffPage from '../../components/StaffPage.astro';
   import { api, requireAuth } from '../../scripts/api';
   import { $, $$, esc, toast } from '../../scripts/ui';
   import { download, toCsv, fmtD, money } from '../../scripts/erp';
-  import { decodeFile, parseTallyXml, parseCsv, guessMapping, mapRows, FIELDS, TEMPLATES, type Entity, type Row } from '../../scripts/tally-parse';
+  import { decodeFile, parseTallyXml, parseCsv, readXlsx, readTableMarkup, findHeaderRow, withKind, guessMapping, mapRows, FIELDS, TEMPLATES, type Entity, type Row, type PartyKind } from '../../scripts/tally-parse';
   import { today } from '../../../shared/calc';
+
+  // ---------- Tally version ----------
+  type TV = 'prime3' | 'prime1' | 'erp9' | 'legacy';
+  const TV_NAME: Record<TV, string> = { prime3: 'TallyPrime', prime1: 'TallyPrime', erp9: 'Tally.ERP 9', legacy: 'Tally' };
+  const BAL_NOTE = 'For <b>current balances</b>, export the Sundry Debtors / Sundry Creditors <b>Group Summary</b> as Excel or CSV (steps below) and import it with “Only update existing”.';
+  const FROM: Record<TV, string[]> = {
+    prime3: [
+      'Open the company → press <code>Alt+E</code> (Export) → <b>Masters</b>.',
+      'Press <code>C</code> (Configure): <b>Type of Masters: All Masters</b>, <b>File Format: XML (Data Interchange)</b>. Note the <b>Folder Path</b>.',
+      'Press <code>Esc</code> → <b>Send</b>. Drop the file (usually <code>Master.xml</code>) above.',
+      BAL_NOTE + ' Balances: Gateway → Display More Reports → Account Books → Group Summary → Sundry Debtors → <code>Alt+E</code> → Current → Format: <b>Excel (Spreadsheet)</b>.',
+    ],
+    prime1: [
+      'Open the company → press <code>Alt+E</code> (Export) → <b>Masters</b>.',
+      'Configure (<code>C</code>): <b>Type of Masters: All Masters</b>, <b>Format: XML (Data Interchange)</b> → <b>Send</b>.',
+      'Drop the file (usually <code>Master.xml</code> in the folder shown) above.',
+      BAL_NOTE + ' Balances: Display More Reports → Account Books → Group Summary → Sundry Debtors → <code>Alt+E</code> → Current → Excel.',
+    ],
+    erp9: [
+      'Gateway of Tally → <b>Display</b> → <b>List of Accounts</b>.',
+      'Press <code>Alt+E</code> (Export): <b>Type of Masters: All Masters</b>, <b>Format: XML (Data Interchange)</b>. Note the <b>Output File Name</b> (default <code>Master.xml</code> in the Tally folder, e.g. <code>C:\\Tally.ERP9</code>) → <b>Yes</b>.',
+      'Drop that file above. Both Unicode and ASCII exports work.',
+      BAL_NOTE + ' Balances: Display → Account Books → Group Summary → Sundry Debtors → <code>Alt+E</code> → Format: <b>Excel (Spreadsheet)</b> or <b>ASCII (Comma Delimited)</b>.',
+    ],
+    legacy: [
+      'Gateway of Tally → <b>Display</b> → <b>List of Accounts</b> → <code>Alt+E</code> (Export).',
+      'Choose <b>Format: XML</b> and note the output file name → <b>Yes</b>.',
+      'Drop that file above. Or export the list as <b>ASCII (Comma Delimited)</b> and drop the CSV.',
+    ],
+  };
+  const CHECK = 'Check the Tally ledger names in <a href="../settings/">Settings → Tally</a> match your Tally company (Sales, Output CGST, Bank Account…). Create any missing ledgers in Tally once.';
+  const AFTER = 'When Tally shows the import was successful, come back here and click <b>Mark as sent to Tally</b> so the next export only has new entries. If Tally reports errors, open <code>tally.imp</code> in the Tally folder: it lists the reason (usually a ledger name that does not exist).';
+  const INTO: Record<TV, string[]> = {
+    prime3: [CHECK,
+      'Gateway of Tally → <code>Alt+O</code> (Import) → <b>Masters</b> → <b>File path</b>: the masters file (e.g. <code>C:\\Users\\…\\Downloads\\tally-masters-….xml</code>) → <b>Behaviour of import if master already exists: Ignore Duplicates</b> → Import.',
+      '<code>Alt+O</code> → <b>Transactions</b> → the vouchers file → Import.', AFTER],
+    prime1: [CHECK,
+      'Gateway of Tally → <code>Alt+O</code> (Import) → <b>Masters</b> → file path of the masters file → <b>Ignore Duplicates</b> → Import.',
+      '<code>Alt+O</code> → <b>Transactions</b> (called <b>Vouchers</b> in release 1.x) → the vouchers file → Import.', AFTER],
+    erp9: [CHECK,
+      'Copy both files into the Tally folder (e.g. <code>C:\\Tally.ERP9</code>) so you only need to type the file name.',
+      'Gateway of Tally → <b>Import of Data</b> → <b>Masters</b> → File to import: the masters file name → <b>Behaviour of import if master already exists: Ignore Duplicates</b> → Yes.',
+      'Gateway of Tally → <b>Import of Data</b> → <b>Vouchers</b> → the vouchers file name → Yes.',
+      'Educational (unlicensed) mode only accepts vouchers dated the 1st, 2nd or 31st of a month.', AFTER],
+    legacy: [CHECK,
+      'These files leave out GST details, which older Tally does not have. Tax amounts still go to the ledgers named in Settings.',
+      'Gateway of Tally → <b>Import of Data</b> → <b>Masters</b> → file name → Yes. Then <b>Import of Data</b> → <b>Vouchers</b>.', AFTER],
+  };
+  const tvSel = $<HTMLSelectElement>('[data-tv]');
+  const tv = () => tvSel.value as TV;
+  function showVersion() {
+    $$('[data-tv-name]').forEach((e) => (e.textContent = TV_NAME[tv()]));
+    $('[data-howto-from]').innerHTML = FROM[tv()].map((l) => `<li>${l}</li>`).join('');
+    $('[data-howto-into]').innerHTML = INTO[tv()].map((l) => `<li>${l}</li>`).join('');
+  }
+  const lsGet = () => { try { return localStorage.getItem('tallyVersion'); } catch { return null; } };
+  const saved = lsGet();
+  if (saved && [...tvSel.options].some((o) => o.value === saved)) tvSel.value = saved;
+  showVersion();
+  let isAdmin = false;
+  tvSel.addEventListener('change', async () => {
+    showVersion();
+    try { localStorage.setItem('tallyVersion', tv()); } catch { /* private mode */ }
+    if (isAdmin) { try { await api('/erp/settings', { method: 'PATCH', body: { tally_version: tv() } }); toast('Saved as the default Tally version'); } catch { /* keep local choice */ } }
+  });
 
   // ---------- tabs ----------
   $$<HTMLButtonElement>('[data-tabs] button').forEach((b) => b.addEventListener('click', () => {
@@ -95,6 +152,8 @@ import StaffPage from '../../components/StaffPage.astro';
   // ---------- import ----------
   let sets: { entity: Entity; label: string; rows: Row[] }[] = [];
   let csv: { headers: string[]; rows: string[][] } | null = null;
+  let xmlRes: ReturnType<typeof parseTallyXml> | null = null;
+  let groupKind: Record<string, PartyKind | ''> = {};
   let fileName = '';
   const drop = $('[data-drop]');
   const file = $<HTMLInputElement>('[data-file]');
@@ -110,19 +169,28 @@ import StaffPage from '../../components/StaffPage.astro';
     $<HTMLButtonElement>('[data-apply]').disabled = true;
     try {
       if (f.size > 25 * 1024 * 1024) throw new Error('File is larger than 25 MB. Export fewer masters at a time.');
-      const text = decodeFile(await f.arrayBuffer());
-      const isXml = /^\s*</.test(text) || f.name.toLowerCase().endsWith('.xml');
-      csv = null; sets = [];
-      if (isXml) {
-        const t = parseTallyXml(text);
-        if (!t.parties.length && !t.items.length) throw new Error(`No customer/supplier/loan ledgers or stock items found${t.ignored ? ` (${t.ignored} other ledgers like bank, sales and expenses were skipped)` : ''}. Make sure you exported Masters.`);
-        if (t.parties.length) sets.push({ entity: 'parties', label: 'Parties', rows: t.parties });
-        if (t.items.length) sets.push({ entity: 'items', label: 'Stock items', rows: t.items });
-        showXml(t);
-      } else {
-        const rows = parseCsv(text);
-        if (rows.length < 2) throw new Error('The CSV needs a header row and at least one data row.');
-        csv = { headers: rows[0], rows: rows.slice(1) };
+      const buf = await f.arrayBuffer();
+      const head = new Uint8Array(buf.slice(0, 4));
+      csv = null; sets = []; xmlRes = null;
+      let table: string[][] | null = null;
+      if (head[0] === 0x50 && head[1] === 0x4b) table = await readXlsx(buf); // .xlsx (zip)
+      else if (head[0] === 0xd0 && head[1] === 0xcf) throw new Error('This is an old binary Excel (.xls) file. Open it in Excel and use Save As → CSV or Excel Workbook (.xlsx), or export XML from Tally instead.');
+      else {
+        const text = decodeFile(buf);
+        table = readTableMarkup(text);
+        if (!table && (/^\s*</.test(text) || f.name.toLowerCase().endsWith('.xml'))) {
+          const t = parseTallyXml(text);
+          if (!t.parties.length && !t.items.length && !t.pending.length) throw new Error(`No customer/supplier/loan ledgers or stock items found${t.ignored ? ` (${t.ignored} other ledgers like bank, sales and expenses were skipped)` : ''}. Make sure you exported Masters.`);
+          xmlRes = t;
+          groupKind = Object.fromEntries(t.unresolved.map((u) => [u.group, u.guess]));
+          rebuildXmlSets();
+          showXml(t);
+        } else if (!table) table = parseCsv(text);
+      }
+      if (table) {
+        const h = findHeaderRow(table);
+        if (table.length - h < 2) throw new Error('The file needs a header row and at least one data row.');
+        csv = { headers: table[h], rows: table.slice(h + 1).filter((r) => !/^(grand )?total$/i.test((r[0] ?? '').trim())) };
         showCsv();
       }
       $('[data-step2]').hidden = false; $('[data-step3]').hidden = false;
@@ -137,16 +205,37 @@ import StaffPage from '../../components/StaffPage.astro';
   const PCOLS: [string, string][] = [['kind', 'Type'], ['name', 'Name'], ['gstin', 'GSTIN'], ['state', 'State'], ['phone', 'Phone'], ['opening_balance', 'Opening bal.']];
   const ICOLS: [string, string][] = [['name', 'Item'], ['code', 'Code'], ['category', 'Category'], ['hsn', 'HSN'], ['gst_rate', 'GST %'], ['unit', 'Unit'], ['sale_rate', 'Sale rate'], ['opening_qty', 'Qty']];
 
+  /** Parties from the file plus ledgers under groups the user has given a type. */
+  function rebuildXmlSets() {
+    const t = xmlRes!;
+    const extra = t.pending.filter((p) => groupKind[p.group]).map((p) => withKind(p.row, groupKind[p.group] as PartyKind, p.ob));
+    const parties = [...t.parties, ...extra];
+    sets = [];
+    if (parties.length) sets.push({ entity: 'parties', label: 'Parties', rows: parties });
+    if (t.items.length) sets.push({ entity: 'items', label: 'Stock items', rows: t.items });
+  }
+
   function showXml(t: ReturnType<typeof parseTallyXml>) {
+    const count = (k: string) => sets.find((s) => s.entity === 'parties')?.rows.filter((r) => r.kind === k).length ?? 0;
+    const kindOpts = (g: string) => [['', 'Skip (not parties)'], ['customer', 'Customers'], ['supplier', 'Suppliers'], ['lender', 'Lenders / loans']]
+      .map(([v, l]) => `<option value="${v}"${groupKind[g] === v ? ' selected' : ''}>${l}</option>`).join('');
     $('[data-found]').innerHTML = `<div class="stats">
-        <div class="stat"><span>Customers</span><strong>${t.counts.customer}</strong></div>
-        <div class="stat"><span>Suppliers</span><strong>${t.counts.supplier}</strong></div>
-        <div class="stat"><span>Lenders / loans</span><strong>${t.counts.lender}</strong></div>
+        <div class="stat"><span>Customers</span><strong>${count('customer')}</strong></div>
+        <div class="stat"><span>Suppliers</span><strong>${count('supplier')}</strong></div>
+        <div class="stat"><span>Lenders / loans</span><strong>${count('lender')}</strong></div>
         <div class="stat"><span>Stock items</span><strong>${t.items.length}</strong></div>
       </div>
       <p class="fhint">${t.company ? `Company: <b>${esc(t.company)}</b> · ` : ''}${t.ignored} other ledgers (bank, cash, sales, expenses, taxes) are not needed and were skipped.</p>
+      ${t.unresolved.length ? `<div class="notice" style="margin:12px 0"><b>${t.pending.length} ledger${t.pending.length === 1 ? ' is' : 's are'} under group${t.unresolved.length === 1 ? '' : 's'} not included in this file.</b> Tell us what each group holds (or export <b>All Masters</b> so the groups come along):
+        <div class="map-grid" style="margin-top:10px">${t.unresolved.map((u, i) => `<label class="field"><span class="flabel">${esc(u.group)} (${u.count})</span><select class="input" data-group="${i}">${kindOpts(u.group)}</select></label>`).join('')}</div></div>` : ''}
       <div class="check-grid" style="margin:12px 0">${sets.map((s, i) => `<label class="switch"><input type="checkbox" data-set="${i}" checked /> Import ${s.label.toLowerCase()} (${s.rows.length})</label>`).join('')}</div>
       ${sets.map((s) => `<h3 style="font-size:15px;margin:14px 0 8px">${s.label}</h3>${preview(s.rows, s.entity === 'parties' ? PCOLS : ICOLS)}`).join('')}`;
+    $$<HTMLSelectElement>('[data-group]').forEach((sel) => sel.addEventListener('change', () => {
+      groupKind[t.unresolved[Number(sel.dataset.group)].group] = sel.value as PartyKind | '';
+      rebuildXmlSets(); showXml(t);
+      $<HTMLButtonElement>('[data-apply]').disabled = true;
+      $('[data-result]').innerHTML = '<p class="fhint">Group types changed. Preview again before applying.</p>';
+    }));
   }
 
   function showCsv() {
@@ -219,7 +308,7 @@ import StaffPage from '../../components/StaffPage.astro';
   async function exportPart(part: 'masters' | 'vouchers') {
     const inc = $$<HTMLInputElement>('[data-ex-inc]:checked').map((c) => c.value).join(',');
     if (!inc) throw new Error('Tick at least one type of entry');
-    const p = new URLSearchParams({ part, from: exFrom.value, to: exTo.value, include: inc, only_new: $<HTMLInputElement>('[data-ex-new]').checked ? '1' : '0' });
+    const p = new URLSearchParams({ part, version: tv(), from: exFrom.value, to: exTo.value, include: inc, only_new: $<HTMLInputElement>('[data-ex-new]').checked ? '1' : '0' });
     const r = await api(`/erp/tally/export?${p}`);
     const c = r.counts;
     if (part === 'masters') {
@@ -245,6 +334,12 @@ import StaffPage from '../../components/StaffPage.astro';
   }
   $$<HTMLButtonElement>('[data-ex]').forEach((b) => b.addEventListener('click', () => guarded(b, () => exportPart(b.dataset.ex as 'masters' | 'vouchers'))));
 
-  requireAuth('staff').then(loadHistory).catch(() => {});
+  requireAuth('staff').then(async (me: any) => {
+    isAdmin = me?.role === 'admin';
+    loadHistory();
+    if (!lsGet()) {
+      try { const { settings } = await api('/erp/settings'); if (settings.tally_version) { tvSel.value = settings.tally_version; showVersion(); } } catch { /* defaults */ }
+    }
+  }).catch(() => {});
   void money;
 </script>

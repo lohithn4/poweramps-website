@@ -105,7 +105,7 @@ All private: stored in the Cloudflare D1 database, never in this repo. Staff men
 | **Parties** | Customers, suppliers, lenders with live balance and ledger statement |
 | **Items** | HSN, GST %, rates, opening stock; stock = opening + purchases − invoices |
 | **GST & reports** | GSTR-1 (B2B, B2CL, B2CS, HSN B2B/B2C, documents issued) and GSTR-3B summary as CSV in GST offline tool columns; sales/purchase registers; receivable/payable ageing |
-| **Tally** | Import (sync / add only / update only, with preview) from Tally Masters XML or any CSV; export new parties/items and vouchers (sales, purchases, receipts, payments, loans) as Tally XML, then mark as sent |
+| **Tally** | Works with TallyPrime 3.0+ (3.x–6.x), TallyPrime 1.x/2.x, Tally.ERP 9 and older Tally 9 / 7.2: pick the version on the Tally page. Import (sync / add only / update only, with preview) from a Tally Masters XML export (Unicode or ASCII), Excel (.xlsx, Excel 2003 XML) or CSV; ledgers under groups missing from the file can be assigned a type. Export new parties/items/units and vouchers (sales, purchases, receipts, payments, loans) as Tally XML in that version's layout, then mark as sent |
 | **Feedback** | Ratings sent automatically when an order is marked Delivered; 9–10 with consent can be published as testimonials (website updates daily, or immediately if `GITHUB_DISPATCH_TOKEN` is set on the worker) |
 | **Settings** | Number formats, default terms, bank details, Tally ledger names (admins only) |
 

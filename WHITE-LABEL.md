@@ -52,7 +52,7 @@ Changes reach emails within about 10 minutes of the site rebuilding.
    and the secrets with `wrangler secret put`.
 10. Set `apiUrl` in site settings to `https://api.<domain>` and publish.
 11. **Accounts settings**: sign in as admin → Staff → **Settings**: invoice number format, bank details,
-    default terms and the Tally ledger names. Then **Tally** → import the company's masters (customers,
+    default terms, the **Tally version** (TallyPrime 3.0+, TallyPrime 1.x/2.x, Tally.ERP 9 or older) and the Tally ledger names. Then **Tally** → import the company's masters (customers,
     suppliers, loans, stock items). The GSTIN and home state come from `site.json` → `gst`.
 
 ## What stays product-specific

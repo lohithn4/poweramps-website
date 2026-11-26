@@ -1,5 +1,5 @@
 import { Env, HttpError, json, readJson, requireStaff, requireAdmin } from './lib';
-import { getSettings, type Settings } from './settings';
+import { getSettings, TALLY_VERSIONS, type Settings, type TallyVersion } from './settings';
 import { partyFields, itemFields, type PartyRow, type ItemRow } from './masters';
 import { r2, stateName } from '../../shared/calc';
 
@@ -134,9 +134,12 @@ const amt = (n: number) => r2(n).toFixed(2);
 const tdate = (d: string) => d.replace(/-/g, '');
 const tag = (name: string, v: unknown) => (v === undefined || v === null || v === '' ? '' : `<${name}>${x(v)}</${name}>`);
 
-function envelope(kind: 'All Masters' | 'Vouchers', company: string, body: string) {
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<ENVELOPE>
+/**
+ * Works with every Tally: the file is pure ASCII (other characters as &#NNN; references, which
+ * Tally.ERP 9 needs), and the XML declaration is left out for Tally.ERP 9 / older, as Tally's own exports do.
+ */
+function envelope(kind: 'All Masters' | 'Vouchers', company: string, body: string, v: TallyVersion) {
+  const xml = `${v.startsWith('prime') ? '<?xml version="1.0" encoding="UTF-8"?>\n' : ''}<ENVELOPE>
  <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>
  <BODY>
   <IMPORTDATA>
@@ -147,7 +150,8 @@ ${body}
   </IMPORTDATA>
  </BODY>
 </ENVELOPE>
-`;
+`.replace(/[^\x00-\x7f]/gu, (c) => `&#${c.codePointAt(0)};`);
+  return v.startsWith('prime') ? xml : xml.replace(/\r?\n/g, '\r\n');
 }
 const msg = (inner: string) => `    <TALLYMESSAGE xmlns:UDF="TallyUDF">\n${inner}\n    </TALLYMESSAGE>`;
 const ledgerName = (p: { tally_name?: string | null; name: string }) => p.tally_name || p.name;
@@ -160,7 +164,11 @@ function entry(ledger: string, amount: number, extra = '', listTag = 'ALLLEDGERE
 const bill = (name: string, type: 'New Ref' | 'Agst Ref' | 'On Account' | 'Advance', amount: number, creditDays?: number | null) =>
   `<BILLALLOCATIONS.LIST>${type === 'On Account' ? '' : tag('NAME', name)}<BILLTYPE>${type}</BILLTYPE>${creditDays ? `<BILLCREDITPERIOD>${creditDays} Days</BILLCREDITPERIOD>` : ''}<AMOUNT>${amt(amount)}</AMOUNT></BILLALLOCATIONS.LIST>`;
 
-function partyMaster(p: PartyRow, s: Settings) {
+const GST_FROM = '20170701';
+const ANY = '&#4; Any';
+const APPLICABLE = '<GSTAPPLICABLE>&#4; Applicable</GSTAPPLICABLE>';
+
+function partyMaster(p: PartyRow, s: Settings, v: TallyVersion) {
   const parent = p.kind === 'customer' ? s.tally_debtors_group : p.kind === 'supplier' ? s.tally_creditors_group : s.tally_loans_group;
   const lines = String(p.address ?? '').split(/\n|,\s*(?=\S)/).map((l) => l.trim()).filter(Boolean).slice(0, 4);
   const state = p.state_code ? stateName(p.state_code) : '';
@@ -168,19 +176,59 @@ function partyMaster(p: PartyRow, s: Settings) {
       <NAME.LIST><NAME>${x(ledgerName(p))}</NAME></NAME.LIST>
       ${tag('PARENT', parent)}
       <ISBILLWISEON>${p.kind === 'lender' ? 'No' : 'Yes'}</ISBILLWISEON>
-      ${lines.length ? `<ADDRESS.LIST TYPE="String">${lines.map((l) => tag('ADDRESS', l)).join('')}</ADDRESS.LIST>` : ''}
-      ${tag('LEDSTATENAME', state)}${state ? '<COUNTRYNAME>India</COUNTRYNAME>' : ''}${tag('PINCODE', p.pincode)}
-      ${p.kind !== 'lender' ? `<GSTREGISTRATIONTYPE>${p.gstin ? 'Regular' : 'Unregistered/Consumer'}</GSTREGISTRATIONTYPE>${tag('PARTYGSTIN', p.gstin)}` : ''}
+      ${partyAddressGst(p, state, lines, v)}
       ${tag('LEDGERPHONE', p.phone)}${tag('EMAIL', p.email)}${tag('LEDGERCONTACT', p.contact_person)}
       ${p.credit_days ? `<BILLCREDITPERIOD>${p.credit_days} Days</BILLCREDITPERIOD>` : ''}
      </LEDGER>`);
 }
 
-function itemMaster(i: ItemRow) {
+/** Address + GST registration, in the layout each Tally release expects. */
+function partyAddressGst(p: PartyRow, state: string, lines: string[], v: TallyVersion) {
+  const addr = lines.length ? `<ADDRESS.LIST TYPE="String">${lines.map((l) => tag('ADDRESS', l)).join('')}</ADDRESS.LIST>` : '';
+  const regType = p.gstin ? 'Regular' : 'Unregistered/Consumer';
+  const gst = p.kind !== 'lender';
+  if (v === 'prime3') {
+    // TallyPrime 3.0+: dated mailing details and GST registration details
+    return `<LEDMAILINGDETAILS.LIST>${addr}<APPLICABLEFROM>${GST_FROM}</APPLICABLEFROM>${tag('PINCODE', p.pincode)}${tag('MAILINGNAME', p.name)}${tag('STATE', state)}<COUNTRY>India</COUNTRY></LEDMAILINGDETAILS.LIST>
+      <COUNTRYOFRESIDENCE>India</COUNTRYOFRESIDENCE>
+      ${gst ? `<LEDGSTREGDETAILS.LIST><APPLICABLEFROM>${GST_FROM}</APPLICABLEFROM><GSTREGISTRATIONTYPE>${regType}</GSTREGISTRATIONTYPE>${tag('PLACEOFSUPPLY', state)}${tag('GSTIN', p.gstin)}</LEDGSTREGDETAILS.LIST>` : ''}`;
+  }
+  const mailing = `<MAILINGNAME.LIST TYPE="String">${tag('MAILINGNAME', p.name)}</MAILINGNAME.LIST>`;
+  if (v === 'legacy') return `${mailing}${addr}${tag('STATENAME', state)}${tag('PINCODE', p.pincode)}`;
+  // Tally.ERP 9 (GST releases) and TallyPrime 1.x / 2.x
+  return `${mailing}${addr}
+      ${tag('LEDSTATENAME', state)}<COUNTRYNAME>India</COUNTRYNAME><COUNTRYOFRESIDENCE>India</COUNTRYOFRESIDENCE>${tag('PINCODE', p.pincode)}
+      ${gst ? `<GSTREGISTRATIONTYPE>${regType}</GSTREGISTRATIONTYPE>${tag('PARTYGSTIN', p.gstin)}` : ''}`;
+}
+
+function gstRates(rate: number) {
+  const half = r2(rate / 2);
+  const head = (h: string, r: number) => `<RATEDETAILS.LIST><GSTRATEDUTYHEAD>${h}</GSTRATEDUTYHEAD><GSTRATEVALUATIONTYPE>Based on Value</GSTRATEVALUATIONTYPE><GSTRATE>${r}</GSTRATE></RATEDETAILS.LIST>`;
+  return `<STATEWISEDETAILS.LIST><STATENAME>${ANY}</STATENAME>${head('Central Tax', half)}${head('State Tax', half)}${head('Integrated Tax', rate)}</STATEWISEDETAILS.LIST>`;
+}
+
+/** Units must exist before items that use them; Tally skips ones it already has ("Ignore duplicates"). */
+function unitMaster(unit: string) {
+  const whole = /^(nos?|pcs?|pieces?|sets?|each|ea|units?|numbers?|lots?|box(es)?)$/i.test(unit);
+  return msg(`     <UNIT NAME="${x(unit)}"><NAME>${x(unit)}</NAME><ISSIMPLEUNIT>Yes</ISSIMPLEUNIT><DECIMALPLACES>${whole ? 0 : 2}</DECIMALPLACES></UNIT>`);
+}
+
+function itemMaster(i: ItemRow, v: TallyVersion) {
+  const taxability = i.gst_rate > 0 ? 'Taxable' : 'Nil Rated';
+  const rates = i.gst_rate > 0 ? gstRates(i.gst_rate) : '';
+  let gst = '';
+  if (v === 'prime3') {
+    gst = `${APPLICABLE}
+      ${i.hsn ? `<HSNDETAILS.LIST><APPLICABLEFROM>${GST_FROM}</APPLICABLEFROM><HSNCODE>${x(i.hsn)}</HSNCODE><SRCOFHSNDETAILS>Specify Details Here</SRCOFHSNDETAILS></HSNDETAILS.LIST>` : ''}
+      <GSTDETAILS.LIST><APPLICABLEFROM>${GST_FROM}</APPLICABLEFROM><TAXABILITY>${taxability}</TAXABILITY><SRCOFGSTDETAILS>Specify Details Here</SRCOFGSTDETAILS>${rates}</GSTDETAILS.LIST>`;
+  } else if (v !== 'legacy') {
+    gst = `${APPLICABLE}
+      <GSTDETAILS.LIST><APPLICABLEFROM>${GST_FROM}</APPLICABLEFROM><CALCULATIONTYPE>On Value</CALCULATIONTYPE>${tag('HSNCODE', i.hsn)}<TAXABILITY>${taxability}</TAXABILITY>${rates}</GSTDETAILS.LIST>`;
+  }
   return msg(`     <STOCKITEM NAME="${x(i.tally_name || i.name)}">
       <NAME.LIST><NAME>${x(i.tally_name || i.name)}</NAME></NAME.LIST>
       ${tag('BASEUNITS', i.unit || 'Nos')}${tag('DESCRIPTION', i.description)}
-      ${i.hsn ? `<GSTDETAILS.LIST><APPLICABLEFROM>20170701</APPLICABLEFROM><HSNCODE>${x(i.hsn)}</HSNCODE><TAXABILITY>Taxable</TAXABILITY></GSTDETAILS.LIST>` : ''}
+      ${gst}
      </STOCKITEM>`);
 }
 
@@ -193,6 +241,10 @@ export async function tallyExport(req: Request, env: Env) {
   const include = new Set((sp.get('include') ?? 'sales,purchases,receipts,payments,loans').split(','));
   const s = await getSettings(env);
   const inventory = s.tally_inventory === 'yes';
+  const known = TALLY_VERSIONS as readonly string[];
+  const asked = sp.get('version') ?? '';
+  const v = (known.includes(asked) ? asked : known.includes(s.tally_version) ? s.tally_version : 'prime3') as TallyVersion;
+  const gstOn = v !== 'legacy';
 
   const docTypes = [include.has('sales') && 'invoice', include.has('purchases') && 'purchase'].filter(Boolean) as string[];
   const payKinds = [include.has('receipts') && 'receipt', include.has('payments') && 'payment', include.has('loans') && 'loan_received', include.has('loans') && 'loan_repayment'].filter(Boolean) as string[];
@@ -220,17 +272,18 @@ export async function tallyExport(req: Request, env: Env) {
   const counts = { documents: docs.length, payments: pays.length, parties: newParties.length, items: 0 };
   let xml: string;
   if (part === 'masters') {
-    const blocks = newParties.map((p) => partyMaster(p, s));
+    const blocks = newParties.map((p) => partyMaster(p, s, v));
     if (inventory) {
       const itemIds = [...new Set([...lines.values()].flat().map((l) => l.item_id).filter(Boolean))];
       if (itemIds.length) {
         // Items that came from Tally already exist there; only send the new ones.
         const { results } = await env.DB.prepare(`SELECT * FROM items WHERE tally_name IS NULL AND id IN (${itemIds.map(() => '?').join(',')})`).bind(...itemIds).all<ItemRow>();
-        results.forEach((i) => { blocks.push(itemMaster(i)); newItemIds.push(i.id); });
+        [...new Set(results.map((i) => i.unit || 'Nos'))].forEach((u) => blocks.push(unitMaster(u)));
+        results.forEach((i) => { blocks.push(itemMaster(i, v)); newItemIds.push(i.id); });
         counts.items = results.length;
       }
     }
-    xml = envelope('All Masters', s.tally_company, blocks.join('\n'));
+    xml = envelope('All Masters', s.tally_company, blocks.join('\n'), v);
   } else {
     const blocks: string[] = [];
     for (const d of docs) {
@@ -267,8 +320,9 @@ export async function tallyExport(req: Request, env: Env) {
       blocks.push(msg(`     <VOUCHER VCHTYPE="${x(vtype)}" ACTION="Create" OBJVIEW="${inventory ? 'Invoice Voucher View' : 'Accounting Voucher View'}">
       <DATE>${tdate(d.doc_date)}</DATE><EFFECTIVEDATE>${tdate(d.doc_date)}</EFFECTIVEDATE>
       ${tag('VOUCHERTYPENAME', vtype)}${tag('VOUCHERNUMBER', d.number)}${tag('REFERENCE', sale ? d.ref_no : d.ref_no)}${d.ref_date ? `<REFERENCEDATE>${tdate(d.ref_date)}</REFERENCEDATE>` : ''}
-      ${tag('PARTYLEDGERNAME', pl)}${tag('PARTYNAME', d.party_name)}${tag('PARTYGSTIN', d.party_gstin)}
-      ${tag('STATENAME', stateName(d.party_state_code || ''))}${tag('PLACEOFSUPPLY', stateName(d.place_of_supply || ''))}
+      ${tag('PARTYLEDGERNAME', pl)}${tag('PARTYNAME', d.party_name)}${tag('PARTYMAILINGNAME', d.party_name)}${sale ? tag('BASICBUYERNAME', d.party_name) : ''}
+      ${tag('STATENAME', stateName(d.party_state_code || ''))}${gstOn ? `<COUNTRYOFRESIDENCE>India</COUNTRYOFRESIDENCE>${tag('PARTYGSTIN', d.party_gstin)}<GSTREGISTRATIONTYPE>${d.party_gstin ? 'Regular' : 'Unregistered/Consumer'}</GSTREGISTRATIONTYPE>${tag('PLACEOFSUPPLY', stateName(d.place_of_supply || ''))}` : ''}
+      ${v === 'prime3' && s.company_gstin ? `${tag('CMPGSTIN', s.company_gstin)}<CMPGSTREGISTRATIONTYPE>Regular</CMPGSTREGISTRATIONTYPE>${tag('CMPGSTSTATE', stateName(s.company_state_code))}` : ''}${v.startsWith('prime') ? `<VCHENTRYMODE>${inventory ? 'Item Invoice' : 'Accounting Invoice'}</VCHENTRYMODE>` : ''}
       ${tag('NARRATION', narration)}
       <PERSISTEDVIEW>${inventory ? 'Invoice Voucher View' : 'Accounting Voucher View'}</PERSISTEDVIEW><ISINVOICE>${inventory ? 'Yes' : 'No'}</ISINVOICE>
 ${out.join('\n')}
@@ -306,9 +360,9 @@ ${out.join('\n')}
 ${out.join('\n')}
      </VOUCHER>`));
     }
-    xml = envelope('Vouchers', s.tally_company, blocks.join('\n'));
+    xml = envelope('Vouchers', s.tally_company, blocks.join('\n'), v);
   }
-  return json({ part, xml, counts, doc_ids: docs.map((d) => d.id), payment_ids: pays.map((p) => p.id), party_ids: newParties.map((p) => p.id), item_ids: newItemIds });
+  return json({ part, version: v, xml, counts, doc_ids: docs.map((d) => d.id), payment_ids: pays.map((p) => p.id), party_ids: newParties.map((p) => p.id), item_ids: newItemIds });
 }
 
 /** Marks entries as sent to Tally so the next export skips them. */

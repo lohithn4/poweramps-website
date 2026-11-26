@@ -58,6 +58,7 @@ import StaffPage from '../../components/StaffPage.astro';
       <div class="pcard__h"><h2>Tally</h2></div>
       <p class="fhint" style="margin-bottom:12px">These names must match ledgers in your Tally company exactly. Use <code>{'{RATE}'}</code> in the sales/purchase ledger to split by GST rate, e.g. <code>Sales @ {'{RATE}'}%</code>.</p>
       <div class="pform"><div class="row3">
+        <label class="field"><span class="flabel">Tally version</span><select class="input" name="tally_version"><option value="prime3">TallyPrime 3.0 or later</option><option value="prime1">TallyPrime 1.x / 2.x</option><option value="erp9">Tally.ERP 9 (with GST)</option><option value="legacy">Tally 9 / 7.2 / ERP 9 before GST</option></select></label>
         <label class="field"><span class="flabel">Tally company name</span><input class="input" name="tally_company" placeholder="(optional)" /></label>
         <label class="field"><span class="flabel">Include stock items in vouchers</span><select class="input" name="tally_inventory"><option value="no">No: accounting entries only</option><option value="yes">Yes: item invoices (needs same item names in Tally)</option></select></label>
         <label class="field"><span class="flabel">Sales ledger</span><input class="input" name="tally_sales_ledger" /></label>
