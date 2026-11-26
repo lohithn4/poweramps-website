@@ -86,6 +86,28 @@ const steps = [
     </div>
   </section>
 
+  <!-- ================= CONFIGURE ONLINE ================= -->
+  <section class="section cfgsec">
+    <div class="wrap cfg">
+      <div class="cfg__copy reveal">
+        <span class="eyebrow">Custom panel builder</span>
+        <h2>Configure your panel online, like a custom laptop.</h2>
+        <p>Sign up free, then build one or many panels for your project: pick the application, list your motors or feeders, and choose every component, from the incomer and busbar to meters, starters, PLC and enclosure. Save your builds, get one quotation for all of them, and order when you're ready.</p>
+        <div class="cfg__actions">
+          <a class="btn btn--red" href={url('/portal/register/?next=%2Fbuild%2F')}>Create free account <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--ghost" href={url('/build/')}>Try the builder</a>
+          <a class="cfg__login" href={url('/portal/login/?next=%2Fbuild%2F')}>Already registered? Log in</a>
+        </div>
+      </div>
+      <ol class="cfg__steps reveal">
+        <li><b>1</b><div><strong>Sign up &amp; log in</strong><span>Free account to save and track your builds.</span></div></li>
+        <li><b>2</b><div><strong>Build one or more panels</strong><span>Application, loads and live ratings, with a drawing as you go.</span></div></li>
+        <li><b>3</b><div><strong>Choose every component</strong><span>Incomer, make, busbar, meters, relays, PLC / HMI, sheet steel, IP, add-ons.</span></div></li>
+        <li><b>4</b><div><strong>One quotation, then order</strong><span>We price all your panels together. Accept online and track production.</span></div></li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ================= CATEGORIES (busbar) ================= -->
   <section class="section grid-paper">
     <div class="wrap">
@@ -473,6 +495,18 @@ const steps = [
     font-style: normal; line-height: 1.6; color: var(--ink-2);
   }
   .visit__addr strong { display: block; color: var(--ink); margin-bottom: 2px; }
+  .cfgsec { padding-bottom: 0; }
+  .cfg { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(28px, 4vw, 64px); align-items: center; padding: clamp(24px, 4vw, 48px); border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(135deg, var(--white), var(--paper)); box-shadow: var(--shadow-sm); }
+  .cfg__copy h2 { margin-top: 12px; font-size: clamp(26px, 3.4vw, 40px); }
+  .cfg__copy p { margin-top: 14px; color: var(--ink-2); font-size: 17px; line-height: 1.6; }
+  .cfg__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 24px; }
+  .cfg__login { font-size: 15px; font-weight: 600; color: var(--navy-700); }
+  .cfg__steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .cfg__steps li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
+  .cfg__steps b { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 10px; background: var(--red); color: #fff; font-size: 15px; }
+  .cfg__steps strong { display: block; font-size: 16px; }
+  .cfg__steps span { display: block; margin-top: 2px; font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+  @media (max-width: 900px) { .cfg { grid-template-columns: 1fr; } }
   .visit__phone { margin-top: 12px; align-items: center; font-size: 17px; font-weight: 500; color: var(--ink); transition: border-color .2s, box-shadow .2s; }
   .visit__phone:hover { box-shadow: var(--shadow-sm); }
   .visit__phone strong { font-size: 14px; font-weight: 600; color: var(--ink-2); }

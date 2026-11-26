@@ -9,6 +9,7 @@ import * as payments from './payments';
 import * as reports from './reports';
 import * as tally from './tally';
 import * as feedback from './feedback';
+import * as builds from './builds';
 
 type Handler = (req: Request, env: Env, id: number) => Promise<Response> | Response;
 interface Route { method: string; pattern: RegExp; handler: Handler; mutation?: boolean }
@@ -38,6 +39,11 @@ const routes: Route[] = [
   r('POST', '/setup/admin', auth.setupAdmin),
 
   // Requests (quotes & orders)
+  r('GET', '/builds', builds.listBuilds),
+  r('POST', '/builds', builds.createBuild),
+  r('GET', '/builds/:id', builds.getBuild),
+  r('PATCH', '/builds/:id', builds.updateBuild),
+  r('DELETE', '/builds/:id', builds.deleteBuild),
   r('POST', '/requests', requests.createRequest),
   r('POST', '/requests/confirm', requests.confirmRequest),
   r('GET', '/requests', requests.listRequests),

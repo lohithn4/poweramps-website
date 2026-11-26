@@ -50,7 +50,7 @@ import { url } from '../../lib/url';
 <script>
   import { api, requireAuth, sitePath } from '../../scripts/api';
   import { $, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
-  import { panelSVG, summaryHTML, compute, normalize } from '../../scripts/panel';
+  import { panelSVG, summaryHTML, compute, normalize, panelsHTML } from '../../scripts/panel';
 
   const id = Number(qs('id'));
   async function load() {
@@ -77,8 +77,13 @@ import { url } from '../../lib/url';
 
     const cfg = normalize(r.config);
     const s = compute(cfg);
-    $('[data-svg]').innerHTML = panelSVG(cfg, s);
-    $('[data-summary]').innerHTML = summaryHTML(cfg, s);
+    if (Array.isArray(r.panels) && r.panels.length > 1) {
+      ($('[data-svg]') as HTMLElement).hidden = true;
+      $('[data-summary]').innerHTML = panelsHTML(r.panels);
+    } else {
+      $('[data-svg]').innerHTML = panelSVG(cfg, s);
+      $('[data-summary]').innerHTML = summaryHTML(cfg, s);
+    }
 
     const qc = $('[data-quote-card]');
     if (r.quote_doc_id) {

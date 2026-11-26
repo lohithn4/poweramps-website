@@ -1,34 +1,27 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
-import { APPS, HP_SIZES, KVA_SIZES, PROTECTIONS } from '../../scripts/panel';
+import { APPS, HP_SIZES, KVA_SIZES, PART_GROUPS, PART_SECTIONS } from '../../scripts/panel';
 import { url } from '../../lib/url';
 
-const steps = ['Application', 'Power supply', 'Loads', 'Features', 'Project', 'Review & submit'];
+const steps = ['Application', 'Power supply', 'Loads', 'Components', 'Project', 'Review & submit'];
 const systems = ['415 V · 3-phase · 50 Hz', '440 V · 3-phase · 50 Hz', '230 V · single-phase · 50 Hz', 'Other'];
 const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'];
-const controls = [
-  { v: 'Manual', d: 'Push buttons & selector switches' },
-  { v: 'Automatic', d: 'Level / pressure / timer based' },
-  { v: 'PLC + HMI', d: 'Programmable logic with touch screen' },
-  { v: 'PLC + HMI + SCADA', d: 'Remote monitoring & data logging' },
-];
-const meterings = ['Digital multifunction meter', 'Digital meter with Modbus', 'Analog meters (A, V)', 'None'];
-const switchgear = ['No preference', 'L&T (Lauritz Knudsen)', 'Schneider Electric', 'Siemens', 'ABB', 'Legrand', 'C&S Electric'];
-const drives = ['No preference', 'ABB', 'Danfoss', 'Siemens', 'Schneider Electric', 'Delta', 'INVT', 'Yaskawa', 'Fuji'];
-const ips = ['IP42', 'IP54', 'IP55', 'IP65'];
-const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (off-white)', 'RAL 3000 (red, fire panels)', 'Other: mention in notes'];
 ---
 <Base title="Build Your Panel" description="Configure your electrical panel step by step and get a clear quotation: motors, feeders, generators or fire pumps, with live ratings and a panel preview." noindex={false}>
   <section class="bhero blueprint on-dark">
     <div class="wrap">
       <span class="eyebrow">Panel builder</span>
-      <h1>Build your panel in 5 easy steps.</h1>
-      <p>No technical knowledge needed. Pick what the panel is for, list your loads, and we'll calculate the ratings and draw it as you go. Then send it for a quote or place your order.</p>
+      <h1>Build your own panel, part by part.</h1>
+      <p>Like configuring a custom laptop: pick what the panel is for, list your loads, then choose every component and make. We calculate the ratings and draw it as you go. Save several panels in your account and get one quotation for all of them, then place your order.</p>
+      <ol class="bhero__how">
+        <li><b>1</b> Sign up free</li><li><b>2</b> Configure one or more panels</li><li><b>3</b> Get one quotation</li><li><b>4</b> Approve &amp; order</li>
+      </ol>
     </div>
   </section>
 
   <section class="builder" data-builder>
+    <div class="wrap"><div class="bacct" data-bacct></div></div>
     <div class="wrap builder__grid">
       <!-- Step navigation -->
       <nav class="bsteps" aria-label="Builder steps">
@@ -117,28 +110,27 @@ const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (o
             </div>
           </section>
 
-          <!-- 4. Features -->
+          <!-- 4. Components -->
           <section class="bstep" data-step="3" hidden>
-            <header><h2>Features & construction</h2><p>Sensible defaults are already selected. Change only what you need.</p></header>
-            <fieldset class="bfield"><legend>How should it be controlled?</legend>
-              <div class="optgrid">{controls.map((c) => <label class="optcard"><input type="radio" name="options.control" value={c.v} /><strong>{c.v}</strong><span>{c.d}</span></label>)}</div>
-            </fieldset>
-            <fieldset class="bfield"><legend>Protection required</legend>
-              <div class="checks checks--grid">{PROTECTIONS.map((p) => <label class="check"><input type="checkbox" name="options.protections" value={p} /><span>{p}</span></label>)}</div>
-            </fieldset>
-            <div class="bgrid2">
-              <label class="field"><span class="flabel">Metering</span><select class="input" name="options.metering">{meterings.map((m) => <option>{m}</option>)}</select></label>
-              <label class="field"><span class="flabel">Preferred switchgear make</span><select class="input" name="options.switchgear">{switchgear.map((m) => <option>{m}</option>)}</select></label>
-              <label class="field" data-show-if="drives"><span class="flabel">Preferred PLC / drive make</span><select class="input" name="options.drives">{drives.map((m) => <option>{m}</option>)}</select></label>
-              <label class="field"><span class="flabel">Enclosure protection (IP)</span><select class="input" name="options.ip">{ips.map((m) => <option>{m}</option>)}</select></label>
-              <label class="field"><span class="flabel">Colour</span><select class="input" name="options.colour">{colours.map((m) => <option>{m}</option>)}</select></label>
-            </div>
-            <div class="bgrid3">
-              <fieldset class="bfield"><legend>Busbar</legend><div class="pills"><label class="pill"><input type="radio" name="options.busbar" value="Copper" /><span>Copper</span></label><label class="pill"><input type="radio" name="options.busbar" value="Aluminium" /><span>Aluminium</span></label></div></fieldset>
-              <fieldset class="bfield"><legend>Mounting</legend><div class="pills"><label class="pill"><input type="radio" name="options.mounting" value="Floor standing" /><span>Floor standing</span></label><label class="pill"><input type="radio" name="options.mounting" value="Wall mounted" /><span>Wall mounted</span></label></div></fieldset>
-              <fieldset class="bfield"><legend>Installed</legend><div class="pills"><label class="pill"><input type="radio" name="options.location" value="Indoor" /><span>Indoor</span></label><label class="pill"><input type="radio" name="options.location" value="Outdoor" /><span>Outdoor</span></label></div></fieldset>
-              <fieldset class="bfield"><legend>Cable entry</legend><div class="pills"><label class="pill"><input type="radio" name="options.entry" value="Bottom" /><span>Bottom</span></label><label class="pill"><input type="radio" name="options.entry" value="Top" /><span>Top</span></label></div></fieldset>
-            </div>
+            <header><h2>Choose your components</h2><p>Pick every part, just like configuring a laptop. Sensible defaults are already selected: change only what you care about.</p></header>
+            {PART_SECTIONS.map((sec) => (
+              <div class="cfg-sec" data-cfg-sec={sec}>
+                <h3 class="cfg-sec__t">{sec}</h3>
+                {PART_GROUPS.filter((g) => g.section === sec).map((g) => (
+                  <fieldset class="bfield" data-part={g.id}>
+                    <legend>{g.title}</legend>
+                    {g.hint && <p class="cfg-hint">{g.hint}</p>}
+                    {g.multi ? (
+                      <div class="checks checks--grid">{g.options.map((o) => <label class="check"><input type="checkbox" name={g.path} value={o.v} /><span>{o.v}</span></label>)}</div>
+                    ) : g.cards ? (
+                      <div class="optgrid">{g.options.map((o) => <label class="optcard"><input type="radio" name={g.path} value={o.v} /><strong>{o.v}</strong>{o.d && <span>{o.d}</span>}</label>)}</div>
+                    ) : (
+                      <div class="pills">{g.options.map((o) => <label class="pill"><input type="radio" name={g.path} value={o.v} /><span>{o.v}{o.tag && <em class="pill__tag">{o.tag}</em>}</span></label>)}</div>
+                    )}
+                  </fieldset>
+                ))}
+              </div>
+            ))}
           </section>
 
           <!-- 5. Project -->
@@ -158,6 +150,7 @@ const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (o
           <section class="bstep" data-step="5" hidden>
             <header><h2>Review your panel</h2><p>Check everything below. Use <b>Edit</b> on any step to make changes.</p></header>
             <div class="review" data-review></div>
+            <div class="rpanels" data-rpanels hidden></div>
 
             <div class="contact-box" data-contact-anon hidden>
               <h3>Your contact details</h3>
@@ -212,6 +205,7 @@ const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (o
           </dl>
           <p class="bside__note">Estimates are indicative. Our engineers verify every rating before quoting.</p>
         </div>
+        <div class="bside__card bproj" data-proj></div>
       </aside>
     </div>
   </section>
@@ -343,6 +337,7 @@ const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (o
   .bside__kpis dd { margin: 3px 0 0; font-family: var(--font-mono); font-weight: 600; font-size: 15px; }
   .bside__note { margin-top: 12px; font-size: 12px; color: var(--muted); }
 
+
   .contact-box { margin: 26px 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
   .contact-box h3 { font-size: 18px; }
   .contact-box .muted { margin: 4px 0 16px; color: var(--muted); font-size: 14px; }
@@ -382,4 +377,60 @@ const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (o
     .bgrid2, .bgrid3, .checks--grid { grid-template-columns: 1fr; }
     .bnav { flex-wrap: wrap; }
   }
+</style>
+
+<!-- Styles for parts the builder script adds after load (scoped styles do not reach them). -->
+<style is:global>
+  /* how it works (hero) */
+  .bhero__how { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 22px 0 0; padding: 0; list-style: none; color: #dfe5f2; font-size: 15px; }
+  .bhero__how li { display: flex; align-items: center; gap: 8px; }
+  .bhero__how b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font-size: 13px; }
+
+  /* account banner */
+  .bacct:empty { display: none; }
+  .bacct { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-top: 22px; padding: 14px 18px; border: 1px solid var(--line); border-left: 4px solid var(--red); border-radius: 14px; background: var(--white); box-shadow: var(--shadow-sm); }
+  .bacct p { margin: 0; font-size: 15px; color: var(--ink-2); }
+  .bacct strong { color: var(--ink); }
+  .bacct__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* configurator sections */
+  .cfg-sec { padding: 18px 18px 2px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
+  .cfg-sec[hidden] { display: none; }
+  .cfg-sec__t { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .cfg-sec__t::before { content: ''; width: 4px; height: 16px; border-radius: 2px; background: var(--red); }
+  .cfg-hint { margin: -2px 0 8px; font-size: 13px; color: var(--muted); }
+  .pill__tag { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--red-050); color: var(--red); font-size: 11px; font-style: normal; font-weight: 600; }
+
+  /* my builds tray */
+  .bproj { margin-top: 14px; }
+  .bproj:empty { display: none; }
+  .bproj h3 { font-size: 15px; margin: 0 0 6px; }
+  .bproj p { font-size: 13.5px; color: var(--ink-2); margin: 0 0 12px; }
+  .bproj__cur { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 8px 10px; margin-bottom: 10px; border-radius: 10px; background: var(--paper); font-size: 13px; }
+  .bproj__cur b { display: block; font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+  .bproj__state { font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .bproj__state--dirty { color: var(--red); }
+  .bproj__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bproj__list { display: grid; gap: 6px; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); max-height: 340px; overflow: auto; }
+  .bproj__item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: start; padding: 8px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; }
+  .bproj__item.is-current { border-color: var(--navy-700); box-shadow: inset 0 0 0 1px var(--navy-700); }
+  .bproj__item input { margin-top: 3px; accent-color: var(--navy-700); width: 16px; height: 16px; }
+  .bproj__item strong { display: block; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bproj__item small { display: block; color: var(--muted); line-height: 1.35; }
+  .bproj__acts { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+  .bproj__acts button, .bproj__acts a { padding: 0; border: 0; background: none; color: var(--navy-700); font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .bproj__acts button[data-b-del] { color: var(--red); }
+  .bproj__sent { grid-column: 1 / -1; }
+  .bproj__go { margin-top: 12px; }
+
+  /* panels in this request (review) */
+  .rpanels { margin: 18px 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--white); }
+  .rpanels h3 { margin: 0 0 4px; font-size: 16px; }
+  .rpanels > p { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .rpanels table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .rpanels th, .rpanels td { padding: 8px 6px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .rpanels th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+  .rpanels td small { display: block; color: var(--muted); }
+  .rpanels .num { text-align: right; white-space: nowrap; }
+  .rpanels button { padding: 0; border: 0; background: none; color: var(--red); font-size: 12.5px; font-weight: 600; cursor: pointer; }
 </style>

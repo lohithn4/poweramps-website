@@ -86,7 +86,7 @@ public/
 
 ## Client & staff portal (Phase 1)
 
-- **Panel builder** at `/build/`: guided 6-step requirement builder with live ratings and panel drawing; submit as quote or order.
+- **Panel builder** at `/build/`: configure a panel like a custom laptop: application, loads (live ratings and drawing), then every component and make (incomer, breakers, busbar, meters, relays, PLC / HMI, VFD, sheet steel, form of separation, IP, add-ons, testing). Signed-in clients save panels to **My builds**, add as many as the project needs, and send one quote request or order for several panels; staff get one quotation line per panel.
 - **Client portal** at `/portal/`: email-verified accounts (plus optional Google / Microsoft / LinkedIn sign-in), order tracking, quotation acceptance.
 - **Staff portal** at `/staff/`: all requests, status updates (emailed to clients), quotations, internal notes, team management.
 - **Backend**: Cloudflare Worker + D1 database in `worker/` (private data never goes into this repo). See `worker/wrangler.jsonc`.

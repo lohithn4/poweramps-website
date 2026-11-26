@@ -23,6 +23,8 @@ export interface PanelConfig {
     busbar: string; ip: string; mounting: string; location: string; entry: string; colour: string;
   };
   project: { name: string; site: string; quantity: number; requiredBy: string; notes: string; reference: string };
+  /** Component choices from the configurator (PART_GROUPS), keyed by group id. */
+  parts: Record<string, string | string[]>;
 }
 
 export const APPS: { id: AppId; title: string; text: string; icon: string; loads: 'motors' | 'feeders' | 'generator' | 'fire' | 'mixed' }[] = [
@@ -65,6 +67,7 @@ export function blankConfig(): PanelConfig {
       switchgear: 'No preference', drives: 'No preference', busbar: 'Copper', ip: 'IP54', mounting: 'Floor standing', location: 'Indoor', entry: 'Bottom', colour: 'RAL 7035 (light grey)',
     },
     project: { name: '', site: '', quantity: 1, requiredBy: '', notes: '', reference: '' },
+    parts: structuredClone(PART_DEFAULTS),
   };
 }
 
@@ -88,10 +91,108 @@ export function normalize(raw: any): PanelConfig {
     fire: { ...b.fire, ...(c.fire ?? {}) },
     options: { ...b.options, ...(c.options ?? {}), protections: Array.isArray(c.options?.protections) ? c.options.protections : b.options.protections },
     project: { ...b.project, ...(c.project ?? {}) },
+    parts: { ...b.parts, ...(c.parts && typeof c.parts === 'object' ? c.parts : {}) },
   };
 }
 
 export const appOf = (id: string) => APPS.find((a) => a.id === id);
+/* ---------------- component configurator ("choose every part", like a custom laptop) ---------------- */
+
+export interface PartOption { v: string; d?: string; tag?: string }
+export interface PartGroup {
+  id: string; section: string; title: string; hint?: string;
+  /** Where the choice is stored: a key in config.parts, or an existing options field. */
+  path: string;
+  multi?: boolean; cards?: boolean;
+  options: PartOption[];
+  /** Shown only when this returns true (e.g. PLC choices only for PLC control). */
+  when?: (c: PanelConfig) => boolean;
+}
+
+const MAKES = ['No preference', 'L&T (Lauritz Knudsen)', 'Schneider Electric', 'Siemens', 'ABB', 'Legrand', 'C&S Electric'];
+const hasMotors = (c: PanelConfig) => ['motors', 'mixed'].includes(appOf(c.application)?.loads ?? '') && c.motors.length > 0 || appOf(c.application)?.loads === 'fire';
+const usesPlc = (c: PanelConfig) => c.options.control.includes('PLC');
+const usesVfd = (c: PanelConfig) => usesPlc(c) || c.application === 'automation' || c.motors.some((m) => m.starter === 'VFD');
+const hasMeter = (c: PanelConfig) => c.options.metering !== 'None';
+const opt = (...vs: (string | PartOption)[]): PartOption[] => vs.map((v) => (typeof v === 'string' ? { v } : v));
+
+export const PART_SECTIONS = ['Control & automation', 'Switchgear', 'Busbar', 'Metering & protection', 'Indication & operation', 'Enclosure', 'Accessories', 'Testing & documents'] as const;
+
+export const PART_GROUPS: PartGroup[] = [
+  { id: 'control', section: 'Control & automation', title: 'How should it be controlled?', path: 'options.control', cards: true, options: [
+    { v: 'Manual', d: 'Push buttons & selector switches' },
+    { v: 'Automatic', d: 'Level / pressure / timer based' },
+    { v: 'PLC + HMI', d: 'Programmable logic with touch screen' },
+    { v: 'PLC + HMI + SCADA', d: 'Remote monitoring & data logging' },
+  ] },
+  { id: 'plc', section: 'Control & automation', title: 'PLC', path: 'parts.plc', when: usesPlc,
+    options: opt('No preference', 'Siemens S7-1200', 'Schneider Modicon M221', 'Delta DVP', 'Allen-Bradley Micro800', 'Mitsubishi FX5U', 'Omron CP2E') },
+  { id: 'hmi', section: 'Control & automation', title: 'HMI touch screen', path: 'parts.hmi', when: usesPlc, options: opt('4.3 inch', '7 inch', '10 inch', '15 inch') },
+  { id: 'drives', section: 'Control & automation', title: 'VFD / drive make', path: 'options.drives', when: usesVfd,
+    options: opt('No preference', 'ABB', 'Danfoss', 'Siemens', 'Schneider Electric', 'Delta', 'INVT', 'Yaskawa', 'Fuji') },
+
+  { id: 'incomer_type', section: 'Switchgear', title: 'Main incomer', hint: 'Auto picks MCB, MCCB or ACB from the calculated current.', path: 'parts.incomer_type',
+    options: opt({ v: 'Auto (recommended)', tag: 'Recommended' }, 'MCCB', 'ACB', 'Switch disconnector fuse (SDF)', 'MCB', 'Changeover switch') },
+  { id: 'switchgear', section: 'Switchgear', title: 'Breakers & contactors make', path: 'options.switchgear', options: opt(...MAKES) },
+  { id: 'incomer_poles', section: 'Switchgear', title: 'Incomer poles', path: 'parts.incomer_poles', when: (c) => !c.supply.system.startsWith('230'), options: opt('4 pole (TPN)', '3 pole (TP)') },
+  { id: 'release', section: 'Switchgear', title: 'Breaker release', path: 'parts.release', when: (c) => compute(c).incomerAmps >= 100,
+    options: opt({ v: 'Thermal-magnetic', d: 'Fixed protection, economical' }, { v: 'Microprocessor', d: 'Adjustable settings, better selectivity' }) },
+  { id: 'overload', section: 'Switchgear', title: 'Motor overload protection', path: 'parts.overload', when: hasMotors,
+    options: opt({ v: 'Thermal overload relay', tag: 'Standard' }, 'Motor protection circuit breaker (MPCB)', 'Electronic motor protection relay') },
+
+  { id: 'busbar', section: 'Busbar', title: 'Busbar material', path: 'options.busbar', options: opt('Copper', 'Aluminium') },
+  { id: 'busbar_sleeve', section: 'Busbar', title: 'Busbar finish', path: 'parts.busbar_sleeve', options: opt('Heat-shrink sleeved, colour coded', 'Bare with phase markings') },
+
+  { id: 'metering', section: 'Metering & protection', title: 'Metering', path: 'options.metering', options: opt('Digital multifunction meter', 'Digital meter with Modbus', 'Analog meters (A, V)', 'None') },
+  { id: 'meter_make', section: 'Metering & protection', title: 'Meter make', path: 'parts.meter_make', when: hasMeter, options: opt('No preference', 'Schneider (Conzerv)', 'Secure (Elite)', 'L&T', 'Siemens', 'Rishabh') },
+  { id: 'cts', section: 'Metering & protection', title: 'Current transformers', path: 'parts.cts', when: hasMeter, options: opt('Resin cast, class 1', 'Class 0.5 (energy accounting)') },
+  { id: 'protections', section: 'Metering & protection', title: 'Protection required', path: 'options.protections', multi: true, options: opt(...PROTECTIONS) },
+  { id: 'relay_make', section: 'Metering & protection', title: 'Protection relay make', path: 'parts.relay_make', options: opt('No preference', 'Minilec', 'L&T', 'Schneider Electric', 'Siemens', 'Selec') },
+
+  { id: 'indication', section: 'Indication & operation', title: 'Indication & controls on the door', path: 'parts.indication', multi: true,
+    options: opt('R-Y-B phase indication lamps', 'ON / OFF / TRIP lamps per feeder', 'Run / trip lamps per motor', 'Auto / manual selector per motor', 'Emergency stop push button', 'Hooter with accept / reset') },
+  { id: 'lamp_make', section: 'Indication & operation', title: 'Lamps & push buttons make', path: 'parts.lamp_make', options: opt('No preference', 'Teknic', 'L&T', 'Schneider Electric', 'Siemens', 'Salzer') },
+
+  { id: 'sheet', section: 'Enclosure', title: 'Sheet steel', path: 'parts.sheet', cards: true, options: [
+    { v: 'CRCA 1.6 mm', d: 'Standard for indoor panels' }, { v: 'CRCA 2.0 mm', d: 'Heavy duty, large panels' },
+    { v: 'Galvanised (GI)', d: 'Better corrosion resistance' }, { v: 'Stainless steel 304', d: 'Food, pharma, coastal sites' },
+  ] },
+  { id: 'form', section: 'Enclosure', title: 'Form of separation', path: 'parts.form', cards: true, options: [
+    { v: 'Form 1', d: 'Single compartment' }, { v: 'Form 2', d: 'Busbars separated' },
+    { v: 'Form 3b', d: 'Each feeder in its own compartment' }, { v: 'Form 4', d: 'Fully compartmentalised, cables too' },
+  ] },
+  { id: 'ip', section: 'Enclosure', title: 'Enclosure protection (IP)', path: 'options.ip', options: opt('IP42', 'IP54', 'IP55', 'IP65') },
+  { id: 'mounting', section: 'Enclosure', title: 'Mounting', path: 'options.mounting', options: opt('Floor standing', 'Wall mounted') },
+  { id: 'location', section: 'Enclosure', title: 'Installed', path: 'options.location', options: opt('Indoor', 'Outdoor') },
+  { id: 'entry', section: 'Enclosure', title: 'Cable entry', path: 'options.entry', options: opt('Bottom', 'Top', 'Top & bottom') },
+  { id: 'colour', section: 'Enclosure', title: 'Colour', path: 'options.colour', options: opt('RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (off-white)', 'RAL 3000 (red, fire panels)', 'Other: mention in notes') },
+
+  { id: 'accessories', section: 'Accessories', title: 'Add-ons', path: 'parts.accessories', multi: true,
+    options: opt('Panel lighting with door switch', 'Space heater with thermostat', 'Cooling fans with filters', 'Surge protection device (SPD)', '20% spare feeders', 'Copper earth bar', 'Canopy for outdoor use', 'Base frame / plinth', 'Danger board & rubber mat') },
+  { id: 'testing', section: 'Testing & documents', title: 'Testing & documents', path: 'parts.testing', multi: true,
+    options: opt('GA & wiring drawings for approval', 'Routine test certificates', 'Factory acceptance test (FAT) with you', 'Installation & commissioning at site', 'Operation & maintenance manual') },
+];
+
+export const PART_DEFAULTS: Record<string, string | string[]> = {
+  plc: 'No preference', hmi: '7 inch', incomer_type: 'Auto (recommended)', incomer_poles: '4 pole (TPN)', release: 'Thermal-magnetic',
+  overload: 'Thermal overload relay', busbar_sleeve: 'Heat-shrink sleeved, colour coded', meter_make: 'No preference', cts: 'Resin cast, class 1',
+  relay_make: 'No preference', indication: ['R-Y-B phase indication lamps', 'ON / OFF / TRIP lamps per feeder', 'Run / trip lamps per motor'],
+  lamp_make: 'No preference', sheet: 'CRCA 1.6 mm', form: 'Form 1', accessories: ['Panel lighting with door switch', 'Copper earth bar'],
+  testing: ['GA & wiring drawings for approval', 'Routine test certificates'],
+};
+
+/** Component choices that apply to this panel, for summaries, quotations and emails. */
+export function chosenParts(c: PanelConfig): { section: string; title: string; value: string }[] {
+  const out: { section: string; title: string; value: string }[] = [];
+  for (const g of PART_GROUPS) {
+    if (g.when && !g.when(c)) continue;
+    const v = g.path.split('.').reduce<any>((o, k) => o?.[k], c);
+    const text = Array.isArray(v) ? v.join(', ') : String(v ?? '');
+    if (text) out.push({ section: g.section, title: g.title, value: text });
+  }
+  return out;
+}
+
 const volts = (c: PanelConfig) => (c.supply.system.startsWith('230') ? 230 : c.supply.system.startsWith('440') ? 440 : 415);
 const threePhase = (c: PanelConfig) => !c.supply.system.startsWith('230');
 
@@ -234,17 +335,29 @@ export function summaryHTML(c: PanelConfig, s: Summary = compute(c)) {
       ${row('Jockey pump', `${f.jockeyHp} HP · DOL`)}
       ${row('Diesel engine pump', f.diesel ? 'Yes: engine controller included' : 'No')}</table></div>`);
   }
-  const o = c.options;
-  parts.push(`<div class="sum-block"><h4>Features & construction</h4><table class="sum-table">
-    ${row('Control', o.control)}${row('Metering', o.metering)}${row('Protection', o.protections.join(', '))}
-    ${row('Switchgear make', o.switchgear)}${o.control.includes('PLC') || c.motors.some((m) => starterOf(m, c) === 'VFD') ? row('PLC / drive make', o.drives) : ''}
-    ${row('Busbar', o.busbar)}${row('Enclosure', `${o.ip} · ${o.mounting} · ${o.location}`)}${row('Cable entry', o.entry)}${row('Colour', o.colour)}
-  </table></div>`);
+  const chosen = chosenParts(c);
+  for (const section of PART_SECTIONS) {
+    const rows = chosen.filter((p) => p.section === section);
+    if (rows.length) parts.push(`<div class="sum-block"><h4>${esc(section)}</h4><table class="sum-table">${rows.map((p) => row(p.title, p.value)).join('')}</table></div>`);
+  }
   const p = c.project;
   parts.push(`<div class="sum-block"><h4>Project</h4><table class="sum-table">
     ${row('Project', p.name)}${row('Site location', p.site)}${row('Quantity', String(p.quantity))}${row('Required by', p.requiredBy)}${row('Based on', p.reference)}${row('Notes', p.notes)}
   </table></div>`);
   return parts.join('');
+}
+
+/** A request with several panels: one collapsible section per panel (drawing + full summary). */
+export function panelsHTML(panels: { name: string; title: string; quantity: number; config: unknown }[]) {
+  const total = panels.reduce((n, p) => n + (p.quantity || 1), 0);
+  return `<p class="pnl-intro">${panels.length} different panels in this request, ${total} in total.</p>` + panels.map((p, i) => {
+    const c = normalize(p.config);
+    const s = compute(c);
+    return `<details class="pnl"${i === 0 ? ' open' : ''}>
+      <summary><span class="pnl__n">Panel ${i + 1}</span><span class="pnl__t"><strong>${esc(p.name || s.title)}</strong><small>${esc(s.title)}</small></span><span class="pnl__q">× ${p.quantity || 1}</span></summary>
+      <div class="pnl__body"><div class="req-svg">${panelSVG(c, s)}</div>${summaryHTML(c, s)}</div>
+    </details>`;
+  }).join('');
 }
 
 /* ---------------- live panel drawing ---------------- */

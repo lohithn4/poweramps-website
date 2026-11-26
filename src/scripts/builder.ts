@@ -3,7 +3,7 @@ import { $, $$, esc, toast } from './ui';
 const BRAND = document.documentElement.dataset.brand || 'us';
 import {
   APPS, HP_SIZES, AMP_SIZES, MOTOR_PRESETS, FEEDER_PRESETS, blankConfig, appOf, compute, summaryHTML, panelSVG,
-  motorAmps, suggestedStarter, newId, normalize, type PanelConfig, type Motor, type Feeder,
+  motorAmps, suggestedStarter, newId, normalize, PART_GROUPS, type PanelConfig, type Motor, type Feeder,
 } from './panel';
 
 const KEY = 'builder_draft_v1';
@@ -11,7 +11,11 @@ const STEPS = 6;
 const root = $('[data-builder]');
 const form = $<HTMLFormElement>('[data-form]', root);
 
-interface Draft { step: number; maxStep: number; config: PanelConfig; contact: { name: string; email: string; phone: string; company: string } }
+interface Draft {
+  step: number; maxStep: number; config: PanelConfig; contact: { name: string; email: string; phone: string; company: string };
+  /** Saved build being edited (signed-in clients), and the config as last saved, to show unsaved changes. */
+  buildId?: number; savedJson?: string;
+}
 const blankDraft = (): Draft => ({ step: 0, maxStep: 0, config: blankConfig(), contact: { name: '', email: '', phone: '', company: '' } });
 
 function load(): Draft {
@@ -257,6 +261,13 @@ function refresh() {
   $('[data-loads-hint]', root).textContent = t[1];
   $('[data-feeder-title]', root).textContent = app?.loads === 'generator' ? 'Load feeders (optional)' : 'Outgoing feeders';
 
+  for (const g of PART_GROUPS) {
+    const el = root.querySelector<HTMLElement>(`[data-part="${g.id}"]`);
+    if (el) el.hidden = !!g.when && !g.when(c);
+  }
+  $$<HTMLElement>('[data-cfg-sec]', root).forEach((sec) => (sec.hidden = !$$<HTMLElement>('[data-part]', sec).some((p) => !p.hidden)));
+  updateProjState();
+
   for (const el of $$<HTMLElement>('[data-show-if]', form)) {
     const cond = el.dataset.showIf!;
     if (cond === 'drives') el.hidden = !(c.options.control.includes('PLC') || c.motors.some((m) => m.starter === 'VFD') || c.application === 'automation');
@@ -268,13 +279,14 @@ function refresh() {
 function renderReview() {
   const c = draft.config;
   const s = compute(c);
-  const sections = [['Application & supply', 1], ['Loads', 2], ['Features', 3], ['Project', 4]] as const;
+  const sections = [['Application & supply', 1], ['Loads', 2], ['Components', 3], ['Project', 4]] as const;
   $('[data-review]', root).innerHTML = `
     <div class="review__head"><div><span class="mono">Your panel</span><h3>${esc(s.title)}</h3></div>
       <div class="review__edit">${sections.map(([l, i]) => `<button type="button" class="qchip" data-edit="${i}">Edit ${l.toLowerCase()}</button>`).join('')}</div></div>
     <div class="review__svg">${panelSVG(c, s)}</div>
     ${summaryHTML(c, s)}`;
   $$<HTMLButtonElement>('[data-edit]', root).forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.edit))));
+  renderRequestPanels();
   ($('[data-contact-anon]', root) as HTMLElement).hidden = !!me;
   const meBox = $('[data-contact-me]', root) as HTMLElement;
   meBox.hidden = !me;
@@ -313,10 +325,11 @@ $('[data-submit]', root).addEventListener('click', () => {
   }
   const s = compute(draft.config);
   $('[data-confirm-title]').textContent = k === 'order' ? 'Confirm your order' : 'Send quote request?';
-  $('[data-confirm-panel]').textContent = s.title;
+  const panels = requestPanels();
+  $('[data-confirm-panel]').textContent = panels.length > 1 ? `${panels.length} different panels, ${panels.reduce((n, x) => n + x.quantity, 0)} in total` : s.title;
   const p = draft.config.project;
   $('[data-confirm-list]').innerHTML = [
-    `Quantity: ${p.quantity} panel${p.quantity > 1 ? 's' : ''}`,
+    ...(panels.length > 1 ? panels.map((x, i) => `Panel ${i + 1}: ${esc(x.name)} × ${x.quantity}`) : [`Quantity: ${p.quantity} panel${p.quantity > 1 ? 's' : ''}`]),
     p.site && `Site: ${esc(p.site)}`,
     p.requiredBy && `Required by: ${esc(p.requiredBy)}`,
     s.incomerAmps && `Suggested incomer: ${s.incomerAmps} A ${s.incomerDevice} (to be confirmed by our engineers)`,
@@ -337,16 +350,23 @@ ok.addEventListener('click', async () => {
   const c = draft.config;
   const s = compute(c);
   try {
+    // Signed-in: keep the current panel in "My builds" so it is linked to this request.
+    if (me && (!draft.buildId || isDirty())) await saveCurrent(true);
+    const panels = requestPanels();
+    const multi = panels.length > 1;
+    const title = multi ? `${panels.length} panels: ${panels.map((x) => x.name).join(', ')}`.slice(0, 200) : s.title;
     const res = await api<{ ref: string; id?: number; needsConfirmation?: boolean }>('/requests', {
       body: {
-        kind: k, title: s.title, config: c, summary: s,
-        quantity: c.project.quantity, site_location: c.project.site, required_by: c.project.requiredBy, notes: c.project.notes,
+        kind: k, title, config: c, summary: s, panels,
+        quantity: multi ? panels.reduce((n, x) => n + x.quantity, 0) : c.project.quantity,
+        site_location: c.project.site, required_by: c.project.requiredBy, notes: c.project.notes,
         contact: me ? { phone: me.phone, company: me.company } : draft.contact,
       },
     });
     dlg.close();
     showDone(k, res);
-    draft = blankDraft(); save();
+    draft = blankDraft(); selected.clear(); saveSel(); save();
+    loadBuilds();
   } catch (e: any) {
     dlg.close();
     if (e.code === 'unauthenticated') { location.href = sitePath(`/portal/login/?next=${encodeURIComponent('/build/?resume=1&kind=order')}`); return; }
@@ -373,7 +393,7 @@ function showDone(k: 'quote' | 'order', res: { ref: string; id?: number; needsCo
     $('[data-done-text]', root).textContent = k === 'order'
       ? 'Our team will review your order and send the order acknowledgement with final price and delivery date. You can track every stage in your portal.'
       : 'Our engineers will review your requirement and send your quotation, usually within 1–2 working days. You can track it in your portal.';
-    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--red" href="${sitePath(`/portal/request/?id=${res.id}`)}">Track this ${k}</a><a class="btn btn--ghost" href="${sitePath('/build/')}">Build another panel</a>`;
+    $('[data-done-actions]', root).innerHTML = `<a class="btn btn--red" href="${sitePath(`/portal/request/?id=${res.id}`)}">Track this ${k}</a><a class="btn btn--ghost" href="${sitePath('/build/?new=1')}">Build another panel</a><a class="btn btn--ghost" href="${sitePath('/portal/#builds')}">My builds</a>`;
   }
   done.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -399,4 +419,190 @@ refresh();
 showStep();
 save();
 
-getMe().then((u) => { me = u; if (draft.step === STEPS - 1) renderReview(); }).catch(() => { me = null; });
+getMe().then(async (u) => {
+  me = u;
+  renderAcct();
+  if (me) {
+    await loadBuilds();
+    const want = Number(params.get('build'));
+    if (want) await editBuild(want);
+    else if (params.get('new')) await newPanel();
+  }
+  renderProj();
+  if (draft.step === STEPS - 1) renderReview();
+}).catch(() => { me = null; renderAcct(); renderProj(); });
+
+/* ---------- My builds: save several panels, quote them together ---------- */
+interface Build { id: number; name: string; title: string; quantity: number; config: PanelConfig; summary: unknown; request_id: number | null; request_ref?: string | null; updated_at: string }
+interface ReqPanel { build_id: number | null; name: string; title: string; quantity: number; config: PanelConfig; summary: unknown }
+let builds: Build[] = [];
+const SEL_KEY = 'builder_selected_v1';
+const selected = new Set<number>((() => { try { return JSON.parse(localStorage.getItem(SEL_KEY) ?? '[]'); } catch { return []; } })());
+function saveSel() { try { localStorage.setItem(SEL_KEY, JSON.stringify([...selected])); } catch {} }
+const cfgJson = () => JSON.stringify(draft.config);
+function isDirty() { return !!draft.config.application && cfgJson() !== draft.savedJson; }
+function current(): ReqPanel {
+  const s = compute(draft.config);
+  return { build_id: draft.buildId ?? null, name: (draft.config.project.name || '').trim() || s.title, title: s.title, quantity: draft.config.project.quantity || 1, config: draft.config, summary: s };
+}
+/** The panel on screen plus the other saved panels ticked "include". */
+function requestPanels(): ReqPanel[] {
+  const others = me ? builds.filter((b) => !b.request_id && selected.has(b.id) && b.id !== draft.buildId)
+    .map((b) => ({ build_id: b.id, name: b.name, title: b.title, quantity: b.quantity, config: b.config, summary: b.summary })) : [];
+  return [...(draft.config.application ? [current()] : []), ...others];
+}
+const signupUrl = () => sitePath(`/portal/register/?next=${encodeURIComponent('/build/?resume=1')}`);
+const loginUrl = () => sitePath(`/portal/login/?next=${encodeURIComponent('/build/')}`);
+
+async function loadBuilds() {
+  if (!me) return;
+  try { builds = (await api<{ builds: Build[] }>('/builds')).builds.map((b) => ({ ...b, config: normalize(b.config) })); } catch { builds = []; }
+  for (const id of [...selected]) if (!builds.some((b) => b.id === id && !b.request_id)) selected.delete(id);
+  saveSel();
+  renderProj();
+}
+
+function readyToSave(): string | null {
+  for (let st = 0; st <= 2; st++) { const e = validate(st); if (e) return e; }
+  return null;
+}
+
+async function saveCurrent(silent = false): Promise<number | null> {
+  if (!me) { location.href = signupUrl(); return null; }
+  const err = readyToSave();
+  if (err) { if (!silent) toast(err, 'err'); return null; }
+  const p = current();
+  const body = { name: p.name, title: p.title, quantity: p.quantity, config: p.config, summary: p.summary };
+  let id = draft.buildId ?? null;
+  try {
+    if (id) await api(`/builds/${id}`, { method: 'PATCH', body });
+    else id = (await api<{ id: number }>('/builds', { body })).id;
+  } catch (e: any) {
+    if (e.status === 409 || e.status === 404) id = (await api<{ id: number }>('/builds', { body })).id; // already sent / deleted: keep as a new panel
+    else throw e;
+  }
+  draft.buildId = id!;
+  draft.savedJson = cfgJson();
+  selected.add(id!); saveSel(); save();
+  await loadBuilds();
+  if (!silent) toast('Panel saved to My builds');
+  return id;
+}
+
+async function newPanel() {
+  if (me && isDirty() && !readyToSave()) await saveCurrent(true);
+  const keep = { site: draft.config.project.site, requiredBy: draft.config.project.requiredBy };
+  draft = blankDraft();
+  Object.assign(draft.config.project, keep);
+  save(); renderLists(); fillInputs(); refresh(); showStep(); renderProj();
+  root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function editBuild(id: number) {
+  if (draft.buildId === id) return;
+  if (me && isDirty()) {
+    if (!readyToSave()) await saveCurrent(true);
+    else if (!confirm('Discard the unsaved panel you are working on?')) return;
+  }
+  let b = builds.find((x) => x.id === id);
+  if (!b) { try { const r = await api<{ build: Build }>(`/builds/${id}`); b = { ...r.build, config: normalize(r.build.config) }; } catch { toast('That saved panel was not found', 'err'); return; } }
+  draft = { ...blankDraft(), step: STEPS - 1, maxStep: STEPS - 1, config: normalize(b.config) };
+  if (!b.request_id) { draft.buildId = b.id; draft.savedJson = cfgJson(); }
+  else toast(`This panel was sent in ${b.request_ref ?? 'an earlier request'}. Changes will be saved as a new panel.`);
+  save(); renderLists(); fillInputs(); refresh(); showStep(); renderProj();
+}
+
+async function duplicateBuild(id: number) {
+  const b = builds.find((x) => x.id === id);
+  if (!b) return;
+  const config = structuredClone(b.config);
+  config.project.name = `${b.name} (copy)`.slice(0, 120);
+  await api('/builds', { body: { name: config.project.name, title: b.title, quantity: b.quantity, config, summary: b.summary } });
+  await loadBuilds();
+  toast('Copy saved. Edit it to make a variant.');
+}
+
+async function deleteBuild(id: number) {
+  const b = builds.find((x) => x.id === id);
+  if (!b || !confirm(`Delete "${b.name}" from My builds?`)) return;
+  await api(`/builds/${id}`, { method: 'DELETE' });
+  if (draft.buildId === id) { draft.buildId = undefined; draft.savedJson = undefined; save(); }
+  selected.delete(id); saveSel();
+  await loadBuilds();
+}
+
+function renderAcct() {
+  const el = $('[data-bacct]', root);
+  el.innerHTML = me
+    ? `<p>Signed in as <strong>${esc(me.name)}</strong>. Save each panel to <strong>My builds</strong>, add as many panels as your project needs, then request one quotation for all of them.</p><div class="bacct__btns"><a class="btn btn--ghost btn--sm" href="${sitePath('/portal/#builds')}">My builds</a></div>`
+    : `<p><strong>Sign up free to save your builds.</strong> Configure several panels for one project, come back any time, and get a single quotation for all of them. You can also send one panel as a guest.</p><div class="bacct__btns"><a class="btn btn--red btn--sm" href="${signupUrl()}">Create free account</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
+}
+
+function updateProjState() {
+  const st = root.querySelector<HTMLElement>('[data-proj-state]');
+  if (!st) return;
+  const dirty = isDirty();
+  st.textContent = !draft.config.application ? 'Not started' : !draft.buildId ? 'Not saved yet' : dirty ? 'Unsaved changes' : 'Saved';
+  st.classList.toggle('bproj__state--dirty', dirty);
+  const nm = root.querySelector<HTMLElement>('[data-proj-name]');
+  if (nm) nm.textContent = draft.config.application ? current().name : 'New panel';
+}
+
+function renderProj() {
+  const el = $('[data-proj]', root);
+  if (!me) {
+    el.innerHTML = `<h3>Save &amp; quote several panels</h3><p>Create a free account to save this panel, build more panels for the same project and get one quotation for all of them.</p>
+      <div class="bproj__btns"><a class="btn btn--red btn--sm" href="${signupUrl()}">Sign up free</a><a class="btn btn--ghost btn--sm" href="${loginUrl()}">Log in</a></div>`;
+    return;
+  }
+  const drafts = builds.filter((b) => !b.request_id);
+  const sent = builds.filter((b) => b.request_id).slice(0, 5);
+  const inQuote = requestPanels().length;
+  el.innerHTML = `<h3>My builds</h3>
+    <div class="bproj__cur"><div><small class="mono">Editing</small><b data-proj-name></b></div><span class="bproj__state" data-proj-state></span></div>
+    <div class="bproj__btns"><button type="button" class="btn btn--red btn--sm" data-b-save>Save panel</button><button type="button" class="btn btn--ghost btn--sm" data-b-new>+ Add panel</button></div>
+    ${drafts.length ? `<div class="bproj__list">${drafts.map((b) => `<div class="bproj__item${b.id === draft.buildId ? ' is-current' : ''}">
+        <input type="checkbox" data-b-sel="${b.id}" ${selected.has(b.id) || b.id === draft.buildId ? 'checked' : ''} ${b.id === draft.buildId ? 'disabled' : ''} title="Include in quotation" aria-label="Include ${esc(b.name)} in the quotation">
+        <div><strong>${esc(b.name)}</strong><small>${esc(b.title)} · Qty ${b.quantity}</small></div>
+        <div class="bproj__acts">${b.id === draft.buildId ? '<span class="bproj__state">On screen</span>' : `<button type="button" data-b-edit="${b.id}">Edit</button>`}<button type="button" data-b-dup="${b.id}">Copy</button><button type="button" data-b-del="${b.id}">Delete</button></div>
+      </div>`).join('')}</div>` : '<p style="margin-top:12px">Saved panels appear here. Tick the ones to include in your quotation.</p>'}
+    ${sent.length ? `<div class="bproj__list">${sent.map((b) => `<div class="bproj__item"><div class="bproj__sent"><strong>${esc(b.name)}</strong><small>Sent in ${esc(b.request_ref ?? '')} · <a href="${sitePath(`/portal/request/?id=${b.request_id}`)}">track</a> · <button type="button" class="link-reset" data-b-dup="${b.id}" style="color:var(--navy-700);font-weight:600">reuse</button></small></div></div>`).join('')}</div>` : ''}
+    ${inQuote > 1 ? `<button type="button" class="btn btn--red btn--block btn--sm bproj__go" data-b-review>Review ${inQuote} panels &amp; request quote</button>` : ''}`;
+  updateProjState();
+}
+
+root.addEventListener('click', async (e) => {
+  const t = (e.target as HTMLElement).closest<HTMLElement>('[data-b-save],[data-b-new],[data-b-edit],[data-b-dup],[data-b-del],[data-b-review],[data-rp-drop]');
+  if (!t) return;
+  try {
+    if (t.matches('[data-b-save]')) await saveCurrent();
+    else if (t.matches('[data-b-new]')) await newPanel();
+    else if (t.dataset.bEdit) await editBuild(Number(t.dataset.bEdit));
+    else if (t.dataset.bDup) await duplicateBuild(Number(t.dataset.bDup));
+    else if (t.dataset.bDel) await deleteBuild(Number(t.dataset.bDel));
+    else if (t.matches('[data-b-review]')) go(STEPS - 1);
+    else if (t.dataset.rpDrop) { selected.delete(Number(t.dataset.rpDrop)); saveSel(); renderProj(); renderRequestPanels(); }
+  } catch (err: any) { toast(err.message, 'err'); }
+});
+root.addEventListener('change', (e) => {
+  const cb = (e.target as HTMLElement).closest<HTMLInputElement>('[data-b-sel]');
+  if (!cb) return;
+  const id = Number(cb.dataset.bSel);
+  cb.checked ? selected.add(id) : selected.delete(id);
+  saveSel(); renderProj();
+  if (draft.step === STEPS - 1) renderRequestPanels();
+});
+
+function renderRequestPanels() {
+  const el = $('[data-rpanels]', root);
+  const panels = requestPanels();
+  el.hidden = !me && panels.length <= 1;
+  if (el.hidden) return;
+  if (!me) return;
+  const total = panels.reduce((n, x) => n + x.quantity, 0);
+  el.innerHTML = `<h3>Panels in this request</h3>
+    <p>${panels.length > 1 ? `One quotation for ${panels.length} different panels (${total} in total).` : 'Only this panel. Tick other saved panels in My builds to quote them together.'}</p>
+    <table><thead><tr><th>#</th><th>Panel</th><th class="num">Qty</th><th></th></tr></thead><tbody>
+    ${panels.map((x, i) => `<tr><td>${i + 1}</td><td><strong>${esc(x.name)}</strong><small>${esc(x.title)}</small></td><td class="num">${x.quantity}</td><td class="num">${i === 0 ? '<small>on screen</small>' : `<button type="button" data-rp-drop="${x.build_id}">Remove</button>`}</td></tr>`).join('')}
+    </tbody></table>`;
+}

@@ -3,6 +3,7 @@ import { sendMail, staffRecipients, esc } from './email';
 import { getBrand } from './brand';
 import { feedbackLink } from './feedback';
 import { markQuoteDocAccepted } from './docs';
+import { readPanels } from './builds';
 
 export const STATUSES = {
   pending_verification: 'Awaiting email confirmation',
@@ -64,17 +65,22 @@ async function notifyClientReceived(env: Env, r: Pick<Row, 'id' | 'ref' | 'kind'
 export async function createRequest(req: Request, env: Env) {
   const user = await currentUser(req, env);
   await rateLimit(env, `request:${user ? `u${user.id}` : clientIp(req)}`, user ? 30 : 6, 3600);
-  const b = await readJson<Record<string, any>>(req, 200_000);
+  const b = await readJson<Record<string, any>>(req, 1_000_000);
 
   const kind = b.kind === 'order' ? 'order' : 'quote';
   const verifiedUser = user && user.email_verified_at ? user : null;
   if (kind === 'order' && !verifiedUser) throw new HttpError(401, 'Please sign in to place an order', 'unauthenticated');
 
   const title = str(b.title, 'Title', { required: true, max: 200 });
-  if (typeof b.config !== 'object' || b.config === null) throw new HttpError(400, 'Panel configuration is missing');
-  const config = JSON.stringify(b.config);
-  const summary = b.summary && typeof b.summary === 'object' ? JSON.stringify(b.summary) : null;
-  const quantity = Math.min(999, Math.max(1, parseInt(b.quantity, 10) || 1));
+  // One panel (config/summary) or several (panels[]); the first panel also fills config/summary for older screens.
+  const panels = readPanels(b.panels);
+  const first = panels ? { config: panels[0].config, summary: panels[0].summary } : { config: b.config, summary: b.summary };
+  if (typeof first.config !== 'object' || first.config === null) throw new HttpError(400, 'Panel configuration is missing');
+  const config = JSON.stringify(first.config);
+  if (config.length > 100_000) throw new HttpError(400, 'Panel configuration is too large');
+  const summary = first.summary && typeof first.summary === 'object' ? JSON.stringify(first.summary) : null;
+  const quantity = panels ? Math.min(9999, panels.reduce((n, p) => n + p.quantity, 0)) : Math.min(999, Math.max(1, parseInt(b.quantity, 10) || 1));
+  const panelsJson = panels && panels.length > 1 ? JSON.stringify(panels.map(({ build_id, ...p }) => p)) : null;
   const site_location = str(b.site_location, 'Site location', { max: 200 });
   const required_by = str(b.required_by, 'Required by', { max: 30 });
   const notes = str(b.notes, 'Notes', { max: 4000 });
@@ -86,13 +92,18 @@ export async function createRequest(req: Request, env: Env) {
 
   const status: Status = verifiedUser ? 'new' : 'pending_verification';
   const ins = await env.DB.prepare(
-    `INSERT INTO requests (kind, status, user_id, contact_name, contact_email, contact_phone, contact_company, title, config, summary, quantity, site_location, required_by, notes, email_verified)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).bind(kind, status, verifiedUser?.id ?? null, contact.name, contact.email, contact.phone || null, contact.company || null, title, config, summary, quantity, site_location || null, required_by || null, notes || null, verifiedUser ? 1 : 0).run();
+    `INSERT INTO requests (kind, status, user_id, contact_name, contact_email, contact_phone, contact_company, title, config, summary, quantity, site_location, required_by, notes, email_verified, panels)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).bind(kind, status, verifiedUser?.id ?? null, contact.name, contact.email, contact.phone || null, contact.company || null, title, config, summary, quantity, site_location || null, required_by || null, notes || null, verifiedUser ? 1 : 0, panelsJson).run();
   const id = Number(ins.meta.last_row_id);
   const ref = `${(await getBrand(env)).refPrefix}-${new Date().getFullYear()}-${String(id).padStart(4, '0')}`;
   await env.DB.prepare('UPDATE requests SET ref = ? WHERE id = ?').bind(ref, id).run();
-  await addEvent(env, id, status, kind === 'order' ? 'Order placed by client' : 'Quote request submitted', true, verifiedUser?.id ?? null);
+  await addEvent(env, id, status, `${kind === 'order' ? 'Order placed by client' : 'Quote request submitted'}${panels && panels.length > 1 ? ` (${panels.length} panels)` : ''}`, true, verifiedUser?.id ?? null);
+  // Saved builds that were sent now belong to this request.
+  const buildIds = (panels ?? []).map((p) => p.build_id).filter((x): x is number => !!x);
+  if (verifiedUser && buildIds.length) {
+    await env.DB.prepare(`UPDATE builds SET request_id = ?, updated_at = datetime('now') WHERE user_id = ? AND request_id IS NULL AND id IN (${buildIds.map(() => '?').join(',')})`).bind(id, verifiedUser.id, ...buildIds).run();
+  }
 
   const row = { id, ref, kind, title, contact_name: contact.name, contact_email: contact.email, contact_company: contact.company } as const;
   if (verifiedUser) {
@@ -182,7 +193,7 @@ export async function getRequest(req: Request, env: Env, id: number) {
   ).bind(id).all();
   const feedback = await env.DB.prepare('SELECT rating, comment, consent, status, created_at FROM feedback WHERE request_id = ?').bind(id).first();
   return json({
-    request: { ...r, config: JSON.parse(r.config), summary: r.summary ? JSON.parse(r.summary) : null },
+    request: { ...r, config: JSON.parse(r.config), summary: r.summary ? JSON.parse(r.summary) : null, panels: (r as any).panels ? JSON.parse((r as any).panels) : null },
     events: isStaff ? events : events.map(({ actor, ...e }: any) => e),
     statuses: STATUSES,
     documents,

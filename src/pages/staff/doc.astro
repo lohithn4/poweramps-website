@@ -125,7 +125,9 @@ import { url } from '../../lib/url';
         request = r.request;
         doc.request_id = reqId; doc.subject = request.title;
         partyId = request.party_id ?? null;
-        lines = [{ description: request.title, hsn: '85371000', qty: request.quantity || 1, unit: 'Nos', rate: 0, gst_rate: 18 }];
+        lines = Array.isArray(request.panels) && request.panels.length > 1
+          ? request.panels.map((p: any) => ({ description: p.name && p.name !== p.title ? `${p.name}: ${p.title}` : p.title, hsn: '85371000', qty: p.quantity || 1, unit: 'Nos', rate: 0, gst_rate: 18 }))
+          : [{ description: request.title, hsn: '85371000', qty: request.quantity || 1, unit: 'Nos', rate: 0, gst_rate: 18 }];
       }
       if (qs('party')) partyId = Number(qs('party'));
       if (!lines.length) lines = [{ description: '', qty: 1, unit: 'Nos', rate: 0, gst_rate: 18 }];
