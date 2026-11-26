@@ -44,7 +44,7 @@
 
   /* Layout */
   --wrap: 1240px;
-  --masthead-h: 95px; /* sticky top bar + header */
+  --masthead-h: 33px; /* the pinned top bar (the logo row scrolls away) */
   --gutter: clamp(16px, 4vw, 32px);
   --radius: 10px;
   --radius-lg: 16px;

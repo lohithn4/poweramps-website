@@ -24,6 +24,7 @@ const { light = false } = Astro.props;
   .logo__name { font-family: var(--font-sans); font-size: 27px; font-weight: 600; font-stretch: 100%; letter-spacing: -0.005em; line-height: 0.8; }
   .logo__sub { font-family: var(--font-sans); font-size: 9.5px; font-weight: 700; font-stretch: 100%; letter-spacing: 0.035em; }
   .logo--light { color: #fff; }
+  .logo--light :global(.logo__mark rect[fill="var(--brand-primary)"]) { fill: color-mix(in srgb, var(--brand-primary) 45%, #5b9bff); }
   @media (max-width: 380px) {
     .logo { gap: 10px; }
     .logo :global(.logo__mark) { width: 36px; height: 36px; }
