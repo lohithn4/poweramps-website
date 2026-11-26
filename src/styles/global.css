@@ -8,10 +8,10 @@
   --navy-950: #081129;
   --navy-900: #0c1a3d;
   --navy-800: #13265a;
-  --navy-700: #1b3478;
-  --navy-600: #24439a;
-  --red: #d71920;
-  --red-600: #b5131a;
+  --navy-700: #024998;
+  --navy-600: #0b5cc0;
+  --red: #cd030d;
+  --red-600: #a8020a;
   --red-050: #fdeceb;
 
   /* Neutrals */
@@ -300,7 +300,7 @@ p { margin: 0; text-wrap: pretty; }
   transition: border-color .2s, box-shadow .2s;
 }
 .input:hover { border-color: var(--line-2); }
-.input:focus { outline: none; border-color: var(--navy-600); box-shadow: 0 0 0 4px rgb(36 67 154 / 12%); }
+.input:focus { outline: none; border-color: var(--navy-600); box-shadow: 0 0 0 4px rgb(2 73 152 / 12%); }
 textarea.input { min-height: 120px; resize: vertical; }
 
 /* ---------- Reveal on scroll ---------- */

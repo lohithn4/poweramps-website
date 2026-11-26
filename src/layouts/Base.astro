@@ -18,13 +18,14 @@ interface Props {
 const { title, description = site.description, image, jsonLd } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: Electrical Control & Distribution Panels, Bengaluru`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = image ? new URL(url(image), Astro.site).href : undefined;
+const ogImage = new URL(url(image ?? '/brand/logo.png'), Astro.site).href;
 
 const org = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: site.legalName,
   url: new URL(url('/'), Astro.site).href,
+  logo: new URL(url('/brand/logo.png'), Astro.site).href,
   foundingDate: String(site.established),
   address: {
     '@type': 'PostalAddress',
@@ -54,7 +55,7 @@ const org = {
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd ?? org)} />
   </head>
