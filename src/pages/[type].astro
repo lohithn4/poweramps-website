@@ -1,0 +1,203 @@
+---
+// Search landing page per panel type, e.g. /mcc-panel-manufacturer/. Content lives in src/data/panel-types.ts.
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import PanelCard from '../components/PanelCard.astro';
+import site from '../data/site.json';
+import { getPanels, getCategoryMap } from '../lib/panels';
+import { PANEL_TYPES, typeBySlug, typeHref, type PanelType } from '../data/panel-types';
+import { url } from '../lib/url';
+
+export function getStaticPaths() {
+  return PANEL_TYPES.map((t) => ({ params: { type: `${t.slug}-manufacturer` }, props: { t } }));
+}
+
+interface Props { t: PanelType }
+const { t } = Astro.props;
+const all = await getPanels();
+const catMap = await getCategoryMap();
+const panels = t.panels.map((id) => all.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
+const related = t.related.map((s) => typeBySlug.get(s)).filter((r): r is PanelType => !!r);
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const pageUrl = abs(typeHref(t.slug));
+const buildHref = url(`/build/?app=${t.app}`);
+// 'an MCC panel', 'a PLC panel', 'a UPS panel': acronyms go by their spoken letter.
+const first = t.name.split(' ')[0];
+const article = first === first.toUpperCase() ? (/^[AEFHILMNORSX]/.test(first) ? 'an' : 'a') : (/^[AEIOU]/i.test(first) ? 'an' : 'a');
+// 'MCC Panel' -> 'MCC panel' (keep acronyms in capitals)
+const lower = t.name.split(' ').map((w) => (w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
+const tel = site.phone ? `tel:${site.phone.replace(/\s/g, '')}` : '';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+        { '@type': 'ListItem', position: 2, name: 'Panels', item: abs('/panels/') },
+        { '@type': 'ListItem', position: 3, name: t.short, item: pageUrl },
+      ],
+    },
+    {
+      '@type': 'Service',
+      name: `${t.name} manufacturing`,
+      serviceType: t.name,
+      description: t.description,
+      url: pageUrl,
+      areaServed: { '@type': 'Country', name: 'India' },
+      provider: { '@id': abs('/#business'), '@type': 'LocalBusiness', name: site.legalName, telephone: site.phone || undefined, address: { '@type': 'PostalAddress', addressLocality: site.address.city, addressRegion: site.address.state, postalCode: site.address.pincode, addressCountry: 'IN' } },
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: t.short,
+        itemListElement: panels.map((p) => ({ '@type': 'Offer', itemOffered: { '@type': 'Product', name: p.data.title, url: abs(`/panels/${p.id}/`), image: abs(p.data.image) } })),
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: t.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    },
+  ],
+};
+---
+<Base title={t.title} description={t.description} image={panels[0]?.data.image} jsonLd={jsonLd}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span>
+        <a href={url('/panels')}>Panels</a><span aria-hidden="true">/</span>
+        <span>{t.short}</span>
+      </nav>
+      <h1>{t.h1}</h1>
+      <p>{t.lead}</p>
+      <div class="pt-hero__actions">
+        <a class="btn btn--primary" href={buildHref}><Icon name="layers" size={18} />Build this panel &amp; get a quote <Icon name="arrow" size={18} /></a>
+        {tel && <a class="btn btn--ghost" href={tel}><Icon name="phone" size={18} />Call {site.phone}</a>}
+      </div>
+      <ul class="pt-trust">
+        <li><Icon name="check" size={15} />Manufacturer since {site.established}</li>
+        <li><Icon name="check" size={15} />Factory tested</li>
+        <li><Icon name="check" size={15} />Dispatch in 3–7 days</li>
+        <li><Icon name="check" size={15} />Installation &amp; service</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section pt-body">
+    <div class="wrap pt-grid">
+      <div class="pt-main">
+        <h2>What is {article} {lower.replace(/ & /, ' or ')}?</h2>
+        <p class="pt-p">{t.what}</p>
+
+        <h2>{t.short.charAt(0).toUpperCase() + t.short.slice(1)} we build</h2>
+        <ul class="pt-list">{t.build.map((b) => <li><Icon name="check" size={16} />{b}</li>)}</ul>
+
+        <h2>Where they are used</h2>
+        <ul class="pt-chips">{t.uses.map((u) => <li>{u}</li>)}</ul>
+      </div>
+
+      <aside class="pt-side">
+        <div class="pt-card">
+          <h2>Get a quotation</h2>
+          <p>Configure your {lower} online, part by part, and get one quotation, usually within 1–2 working days.</p>
+          <a class="btn btn--primary btn--block" href={buildHref}>Configure online <Icon name="arrow" size={18} /></a>
+          <a class="btn btn--ghost btn--block" href={url(`/contact?panel=${encodeURIComponent(t.name)}`)}>Send an enquiry</a>
+          <p class="pt-card__addr"><Icon name="pin" size={15} />Works: {site.address.line1}, {site.address.city}</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {panels.length > 0 && (
+    <section class="section pt-panels">
+      <div class="wrap">
+        <div class="section-head section-head--split">
+          <div>
+            <span class="eyebrow">From our catalogue</span>
+            <h2>{t.short.charAt(0).toUpperCase() + t.short.slice(1)} we have built</h2>
+          </div>
+          <a class="btn btn--ghost" href={url('/panels')}>All panels <Icon name="arrow" size={18} /></a>
+        </div>
+        <div class="pt-cards">
+          {panels.map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section pt-faq">
+    <div class="wrap pt-faq__grid">
+      <div>
+        <span class="eyebrow">Questions</span>
+        <h2>{t.name} FAQs</h2>
+      </div>
+      <div class="pt-faq__list">
+        {t.faqs.map((f, i) => (
+          <details open={i === 0}>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {related.length > 0 && (
+    <section class="section--tight pt-related">
+      <div class="wrap">
+        <h2>Related panels</h2>
+        <ul>
+          {related.map((r) => <li><a href={url(typeHref(r.slug))}>{r.h1.replace(/ in Bengaluru$/, '')} <Icon name="arrow" size={16} /></a></li>)}
+        </ul>
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .pt-hero__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .pt-trust { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 13.5px; color: #c9d1e3; }
+  .pt-trust li { display: inline-flex; align-items: center; gap: 6px; }
+  .pt-trust :global(svg) { color: var(--live); }
+
+  .pt-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: clamp(24px, 4vw, 48px); align-items: start; }
+  .pt-main h2 { font-size: clamp(21px, 2.2vw, 26px); margin: 26px 0 10px; }
+  .pt-main h2:first-child { margin-top: 0; }
+  .pt-p { color: var(--ink-2); font-size: 16.5px; line-height: 1.7; max-width: 75ch; }
+  .pt-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .pt-list li { display: flex; gap: 10px; align-items: flex-start; color: var(--ink-2); font-size: 16px; line-height: 1.5; }
+  .pt-list :global(svg) { flex: none; margin-top: 3px; color: var(--action); }
+  .pt-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .pt-chips li { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); font-size: 14px; color: var(--ink-2); }
+
+  .pt-side { position: sticky; top: calc(var(--masthead-h) + 16px); }
+  .pt-card { display: grid; gap: 10px; padding: 20px; border: 1px solid var(--line); border-top: 4px solid var(--action); border-radius: 16px; background: var(--white); box-shadow: var(--shadow); }
+  .pt-card h2 { font-size: 20px; }
+  .pt-card p { color: var(--ink-2); font-size: 15px; line-height: 1.55; }
+  .pt-card__addr { display: flex; gap: 6px; align-items: flex-start; font-size: 13.5px !important; color: var(--muted) !important; }
+  .pt-card__addr :global(svg) { flex: none; margin-top: 2px; }
+
+  .pt-panels { background: var(--paper); }
+  .pt-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+
+  .pt-faq__grid { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+  .pt-faq h2 { margin-top: 8px; font-size: clamp(24px, 2.8vw, 34px); }
+  .pt-faq__list { display: grid; gap: 10px; }
+  .pt-faq details { border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
+  .pt-faq summary { cursor: pointer; padding: 14px 16px; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .pt-faq summary::-webkit-details-marker { display: none; }
+  .pt-faq summary::after { content: '+'; flex: none; font-size: 20px; line-height: 1; color: var(--action); }
+  .pt-faq details[open] summary::after { content: '−'; }
+  .pt-faq details p { padding: 0 16px 14px; color: var(--ink-2); font-size: 15.5px; line-height: 1.65; }
+
+  .pt-related { background: var(--paper); border-top: 1px solid var(--line); }
+  .pt-related h2 { font-size: 20px; margin-bottom: 12px; }
+  .pt-related ul { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .pt-related a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); font-weight: 600; font-size: 14.5px; color: var(--navy-700); }
+  .pt-related a:hover { border-color: var(--action); }
+
+  @media (max-width: 900px) {
+    .pt-grid, .pt-faq__grid { grid-template-columns: minmax(0, 1fr); }
+    .pt-side { position: static; }
+  }
+</style>

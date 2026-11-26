@@ -4,6 +4,7 @@ import Icon from '../../components/Icon.astro';
 import PanelCard from '../../components/PanelCard.astro';
 import { getPanels, getCategories, getCategoryMap } from '../../lib/panels';
 import { url } from '../../lib/url';
+import { PANEL_TYPES, typeHref } from '../../data/panel-types';
 
 const panels = await getPanels();
 const categories = await getCategories();
@@ -21,6 +22,10 @@ const countFor = (id: string) => panels.filter((p) => p.data.category.id === id)
       </nav>
       <h1>Panel catalogue</h1>
       <p>{panels.length} panels across {categories.length} product lines. Every one can be customised to your ratings, components and site conditions.</p>
+      <nav class="types" aria-label="Browse by panel type">
+        <span class="types__label">Browse by type</span>
+        {PANEL_TYPES.map((t) => <a href={url(typeHref(t.slug))}>{t.short.charAt(0).toUpperCase() + t.short.slice(1)}</a>)}
+      </nav>
     </div>
   </section>
 
@@ -103,6 +108,11 @@ const countFor = (id: string) => panels.filter((p) => p.data.category.id === id)
 </script>
 
 <style>
+  .types { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+  .types__label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: #9fb0d0; margin-right: 4px; }
+  .types a { padding: 5px 11px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; font-size: 13.5px; color: #dfe5f2; transition: background .2s, border-color .2s; }
+  .types a:hover { background: rgb(255 255 255 / 10%); border-color: rgb(255 255 255 / 34%); color: #fff; }
+
   .toolbar {
     position: sticky; top: 72px; z-index: 20;
     background: rgb(255 255 255 / 94%);

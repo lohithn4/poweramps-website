@@ -7,6 +7,7 @@ import RatingPlate from '../../components/RatingPlate.astro';
 import site from '../../data/site.json';
 import { getPanels, getCategoryMap, type Panel } from '../../lib/panels';
 import { url } from '../../lib/url';
+import { typeForPanel, typeHref } from '../../data/panel-types';
 
 export async function getStaticPaths() {
   const panels = await getPanels();
@@ -31,9 +32,11 @@ const APP_FOR: Record<string, string> = { 'control-automation': d.title.match(/P
 const buildHref = url(`/build/?app=${APP_FOR[d.category.id] ?? 'other'}&ref=${encodeURIComponent(d.title)}`);
 const waHref = site.whatsapp ? `https://wa.me/${site.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(enquiry)}` : '';
 
-const jsonLd = {
-  '@context': 'https://schema.org',
+const ptype = typeForPanel(panel.id);
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const product = {
   '@type': 'Product',
+  url: abs(`/panels/${panel.id}/`),
   name: d.title,
   description: d.summary,
   image: images.map((i) => new URL(url(i), Astro.site).href),
@@ -42,6 +45,19 @@ const jsonLd = {
   manufacturer: { '@type': 'Organization', name: site.legalName },
   additionalProperty: d.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
 };
+const crumbs = [
+  { name: 'Home', item: abs('/') },
+  { name: 'Panels', item: abs('/panels/') },
+  ...(ptype ? [{ name: ptype.short, item: abs(typeHref(ptype.slug)) }] : []),
+  { name: d.title, item: abs(`/panels/${panel.id}/`) },
+];
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    product,
+    { '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, ...c })) },
+  ],
+};
 ---
 <Base title={d.title} description={d.summary} image={d.image} jsonLd={jsonLd}>
   <section class="detail">
@@ -49,7 +65,7 @@ const jsonLd = {
       <nav class="crumbs" aria-label="Breadcrumb">
         <a href={url('/')}>Home</a><span aria-hidden="true">/</span>
         <a href={url('/panels')}>Panels</a><span aria-hidden="true">/</span>
-        {category && <><a href={url(`/panels?category=${category.id}`)}>{category.data.title}</a><span aria-hidden="true">/</span></>}
+        {ptype ? <><a href={url(typeHref(ptype.slug))}>{ptype.short.charAt(0).toUpperCase() + ptype.short.slice(1)}</a><span aria-hidden="true">/</span></> : category && <><a href={url(`/panels?category=${category.id}`)}>{category.data.title}</a><span aria-hidden="true">/</span></>}
         <span>{d.title}</span>
       </nav>
 

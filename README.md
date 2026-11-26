@@ -55,6 +55,16 @@ Phone, WhatsApp and email buttons appear across the site as soon as those fields
 
 ---
 
+## SEO
+
+- **Panel-type landing pages** (`/mcc-panel-manufacturer/`, `/amf-panel-manufacturer/` …) come from
+  `src/data/panel-types.ts`: heading, intro, what we build, uses, FAQs and which catalogue panels to show.
+  Add a type there and it appears in the footer, the catalogue's "Browse by type" row and the sitemap.
+  Keep every claim true.
+- `robots.txt` and the sitemap leave out `/portal/`, `/staff/` and `/admin/`; those pages also carry `noindex`.
+- Structured data: LocalBusiness on every page, Product + BreadcrumbList on panel pages,
+  Service + BreadcrumbList + FAQPage on panel-type pages.
+
 ## Developer notes
 
 ```bash

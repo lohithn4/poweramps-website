@@ -1,13 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
 import Logo from './Logo.astro';
 import Icon from './Icon.astro';
 import site from '../data/site.json';
 import { url } from '../lib/url';
 import { getClients } from '../lib/clients';
 import { getTestimonials } from '../lib/testimonials';
+import { PANEL_TYPES, typeHref } from '../data/panel-types';
 
-const categories = (await getCollection('categories')).sort((a, b) => a.data.order - b.data.order);
 const year = new Date().getFullYear();
 const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
 // Floating 'Build your panel' button on public pages (not on the builder, account, staff or editor pages).
@@ -30,7 +29,8 @@ const a = site.address;
       <div>
         <h3 class="footer__h">Panels</h3>
         <ul class="footer__list">
-          {categories.map((c) => <li><a href={url(`/panels?category=${c.id}`)}>{c.data.title}</a></li>)}
+          {PANEL_TYPES.filter((t) => t.slug !== 'lt-panel').map((t) => <li><a href={url(typeHref(t.slug))}>{t.short.charAt(0).toUpperCase() + t.short.slice(1)}</a></li>)}
+          <li><a href={url(typeHref('lt-panel'))}>LT panels</a></li>
           <li><a href={url('/panels')}>All panels →</a></li>
         </ul>
       </div>
