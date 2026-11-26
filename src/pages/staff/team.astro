@@ -6,7 +6,7 @@ import StaffNav from '../../components/StaffNav.astro';
   <section class="portal">
     <div class="wrap">
       <div class="portal-head">
-        <div><h1>Team & clients</h1><p>Manage who can access the staff portal.</p></div>
+        <div><h1>Team & clients</h1><p>Manage who can access the staff portal. Admins can change anyone else's role.</p></div>
         <StaffNav active="team" />
       </div>
       <div class="pgrid">
@@ -21,7 +21,7 @@ import StaffNav from '../../components/StaffNav.astro';
           </div>
         </div>
         <div class="pcard" data-invite-card hidden>
-          <div class="pcard__h"><h2>Add a staff member</h2></div>
+          <div class="pcard__h"><h2>Add a staff member or admin</h2></div>
           <form class="pform" data-invite novalidate>
             <label class="field"><span class="flabel">Name</span><input class="input" name="name" required /></label>
             <label class="field"><span class="flabel">Email</span><input class="input" type="email" name="email" required /></label>
@@ -37,6 +37,7 @@ import StaffNav from '../../components/StaffNav.astro';
 </Base>
 
 <style>.flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }</style>
+<style is:global>.input.input--sm { min-height: 36px; padding: 6px 10px; font-size: 14px; width: auto; min-width: 110px; }</style>
 
 <script>
   import { api, requireAuth, type Me } from '../../scripts/api';
@@ -46,15 +47,26 @@ import StaffNav from '../../components/StaffNav.astro';
   async function load() {
     const [{ users: staff }, { users: clients }] = await Promise.all([api('/staff/users'), api('/staff/users?role=client')]);
     const isAdmin = me.role === 'admin';
+    // Admins can change anyone's role except their own: client ↔ staff ↔ admin.
+    const roleCell = (u: any) => isAdmin && u.id !== me.id
+      ? `<select class="input input--sm" data-role="${u.id}" data-was="${u.role}" aria-label="Role for ${esc(u.name)}">${[['client', 'Client'], ['staff', 'Staff'], ['admin', 'Admin']].map(([v, l]) => `<option value="${v}"${u.role === v ? ' selected' : ''}>${l}</option>`).join('')}</select>`
+      : `<span class="badge badge--${u.role === 'admin' ? 'red' : 'blue'}">${u.role}</span>`;
     $('[data-staff]').innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Name</th><th>Role</th><th>Status</th>${isAdmin ? '<th></th>' : ''}</tr></thead><tbody>
       ${staff.map((u: any) => `<tr><td>${esc(u.name)}<span class="sub">${esc(u.email)}</span></td>
-        <td><span class="badge badge--${u.role === 'admin' ? 'red' : 'blue'}">${u.role}</span></td>
+        <td>${roleCell(u)}</td>
         <td>${u.active ? '<span class="badge badge--green">Active</span>' : '<span class="badge badge--muted">Disabled</span>'}</td>
         ${isAdmin ? `<td>${u.id === me.id ? '<span class="sub">You</span>' : `<button class="btn btn--ghost btn--sm" data-toggle="${u.id}" data-active="${u.active}">${u.active ? 'Disable' : 'Enable'}</button>`}</td>` : ''}</tr>`).join('')}
       </tbody></table></div>`;
-    $('[data-clients]').innerHTML = clients.length ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Phone</th><th>Requests</th><th>Joined</th></tr></thead><tbody>
-      ${clients.map((u: any) => `<tr><td>${esc(u.name)}<span class="sub">${esc(u.company ?? '')} ${esc(u.email)}</span></td><td>${esc(u.phone ?? '—')}</td><td>${u.requests}</td><td>${fmtDate(u.created_at)}</td></tr>`).join('')}
+    $('[data-clients]').innerHTML = clients.length ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Phone</th><th>Requests</th><th>Joined</th>${isAdmin ? '<th>Role</th>' : ''}</tr></thead><tbody>
+      ${clients.map((u: any) => `<tr><td>${esc(u.name)}<span class="sub">${esc(u.company ?? '')} ${esc(u.email)}</span></td><td>${esc(u.phone ?? '—')}</td><td>${u.requests}</td><td>${fmtDate(u.created_at)}</td>${isAdmin ? `<td>${roleCell(u)}</td>` : ''}</tr>`).join('')}
       </tbody></table></div>` : '<div class="pempty">No registered clients yet.</div>';
+    document.querySelectorAll<HTMLSelectElement>('[data-role]').forEach((sel) => sel.addEventListener('change', async () => {
+      const name = sel.closest('tr')?.querySelector('td')?.firstChild?.textContent ?? 'this person';
+      const what = sel.value === 'admin' ? 'an ADMIN (full access, including managing the team and settings)' : sel.value === 'staff' ? 'STAFF (requests, orders and accounts)' : 'a CLIENT (no staff access)';
+      if (!confirm(`Make ${name} ${what}?`)) { sel.value = sel.dataset.was!; return; }
+      try { await api(`/staff/users/${sel.dataset.role}`, { method: 'PATCH', body: { role: sel.value } }); toast(`${name} is now ${sel.value}`); load(); }
+      catch (e: any) { sel.value = sel.dataset.was!; toast(e.message, 'err'); }
+    }));
     $('[data-staff]').querySelectorAll<HTMLButtonElement>('[data-toggle]').forEach((b) => b.addEventListener('click', async () => {
       const active = b.dataset.active === '1';
       if (!confirm(`${active ? 'Disable' : 'Enable'} this staff account?`)) return;

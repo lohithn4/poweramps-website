@@ -20,6 +20,7 @@
 .snav__out { flex: none; padding: 8px 12px; border: 0; border-radius: 9px; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--red); white-space: nowrap; cursor: pointer; }
 .snav__out:hover { background: var(--red-050); }
 .snav__sep { flex: none; width: 1px; height: 22px; margin-inline: 6px; background: var(--line); }
+@media (min-width: 1024px) { .snav { flex-wrap: wrap; overflow: visible; } .snav a, .snav__out { padding: 8px 10px; } }
 .portal-head > .snav { order: -1; flex-basis: 100%; margin-bottom: 4px; }
 .phead-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .phead-actions:empty { display: none; }
