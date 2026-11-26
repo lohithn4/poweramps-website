@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# portal API (Cloudflare Worker)
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+.dev.vars

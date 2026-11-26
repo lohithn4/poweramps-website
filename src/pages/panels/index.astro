@@ -149,7 +149,7 @@ const countFor = (id: string) => panels.filter((p) => p.data.category.id === id)
     color: var(--ink);
     transition: border-color .2s, background .2s, box-shadow .2s;
   }
-  .search input:focus { outline: none; background: var(--white); border-color: var(--navy-600); box-shadow: 0 0 0 4px rgb(2 73 152 / 12%); }
+  .search input:focus { outline: none; background: var(--white); border-color: var(--navy-600); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 
   @media (max-width: 880px) {
     .toolbar__inner { flex-direction: column-reverse; align-items: stretch; gap: 12px; }

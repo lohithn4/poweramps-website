@@ -1,0 +1,45 @@
+{
+  // ==========================================================================
+  //  Portal API: Cloudflare Worker + D1 (white-label)
+  //
+  //  Company branding (name, colours, address, order prefix) is NOT set here.
+  //  It is read from <SITE_URL>/brand.json, generated from src/data/site.json
+  //  (edit in /admin → Site settings). Only deployment settings live below.
+  //
+  //  Secrets (never commit). Set with: npx wrangler secret put <NAME>
+  //    RESEND_API_KEY          email sending
+  //    SETUP_TOKEN             one-time first-admin creation
+  //    GOOGLE_CLIENT_SECRET    MICROSOFT_CLIENT_SECRET    LINKEDIN_CLIENT_SECRET
+  // ==========================================================================
+
+  // ---- PER-COMPANY: change these when deploying for another company -------
+  "name": "poweramps-api",                       // unique worker name per company
+  "routes": [{ "pattern": "api.poweramps.in", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "poweramps",              // from `npx wrangler d1 create <name>`
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "SITE_URL": "https://poweramps.in",          // public website (no trailing slash)
+    "API_URL": "https://api.poweramps.in",       // this worker's public URL
+    "ALLOWED_ORIGINS": "https://poweramps.in,https://www.poweramps.in",
+    "COOKIE_DOMAIN": ".poweramps.in",            // shared parent domain of site + API
+    "EMAIL_FROM": "Poweramps Technology <no-reply@poweramps.in>",  // verified sender domain
+    "STAFF_NOTIFY_EMAIL": "",                    // comma-separated inbox(es) for new requests
+    "BRAND_NAME": "Poweramps Technology",        // fallback only, if brand.json is unreachable
+    "REF_PREFIX": "PA",                          // fallback only
+    // Public OAuth client IDs (not secret). Leave empty to hide a provider.
+    "GOOGLE_CLIENT_ID": "",
+    "MICROSOFT_CLIENT_ID": "",
+    "LINKEDIN_CLIENT_ID": ""
+  },
+  // -------------------------------------------------------------------------
+
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true }
+}

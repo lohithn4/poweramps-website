@@ -5,7 +5,7 @@ The product website for **Poweramps Technology Pvt. Ltd.**: a catalogue of elect
 - **Website:** [Astro](https://astro.build), a static site that is fast and search-engine friendly
 - **Content editor:** [Sveltia CMS](https://github.com/sveltia/sveltia-cms) at `/admin`
 - **Hosting:** GitHub Pages (free), published automatically by GitHub Actions
-- **Database:** none. Every panel is a Markdown file in this repo.
+- **Database:** none for the public site (every panel is a Markdown file). The client/staff portal stores private data in a Cloudflare D1 database, never in this repo.
 
 ---
 
@@ -81,3 +81,18 @@ public/
 **Deployment:** in the repo go to **Settings → Pages → Build and deployment → Source: GitHub Actions**. Each push to `main` (including saves from `/admin`) rebuilds the site. The site URL and base path (`/<repo>/`) are detected automatically, so a custom domain also works with no code changes.
 
 **Local CMS editing:** run `npm run dev`, open `http://localhost:4321/admin/` in Chrome or Edge, and choose **Work with Local Repository** to edit files on disk without a token.
+
+---
+
+## Client & staff portal (Phase 1)
+
+- **Panel builder** at `/build/`: guided 6-step requirement builder with live ratings and panel drawing; submit as quote or order.
+- **Client portal** at `/portal/`: email-verified accounts (plus optional Google / Microsoft / LinkedIn sign-in), order tracking, quotation acceptance.
+- **Staff portal** at `/staff/`: all requests, status updates (emailed to clients), quotations, internal notes, team management.
+- **Backend**: Cloudflare Worker + D1 database in `worker/` (private data never goes into this repo). See `worker/wrangler.jsonc`.
+
+Local development: `cd worker && npm run migrate:local && npm run dev` (API on :8787), then `npm run dev` in the root (site on :4321, uses `.env.development`).
+
+## Reusing for another company
+
+Everything company-specific lives in settings and content. See **[WHITE-LABEL.md](WHITE-LABEL.md)**.

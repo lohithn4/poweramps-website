@@ -432,12 +432,12 @@ const steps = [
   }
   .step { position: relative; padding: 30px 28px 32px; background: var(--navy-950); transition: background .3s; }
   .step:hover { background: var(--navy-900); }
-  .step__num { position: absolute; top: 26px; right: 26px; font-family: var(--font-mono); font-size: 13px; color: #5d6c8f; }
+  .step__num { position: absolute; top: 26px; right: 26px; font-family: var(--font-mono); font-size: 13px; color: color-mix(in srgb, var(--brand-dark) 40%, white); }
   .step__icon {
     display: grid; place-items: center;
     width: 44px; height: 44px; border-radius: 10px;
     border: 1px solid rgb(255 255 255 / 14%);
-    color: #ff6b70;
+    color: color-mix(in srgb, var(--brand-accent) 62%, white);
   }
   .step h3 { margin-top: 20px; font-size: 20px; color: #fff; }
   .step p { margin-top: 8px; color: #a3aec7; font-size: 15px; }

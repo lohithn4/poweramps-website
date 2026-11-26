@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Verify email" noindex>
+  <section class="auth">
+    <div class="auth__card" style="text-align:center">
+      <h1 data-title>Verifying your email…</h1>
+      <p class="auth__sub" data-text>Please wait a moment.</p>
+      <p style="margin-top:20px" data-actions hidden><a class="btn btn--red" href={url('/portal/login/')}>Go to sign in</a></p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { api, markSignedIn, sitePath, homeFor, type Me } from '../../scripts/api';
+  import { $, qs } from '../../scripts/ui';
+
+  api<{ user: Me }>('/auth/verify', { body: { token: qs('token') } })
+    .then(({ user }) => {
+      markSignedIn(true);
+      $('[data-title]').textContent = 'Email verified ✓';
+      $('[data-text]').textContent = `Welcome, ${user.name.split(' ')[0]}! Taking you to your account…`;
+      let hasDraft = false;
+      try { hasDraft = !!JSON.parse(localStorage.getItem('builder_draft_v1') ?? 'null')?.config?.application; } catch {}
+      setTimeout(() => (location.href = sitePath(hasDraft && user.role === 'client' ? '/build/?resume=1' : homeFor(user))), 1300);
+    })
+    .catch((e) => {
+      $('[data-title]').textContent = 'Link not valid';
+      $('[data-text]').textContent = `${e.message} Sign in and we can send you a new verification link.`;
+      $('[data-actions]').hidden = false;
+    });
+</script>

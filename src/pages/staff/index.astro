@@ -1,0 +1,77 @@
+---
+import Base from '../../layouts/Base.astro';
+import StaffNav from '../../components/StaffNav.astro';
+---
+<Base title="Staff dashboard" noindex>
+  <section class="portal">
+    <div class="wrap">
+      <div class="portal-head">
+        <div><h1>Staff dashboard</h1><p data-hello>Quote requests and orders from the website.</p></div>
+        <StaffNav active="requests" />
+      </div>
+
+      <div class="kpis" data-kpis></div>
+
+      <div class="pcard">
+        <div class="filters-row">
+          <input class="input" type="search" placeholder="Search ref, client, company, panel…" data-q />
+          <select class="input" data-status></select>
+          <select class="input" data-kind><option value="">Quotes & orders</option><option value="quote">Quotes only</option><option value="order">Orders only</option></select>
+        </div>
+        <div data-list><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { api, requireAuth, sitePath } from '../../scripts/api';
+  import { $, esc, fmtDate, inr, kindBadge, statusBadge } from '../../scripts/ui';
+
+  const q = $<HTMLInputElement>('[data-q]');
+  const st = $<HTMLSelectElement>('[data-status]');
+  const kind = $<HTMLSelectElement>('[data-kind]');
+  let statuses: Record<string, string> = {};
+  const KPI = [
+    ['new', 'New'], ['reviewing', 'Under review'], ['quoted', 'Quoted'], ['accepted', 'Confirmed'], ['in_production', 'In production'], ['dispatched', 'Dispatched'],
+  ] as const;
+
+  async function load() {
+    const params = new URLSearchParams({ scope: 'all' });
+    if (st.value) params.set('status', st.value);
+    if (kind.value) params.set('kind', kind.value);
+    if (q.value.trim()) params.set('q', q.value.trim());
+    const data = await api(`/requests?${params}`);
+    statuses = data.statuses;
+    if (st.options.length === 0) {
+      st.innerHTML = `<option value="open">All open</option><option value="">All (incl. closed)</option>` +
+        Object.entries(statuses).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+      st.value = 'open';
+      return load();
+    }
+    const counts: Record<string, number> = Object.fromEntries((data.counts ?? []).map((c: any) => [c.status, c.n]));
+    $('[data-kpis]').innerHTML = KPI.map(([k, l]) => `<button type="button" class="kpi${st.value === k ? ' is-active' : ''}" data-k="${k}"><span>${l}</span><strong>${counts[k] ?? 0}</strong></button>`).join('');
+    $('[data-kpis]').querySelectorAll<HTMLButtonElement>('[data-k]').forEach((b) => b.addEventListener('click', () => { st.value = st.value === b.dataset.k ? 'open' : b.dataset.k!; load(); }));
+
+    const list = $('[data-list]');
+    if (!data.requests.length) { list.innerHTML = '<div class="pempty"><strong>Nothing here</strong>No requests match these filters.</div>'; return; }
+    list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Ref</th><th>Client</th><th>Panel</th><th>Status</th><th>Quote</th><th>Received</th></tr></thead><tbody>
+      ${data.requests.map((r: any) => `<tr data-href="${sitePath(`/staff/request/?id=${r.id}`)}">
+        <td><span class="ref">${esc(r.ref)}</span><span class="sub">${kindBadge(r.kind)}</span></td>
+        <td>${esc(r.contact_name)}<span class="sub">${esc(r.contact_company ?? r.contact_email)}</span></td>
+        <td>${esc(r.title)}<span class="sub">Qty ${r.quantity}</span></td>
+        <td>${statusBadge(r.status, statuses)}</td>
+        <td>${inr(r.quote_amount)}</td>
+        <td>${fmtDate(r.created_at)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+    list.querySelectorAll<HTMLElement>('tr[data-href]').forEach((tr) => tr.addEventListener('click', () => (location.href = tr.dataset.href!)));
+  }
+
+  let t: number | undefined;
+  q.addEventListener('input', () => { clearTimeout(t); t = window.setTimeout(load, 300); });
+  st.addEventListener('change', load);
+  kind.addEventListener('change', load);
+
+  requireAuth('staff').then((me) => { $('[data-hello]').textContent = `Signed in as ${me.name} (${me.role}).`; return load(); })
+    .catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

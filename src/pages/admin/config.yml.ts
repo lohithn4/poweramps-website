@@ -159,6 +159,36 @@ collections:
           - { label: Legal name, name: legalName, widget: string }
           - { label: Tagline, name: tagline, widget: string }
           - { label: SEO description, name: description, widget: text }
+          - { label: Home page title (SEO), name: seoTitle, widget: string, hint: "Shown after the company name in browser tabs and Google, e.g. Electrical Control Panels, Pune" }
+          - label: Brand (logo & colours)
+            name: brand
+            widget: object
+            hint: "Changing these re-themes the whole website, portal, favicon and emails."
+            fields:
+              - { label: Logo text (large), name: wordmark, widget: string, hint: "e.g. POWERAMPS" }
+              - { label: Logo text (small line), name: wordmarkSub, widget: string, required: false, hint: "e.g. TECHNOLOGY PVT. LTD." }
+              - { label: Logo symbol image (optional), name: logoImage, widget: image, required: false, hint: "Square image. Leave empty to use the 4-square mark in your brand colours." }
+              - { label: Primary colour, name: primary, widget: color, hint: "Links, highlights, logo squares" }
+              - { label: Accent colour, name: accent, widget: color, hint: "Buttons and call-to-action colour" }
+              - { label: Dark colour, name: dark, widget: color, hint: "Dark sections, header bar, email header" }
+          - { label: Order reference prefix, name: refPrefix, widget: string, hint: "2–6 letters, e.g. PA → PA-2026-0001", pattern: ["^[A-Za-z0-9]{1,6}$", "1–6 letters or digits"] }
+          - { label: Portal API address, name: apiUrl, widget: string, hint: "Where the client/staff portal backend runs, e.g. https://api.yourdomain.in" }
+          - label: Home page hero
+            name: hero
+            widget: object
+            fields:
+              - { label: Small label above headline, name: eyebrow, widget: string, hint: "e.g. LT panel manufacturer" }
+              - { label: Headline start, name: headline, widget: string, hint: "Completed by each product line's hero phrase, e.g. 'Electrical panels that keep your … motors running.'" }
+              - { label: Intro sentence, name: lead, widget: text }
+          - label: About page
+            name: about
+            widget: object
+            fields:
+              - { label: Headline, name: headline, widget: string }
+              - label: Story paragraphs
+                name: story
+                widget: list
+                field: { label: Paragraph, name: paragraph, widget: text }
           - { label: Year established, name: established, widget: number, value_type: int }
           - { label: Director, name: director, widget: string }
           - { label: Phone, name: phone, widget: string, required: false, hint: "e.g. +91 98450 00000" }
@@ -170,6 +200,7 @@ collections:
             fields:
               - { label: Line 1, name: line1, widget: string }
               - { label: Line 2, name: line2, widget: string }
+              - { label: Area / locality (short), name: locality, widget: string, required: false, hint: "Shown in the top bar and hero, e.g. Yelachenahalli, Kanakapura Rd" }
               - { label: City, name: city, widget: string }
               - { label: State, name: state, widget: string }
               - { label: PIN code, name: pincode, widget: string }

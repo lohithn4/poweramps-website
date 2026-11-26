@@ -1,18 +1,22 @@
 /* ==========================================================================
-   Poweramps — design tokens & base styles
-   Brand: navy + signal red, on a clean engineering-catalogue paper.
+   Design tokens & base styles (white-label)
+   Brand colours come from src/data/site.json → brand.{primary,accent,dark},
+   injected as --brand-* by layouts/Base.astro. Everything else derives from them.
    ========================================================================== */
 
 :root {
-  /* Brand */
-  --navy-950: #081129;
-  --navy-900: #0c1a3d;
-  --navy-800: #13265a;
-  --navy-700: #024998;
-  --navy-600: #0b5cc0;
-  --red: #cd030d;
-  --red-600: #a8020a;
-  --red-050: #fdeceb;
+  /* Brand (defaults; overridden from site.json) */
+  --brand-primary: #024998;
+  --brand-accent: #cd030d;
+  --brand-dark: #081129;
+  --navy-950: var(--brand-dark);
+  --navy-900: color-mix(in srgb, var(--brand-dark) 88%, var(--brand-primary));
+  --navy-800: color-mix(in srgb, var(--brand-dark) 62%, var(--brand-primary));
+  --navy-700: var(--brand-primary);
+  --navy-600: color-mix(in srgb, var(--brand-primary) 80%, white);
+  --red: var(--brand-accent);
+  --red-600: color-mix(in srgb, var(--brand-accent) 82%, black);
+  --red-050: color-mix(in srgb, var(--brand-accent) 8%, white);
 
   /* Neutrals */
   --ink: #0d1626;
@@ -67,6 +71,7 @@ body {
   overflow-x: hidden;
 }
 
+[hidden] { display: none !important; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -120,7 +125,7 @@ p { margin: 0; text-wrap: pretty; }
   height: 2px;
   background: currentColor;
 }
-.on-dark .eyebrow { color: #ff6b70; }
+.on-dark .eyebrow { color: color-mix(in srgb, var(--brand-accent) 62%, white); }
 
 .mono { font-family: var(--font-mono); }
 
@@ -300,7 +305,7 @@ p { margin: 0; text-wrap: pretty; }
   transition: border-color .2s, box-shadow .2s;
 }
 .input:hover { border-color: var(--line-2); }
-.input:focus { outline: none; border-color: var(--navy-600); box-shadow: 0 0 0 4px rgb(2 73 152 / 12%); }
+.input:focus { outline: none; border-color: var(--navy-600); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 textarea.input { min-height: 120px; resize: vertical; }
 
 /* ---------- Reveal on scroll ---------- */

@@ -27,6 +27,8 @@ const more = related.length < 3 ? all.filter((p) => p.id !== panel.id && !relate
 
 const enquiry = `Hello ${site.name}, I'd like a quote for: ${d.title}`;
 const enquiryHref = url(`/contact?panel=${encodeURIComponent(d.title)}`);
+const APP_FOR: Record<string, string> = { 'control-automation': d.title.match(/PLC|VFD/i) ? 'automation' : d.title.match(/RO|STP/) ? 'water' : 'motor', 'power-distribution': 'distribution', 'generator-synchronization': 'generator', 'fire-fighting': 'fire', chargers: 'other' };
+const buildHref = url(`/build/?app=${APP_FOR[d.category.id] ?? 'other'}&ref=${encodeURIComponent(d.title)}`);
 const waHref = site.whatsapp ? `https://wa.me/${site.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(enquiry)}` : '';
 
 const jsonLd = {
@@ -89,7 +91,8 @@ const jsonLd = {
           )}
 
           <div class="info__actions">
-            <a class="btn btn--red" href={enquiryHref}>Request a quote <Icon name="arrow" size={18} /></a>
+            <a class="btn btn--red" href={buildHref}>Customise &amp; get a quote <Icon name="arrow" size={18} /></a>
+            <a class="btn btn--ghost" href={enquiryHref}>Quick enquiry</a>
             {waHref && <a class="btn btn--wa" href={waHref} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} />WhatsApp</a>}
             {site.phone && <a class="btn btn--ghost" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={18} />Call</a>}
           </div>
@@ -237,7 +240,7 @@ const jsonLd = {
   }
   .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 6px; mix-blend-mode: multiply; }
   .thumb:hover { border-color: var(--line-2); }
-  .thumb.is-active { border-color: var(--navy-700); box-shadow: 0 0 0 3px rgb(2 73 152 / 12%); }
+  .thumb.is-active { border-color: var(--navy-700); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 
   .info { display: grid; gap: 20px; }
   .info h1 { font-size: clamp(32px, 4.2vw, 50px); }

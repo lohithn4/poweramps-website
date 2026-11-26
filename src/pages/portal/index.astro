@@ -1,0 +1,90 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { url } from '../../lib/url';
+---
+<Base title="My account" noindex>
+  <section class="portal">
+    <div class="wrap">
+      <div class="portal-head">
+        <div>
+          <h1 data-hello>My account</h1>
+          <p>Your quote requests, orders and account details.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn btn--ghost" data-staff-link href={url('/staff/')} hidden><Icon name="cog" size={18} />Staff dashboard</a>
+          <a class="btn btn--red" href={url('/build/')}><Icon name="layers" size={18} />Build a new panel</a>
+        </div>
+      </div>
+
+      <div class="pgrid">
+        <div class="pcard">
+          <div class="pcard__h"><h2>My requests & orders</h2></div>
+          <div data-list><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+        </div>
+
+        <div class="pstack">
+          <div class="pcard">
+            <div class="pcard__h"><h2>Profile</h2></div>
+            <form class="pform" data-profile novalidate>
+              <label class="field"><span class="flabel">Name</span><input class="input" name="name" required /></label>
+              <label class="field"><span class="flabel">Company</span><input class="input" name="company" /></label>
+              <label class="field"><span class="flabel">Phone</span><input class="input" type="tel" name="phone" /></label>
+              <label class="field"><span class="flabel">Email</span><input class="input" name="email" disabled /></label>
+              <p class="form-error" data-error hidden></p>
+              <button class="btn btn--ghost" type="submit">Save profile</button>
+            </form>
+          </div>
+          <div class="pcard">
+            <div class="pcard__h"><h2>Password</h2></div>
+            <form class="pform" data-password novalidate>
+              <label class="field"><span class="flabel">Current password</span><input class="input" type="password" name="current" autocomplete="current-password" /></label>
+              <label class="field"><span class="flabel">New password</span><input class="input" type="password" name="password" autocomplete="new-password" minlength="8" /></label>
+              <p class="form-error" data-error hidden></p>
+              <button class="btn btn--ghost" type="submit">Change password</button>
+            </form>
+          </div>
+          <button class="btn btn--ghost btn--block" type="button" data-logout style="margin-top:18px">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>.flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }</style>
+
+<script>
+  import { api, requireAuth, logout, sitePath } from '../../scripts/api';
+  import { $, bindForm, esc, fmtDate, inr, kindBadge, statusBadge, toast } from '../../scripts/ui';
+
+  (async () => {
+    const me = await requireAuth();
+    $('[data-hello]').textContent = `Hello, ${me.name.split(' ')[0]}`;
+    if (me.role !== 'client') $('[data-staff-link]').hidden = false;
+    const f = $<HTMLFormElement>('[data-profile]');
+    (f.elements.namedItem('name') as HTMLInputElement).value = me.name;
+    (f.elements.namedItem('company') as HTMLInputElement).value = me.company ?? '';
+    (f.elements.namedItem('phone') as HTMLInputElement).value = me.phone ?? '';
+    (f.elements.namedItem('email') as HTMLInputElement).value = me.email;
+
+    const { requests, statuses } = await api('/requests');
+    const list = $('[data-list]');
+    if (!requests.length) {
+      list.innerHTML = `<div class="pempty"><strong>No requests yet</strong>Design your panel in a few minutes and get a clear quotation.<br><a class="btn btn--red" href="${sitePath('/build/')}">Build your first panel</a></div>`;
+    } else {
+      list.innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Reference</th><th>Panel</th><th>Status</th><th>Quote</th><th>Updated</th></tr></thead><tbody>
+        ${requests.map((r: any) => `<tr data-href="${sitePath(`/portal/request/?id=${r.id}`)}">
+          <td><span class="ref">${esc(r.ref)}</span><span class="sub">${kindBadge(r.kind)}</span></td>
+          <td>${esc(r.title)}<span class="sub">Qty ${r.quantity}</span></td>
+          <td>${statusBadge(r.status, statuses)}</td>
+          <td>${inr(r.quote_amount)}</td>
+          <td>${fmtDate(r.updated_at)}</td></tr>`).join('')}
+        </tbody></table></div>`;
+      list.querySelectorAll<HTMLElement>('tr[data-href]').forEach((tr) => tr.addEventListener('click', () => (location.href = tr.dataset.href!)));
+    }
+  })().catch((e) => { if (e.message !== 'redirecting') $('[data-list]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+
+  bindForm($('[data-profile]'), async (d) => { await api('/auth/me', { method: 'PATCH', body: d }); toast('Profile saved'); });
+  bindForm($('[data-password]'), async (d) => { await api('/auth/password', { body: d }); toast('Password changed'); ($('[data-password]') as HTMLFormElement).reset(); });
+  $('[data-logout]').addEventListener('click', logout);
+</script>

@@ -9,7 +9,7 @@ import { getClients } from '../lib/clients';
 const hasClients = (await getClients()).length > 0;
 const nav = [
   { href: '/panels', label: 'Panels' },
-  { href: '/#capabilities', label: 'Capabilities' },
+  { href: '/build', label: 'Build a panel' },
   ...(hasClients ? [{ href: '/clients', label: 'Clients' }] : []),
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
@@ -29,7 +29,7 @@ const path = Astro.url.pathname;
     </span>
     <span class="topbar__right">
       <a class="topbar__item topbar__loc" href={openMapUrl} target="_blank" rel="noopener" title="Open our location in Google Maps">
-        <Icon name="pin" size={14} /><span class="topbar__loc-long">Yelachenahalli, Kanakapura Rd, </span>{site.address.city}
+        <Icon name="pin" size={14} />{site.address.locality && <span class="topbar__loc-long">{site.address.locality}, </span>}{site.address.city}
       </a>
       {site.phone && <a class="topbar__item topbar__extra" href={`tel:${site.phone.replace(/\s/g, '')}`}><Icon name="phone" size={14} />{site.phone}</a>}
       {site.email && <a class="topbar__item topbar__extra" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
@@ -50,7 +50,8 @@ const path = Astro.url.pathname;
     </nav>
 
     <div class="header__cta">
-      <a class="btn btn--red btn--sm" href={url('/contact')}>Get a quote <Icon name="arrow" size={16} /></a>
+      <a class="acct" href={url('/portal/login/')} data-acct><Icon name="user" size={18} /><span data-acct-label>Sign in</span></a>
+      <a class="btn btn--red btn--sm" href={url('/build/')}>Get a quote <Icon name="arrow" size={16} /></a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu-btn>
         <span class="sr-only">Menu</span>
         <Icon name="menu" size={24} class="i-open" />
@@ -62,7 +63,8 @@ const path = Astro.url.pathname;
   <nav id="mobile-nav" class="mnav" aria-label="Mobile" data-mnav hidden>
     <div class="wrap mnav__inner">
       {nav.map((item) => <a href={url(item.href)} class="mnav__link">{item.label} <Icon name="arrow" size={18} /></a>)}
-      <a class="btn btn--red btn--block" href={url('/contact')}>Get a quote</a>
+      <a href={url('/portal/login/')} class="mnav__link" data-acct>Client / staff sign in <Icon name="user" size={18} /></a>
+      <a class="btn btn--red btn--block" href={url('/build/')}>Build a panel &amp; get a quote</a>
     </div>
   </nav>
 </header>
@@ -92,6 +94,18 @@ const path = Astro.url.pathname;
       } catch {}
     });
   });
+
+  // Swap "Sign in" for "My account" when a session flag exists (set on login).
+  try {
+    if (localStorage.getItem('portal_signed_in') === '1') {
+      document.querySelectorAll<HTMLAnchorElement>('[data-acct]').forEach((a) => {
+        a.href = a.href.replace('portal/login/', 'portal/');
+        const l = a.querySelector('[data-acct-label]');
+        if (l) l.textContent = 'My account';
+        else a.firstChild!.textContent = 'My account ';
+      });
+    }
+  } catch {}
 
   const header = document.querySelector('[data-header]');
   const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
@@ -137,7 +151,7 @@ const path = Astro.url.pathname;
   .gstin.is-copied .gstin__num { color: #4ade80; }
   .topbar__since { color: #8d98b3; }
   .topbar__loc { color: #dfe5f2; }
-  .topbar__loc :global(svg) { color: #ff6b70; }
+  .topbar__loc :global(svg) { color: color-mix(in srgb, var(--brand-accent) 62%, white); }
   .topbar__loc:hover { text-decoration: underline; text-underline-offset: 3px; }
   @media (max-width: 1100px) {
     .topbar__extra { display: none; }
@@ -188,6 +202,9 @@ const path = Astro.url.pathname;
   }
 
   .header__cta { display: flex; align-items: center; gap: 10px; }
+  .acct { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 8px; font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
+  .acct:hover { background: var(--paper); color: var(--ink); }
+  @media (max-width: 880px) { .acct span { display: none; } .acct { padding: 10px; border: 1px solid var(--line); } }
   .menu-btn {
     display: none;
     width: 44px; height: 44px;

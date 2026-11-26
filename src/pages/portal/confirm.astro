@@ -1,0 +1,30 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Confirm request" noindex>
+  <section class="auth">
+    <div class="auth__card" style="text-align:center">
+      <h1 data-title>Confirming your request…</h1>
+      <p class="auth__sub" data-text>Please wait a moment.</p>
+      <div style="margin-top:20px;display:grid;gap:10px" data-actions hidden></div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { api, sitePath } from '../../scripts/api';
+  import { $, esc, qs } from '../../scripts/ui';
+
+  api<{ ref: string; email: string }>('/requests/confirm', { body: { token: qs('token') } })
+    .then(({ ref, email }) => {
+      $('[data-title]').textContent = 'Request confirmed ✓';
+      $('[data-text]').innerHTML = `Thank you! Your quote request <strong>${esc(ref)}</strong> is now with our engineers. We'll email your quotation to ${esc(email)}.`;
+      const a = $('[data-actions]');
+      a.hidden = false;
+      a.innerHTML = `<a class="btn btn--red" href="${sitePath(`/portal/register/?email=${encodeURIComponent(email)}`)}">Create an account to track it</a><a class="btn btn--ghost" href="${sitePath('/panels')}">Browse our panels</a>`;
+    })
+    .catch((e) => {
+      $('[data-title]').textContent = 'Link not valid';
+      $('[data-text]').textContent = `${e.message} If you've already confirmed, your request is with us.`;
+    });
+</script>

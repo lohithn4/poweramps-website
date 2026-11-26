@@ -1,4 +1,5 @@
 ---
+import BrandMark from './BrandMark.astro';
 import site from '../data/site.json';
 import { url } from '../lib/url';
 
@@ -9,58 +10,23 @@ interface Props {
 const { light = false } = Astro.props;
 ---
 <a href={url('/')} class:list={['logo', { 'logo--light': light }]} aria-label={`${site.legalName}: home`}>
-  <!-- Brand mark: 2×2 squares, blue / red / red / blue -->
-  <svg class="logo__mark" viewBox="0 0 40 40" aria-hidden="true">
-    <rect x="0" y="0" width="18.5" height="18.5" fill="#024998" />
-    <rect x="21.5" y="0" width="18.5" height="18.5" fill="#cd030d" />
-    <rect x="0" y="21.5" width="18.5" height="18.5" fill="#cd030d" />
-    <rect x="21.5" y="21.5" width="18.5" height="18.5" fill="#024998" />
-  </svg>
+  <BrandMark size={42} class="logo__mark" />
   <span class="logo__text">
-    <span class="logo__name">POWERAMPS</span>
-    <span class="logo__sub">TECHNOLOGY PVT. LTD.</span>
+    <span class="logo__name">{site.brand.wordmark || site.name}</span>
+    {site.brand.wordmarkSub && <span class="logo__sub">{site.brand.wordmarkSub}</span>}
   </span>
 </a>
 
 <style>
-  .logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    color: #cd030d;
-    line-height: 1;
-  }
-  .logo__mark {
-    width: 42px;
-    height: 42px;
-    flex: none;
-    shape-rendering: crispEdges;
-  }
-  .logo__text {
-    display: grid;
-    justify-items: end;
-    gap: 3px;
-  }
-  .logo__name {
-    font-family: var(--font-sans);
-    font-size: 27px;
-    font-weight: 600;
-    font-stretch: 100%;
-    letter-spacing: -0.005em;
-    line-height: 0.8;
-  }
-  .logo__sub {
-    font-family: var(--font-sans);
-    font-size: 9.5px;
-    font-weight: 700;
-    font-stretch: 100%;
-    letter-spacing: 0.035em;
-  }
+  .logo { display: inline-flex; align-items: center; gap: 12px; color: var(--brand-accent); line-height: 1; }
+  .logo :global(.logo__mark) { width: 42px; height: 42px; flex: none; }
+  .logo__text { display: grid; justify-items: end; gap: 3px; }
+  .logo__name { font-family: var(--font-sans); font-size: 27px; font-weight: 600; font-stretch: 100%; letter-spacing: -0.005em; line-height: 0.8; }
+  .logo__sub { font-family: var(--font-sans); font-size: 9.5px; font-weight: 700; font-stretch: 100%; letter-spacing: 0.035em; }
   .logo--light { color: #fff; }
-
   @media (max-width: 380px) {
     .logo { gap: 10px; }
-    .logo__mark { width: 36px; height: 36px; }
+    .logo :global(.logo__mark) { width: 36px; height: 36px; }
     .logo__name { font-size: 23px; }
     .logo__sub { font-size: 8.2px; }
   }

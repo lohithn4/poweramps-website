@@ -1,4 +1,5 @@
 ---
+import site from '../data/site.json';
 interface Props {
   items: { label: string; value: string }[];
   title?: string;
@@ -13,7 +14,7 @@ const { items, title = 'Rating plate', serial, class: className, ...rest } = Ast
   <span class="rivet bl" aria-hidden="true"></span>
   <span class="rivet br" aria-hidden="true"></span>
   <div class="plate__head">
-    <span><span class="plate__brand">POWERAMPS · </span>{title}</span>
+    <span><span class="plate__brand">{site.brand.wordmark || site.name} · </span>{title}</span>
     {serial && <span>{serial}</span>}
   </div>
   <dl class="plate__grid">

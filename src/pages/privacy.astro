@@ -1,0 +1,44 @@
+---
+import Base from '../layouts/Base.astro';
+import site from '../data/site.json';
+import { url } from '../lib/url';
+const updated = '26 November 2026';
+---
+<Base title="Privacy Policy" description={`How ${site.legalName} collects, uses and protects your personal data.`}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>Privacy</span></nav>
+      <h1>Privacy policy</h1>
+      <p>Last updated {updated}</p>
+    </div>
+  </section>
+  <section class="section--tight">
+    <div class="wrap">
+      <div class="prose pcard" style="max-width:820px">
+        <p>{site.legalName} ("{site.name}", "we") respects your privacy. This policy explains what personal data we collect through this website and client portal, why, and your rights under India's Digital Personal Data Protection Act, 2023.</p>
+        <h2>What we collect</h2>
+        <ul>
+          <li><strong>Account details:</strong> name, email, phone, company, and a securely hashed password (we never see or store your actual password). If you sign in with Google, Microsoft or LinkedIn, we receive your name and email from that provider.</li>
+          <li><strong>Enquiries, quotes and orders:</strong> the panel requirements you enter in the panel builder, project details, site location and any notes.</li>
+          <li><strong>Technical data:</strong> a secure session cookie to keep you signed in, and basic logs (such as IP address) used to prevent abuse.</li>
+        </ul>
+        <h2>Why we use it</h2>
+        <ul>
+          <li>To prepare quotations, process and deliver your orders, and keep you updated on their status.</li>
+          <li>To verify your email address and keep a reliable record of enquiries and orders.</li>
+          <li>To meet legal, tax (GST) and accounting obligations.</li>
+          <li>To ask for feedback after delivery. With your explicit permission only, we may publish your feedback as a testimonial.</li>
+        </ul>
+        <p>We do not sell your data or use it for third-party advertising.</p>
+        <h2>Where it is stored</h2>
+        <p>Your data is stored in a secured database operated by Cloudflare, and transactional emails are sent through our email service provider. Access is limited to authorised {site.name} staff. All traffic is encrypted (HTTPS).</p>
+        <h2>How long we keep it</h2>
+        <p>Account and order records are kept for as long as your account is active and as required by law (for example, GST records for at least 8 years). Unconfirmed enquiries are deleted after 90 days.</p>
+        <h2>Your rights</h2>
+        <p>You can access and update your profile in your account at any time. You may ask us to correct or erase your personal data, or withdraw consent, by contacting us. We will respond within a reasonable time, subject to our legal record-keeping duties.</p>
+        <h2>Contact</h2>
+        <p>{site.legalName}, {site.address.line1}, {site.address.line2}, {site.address.city}, {site.address.state} {site.address.pincode}.{site.email && <> Email: <a href={`mailto:${site.email}`}>{site.email}</a>.</>}</p>
+      </div>
+    </div>
+  </section>
+</Base>

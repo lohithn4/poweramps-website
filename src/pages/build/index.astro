@@ -1,0 +1,385 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { APPS, HP_SIZES, KVA_SIZES, PROTECTIONS } from '../../scripts/panel';
+import { url } from '../../lib/url';
+
+const steps = ['Application', 'Power supply', 'Loads', 'Features', 'Project', 'Review & submit'];
+const systems = ['415 V · 3-phase · 50 Hz', '440 V · 3-phase · 50 Hz', '230 V · single-phase · 50 Hz', 'Other'];
+const sources = ['Grid (EB) only', 'Grid + DG backup', 'DG only', 'Grid + Solar'];
+const controls = [
+  { v: 'Manual', d: 'Push buttons & selector switches' },
+  { v: 'Automatic', d: 'Level / pressure / timer based' },
+  { v: 'PLC + HMI', d: 'Programmable logic with touch screen' },
+  { v: 'PLC + HMI + SCADA', d: 'Remote monitoring & data logging' },
+];
+const meterings = ['Digital multifunction meter', 'Digital meter with Modbus', 'Analog meters (A, V)', 'None'];
+const switchgear = ['No preference', 'L&T (Lauritz Knudsen)', 'Schneider Electric', 'Siemens', 'ABB', 'Legrand', 'C&S Electric'];
+const drives = ['No preference', 'ABB', 'Danfoss', 'Siemens', 'Schneider Electric', 'Delta', 'INVT', 'Yaskawa', 'Fuji'];
+const ips = ['IP42', 'IP54', 'IP55', 'IP65'];
+const colours = ['RAL 7035 (light grey)', 'RAL 7032 (pebble grey)', 'RAL 9002 (off-white)', 'RAL 3000 (red, fire panels)', 'Other: mention in notes'];
+---
+<Base title="Build Your Panel" description="Configure your electrical panel step by step and get a clear quotation: motors, feeders, generators or fire pumps, with live ratings and a panel preview." noindex={false}>
+  <section class="bhero blueprint on-dark">
+    <div class="wrap">
+      <span class="eyebrow">Panel builder</span>
+      <h1>Build your panel in 5 easy steps.</h1>
+      <p>No technical knowledge needed. Pick what the panel is for, list your loads, and we'll calculate the ratings and draw it as you go. Then send it for a quote or place your order.</p>
+    </div>
+  </section>
+
+  <section class="builder" data-builder>
+    <div class="wrap builder__grid">
+      <!-- Step navigation -->
+      <nav class="bsteps" aria-label="Builder steps">
+        <p class="bsteps__mobile mono" data-step-mobile></p>
+        <div class="bsteps__bar"><span data-step-bar></span></div>
+        <ol>
+          {steps.map((s, i) => (
+            <li><button type="button" class="bstep-btn" data-goto={i}><span class="bstep-btn__n">{i + 1}</span><span>{s}</span></button></li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="builder__main">
+        <form data-form novalidate autocomplete="on">
+          <!-- 1. Application -->
+          <section class="bstep" data-step="0">
+            <header><h2>What is the panel for?</h2><p>Choose the closest match. You can describe anything special later.</p></header>
+            <div class="appgrid">
+              {APPS.map((a) => (
+                <label class="appcard">
+                  <input type="radio" name="application" value={a.id} />
+                  <span class="appcard__icon" aria-hidden="true">{a.icon}</span>
+                  <span class="appcard__t">{a.title}</span>
+                  <span class="appcard__d">{a.text}</span>
+                  <span class="appcard__check" aria-hidden="true"><Icon name="check" size={14} /></span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <!-- 2. Supply -->
+          <section class="bstep" data-step="1" hidden>
+            <header><h2>Power supply</h2><p>Most industrial sites in India use 415 V three-phase. If you're unsure, leave it as it is.</p></header>
+            <fieldset class="bfield"><legend>Supply system</legend>
+              <div class="pills">{systems.map((s) => <label class="pill"><input type="radio" name="supply.system" value={s} /><span>{s}</span></label>)}</div>
+              <input class="input" name="supply.other" placeholder="Describe the supply, e.g. 11 kV / 433 V" data-show-if="supply.system=Other" />
+            </fieldset>
+            <fieldset class="bfield"><legend>Power sources feeding this panel</legend>
+              <div class="pills">{sources.map((s) => <label class="pill"><input type="radio" name="supply.sources" value={s} /><span>{s}</span></label>)}</div>
+            </fieldset>
+          </section>
+
+          <!-- 3. Loads -->
+          <section class="bstep" data-step="2" hidden>
+            <header><h2 data-loads-title>Your loads</h2><p data-loads-hint>Add each item the panel will control.</p></header>
+
+            <div class="loads" data-loads="motors" hidden>
+              <div class="chips"><span class="chips__label">Quick add:</span><span data-motor-chips></span></div>
+              <div class="lhead"><span>Load</span><span>Rating</span><span>Qty</span><span>Starter</span><span></span></div>
+              <div data-motor-list></div>
+              <button type="button" class="btn btn--ghost btn--sm" data-add="motor"><Icon name="layers" size={16} />Add motor / pump</button>
+              <p class="tip"><Icon name="bolt" size={15} />Not sure of the HP? Check the motor nameplate, or pick the nearest size. Mark spare pumps as <b>standby</b> so they're not counted in running load.</p>
+            </div>
+
+            <div class="loads" data-loads="generator" hidden>
+              <fieldset class="bfield"><legend>What should the panel do?</legend>
+                <div class="pills">
+                  <label class="pill"><input type="radio" name="generator.mode" value="AMF: automatic changeover" /><span>AMF: switch to DG automatically on power failure</span></label>
+                  <label class="pill"><input type="radio" name="generator.mode" value="Synchronization: run DGs in parallel" /><span>Synchronization: run 2+ DGs together</span></label>
+                </div>
+              </fieldset>
+              <div class="bgrid2">
+                <label class="field"><span class="flabel">Number of DG sets</span><input class="input" type="number" min="1" max="8" name="generator.sets" data-num /></label>
+                <label class="field"><span class="flabel">Rating of each DG</span><select class="input" name="generator.kva" data-num>{KVA_SIZES.map((k) => <option value={k}>{k} kVA</option>)}</select></label>
+              </div>
+            </div>
+
+            <div class="loads" data-loads="fire" hidden>
+              <div class="bgrid2">
+                <label class="field"><span class="flabel">Main electric pump</span><select class="input" name="fire.mainHp" data-num>{HP_SIZES.filter((h) => h >= 5).map((h) => <option value={h}>{h} HP</option>)}</select></label>
+                <label class="field"><span class="flabel">Jockey pump</span><select class="input" name="fire.jockeyHp" data-num>{HP_SIZES.filter((h) => h <= 20).map((h) => <option value={h}>{h} HP</option>)}</select></label>
+                <label class="field"><span class="flabel">Main pump starter</span><select class="input" name="fire.starter"><option>Star-Delta</option><option>DOL</option><option>Soft starter</option></select></label>
+              </div>
+              <div class="checks">
+                <label class="check"><input type="checkbox" name="fire.standbyMain" /><span>Standby electric main pump</span></label>
+                <label class="check"><input type="checkbox" name="fire.diesel" /><span>Diesel engine-driven pump (adds engine controller)</span></label>
+              </div>
+            </div>
+
+            <div class="loads" data-loads="feeders" hidden>
+              <h3 class="loads__sub" data-feeder-title>Outgoing feeders</h3>
+              <div class="chips"><span class="chips__label">Quick add:</span><span data-feeder-chips></span></div>
+              <div class="lhead lhead--f"><span>Feeder</span><span>Rating</span><span>Qty</span><span>Device</span><span></span></div>
+              <div data-feeder-list></div>
+              <button type="button" class="btn btn--ghost btn--sm" data-add="feeder"><Icon name="layers" size={16} />Add feeder</button>
+            </div>
+          </section>
+
+          <!-- 4. Features -->
+          <section class="bstep" data-step="3" hidden>
+            <header><h2>Features & construction</h2><p>Sensible defaults are already selected. Change only what you need.</p></header>
+            <fieldset class="bfield"><legend>How should it be controlled?</legend>
+              <div class="optgrid">{controls.map((c) => <label class="optcard"><input type="radio" name="options.control" value={c.v} /><strong>{c.v}</strong><span>{c.d}</span></label>)}</div>
+            </fieldset>
+            <fieldset class="bfield"><legend>Protection required</legend>
+              <div class="checks checks--grid">{PROTECTIONS.map((p) => <label class="check"><input type="checkbox" name="options.protections" value={p} /><span>{p}</span></label>)}</div>
+            </fieldset>
+            <div class="bgrid2">
+              <label class="field"><span class="flabel">Metering</span><select class="input" name="options.metering">{meterings.map((m) => <option>{m}</option>)}</select></label>
+              <label class="field"><span class="flabel">Preferred switchgear make</span><select class="input" name="options.switchgear">{switchgear.map((m) => <option>{m}</option>)}</select></label>
+              <label class="field" data-show-if="drives"><span class="flabel">Preferred PLC / drive make</span><select class="input" name="options.drives">{drives.map((m) => <option>{m}</option>)}</select></label>
+              <label class="field"><span class="flabel">Enclosure protection (IP)</span><select class="input" name="options.ip">{ips.map((m) => <option>{m}</option>)}</select></label>
+              <label class="field"><span class="flabel">Colour</span><select class="input" name="options.colour">{colours.map((m) => <option>{m}</option>)}</select></label>
+            </div>
+            <div class="bgrid3">
+              <fieldset class="bfield"><legend>Busbar</legend><div class="pills"><label class="pill"><input type="radio" name="options.busbar" value="Copper" /><span>Copper</span></label><label class="pill"><input type="radio" name="options.busbar" value="Aluminium" /><span>Aluminium</span></label></div></fieldset>
+              <fieldset class="bfield"><legend>Mounting</legend><div class="pills"><label class="pill"><input type="radio" name="options.mounting" value="Floor standing" /><span>Floor standing</span></label><label class="pill"><input type="radio" name="options.mounting" value="Wall mounted" /><span>Wall mounted</span></label></div></fieldset>
+              <fieldset class="bfield"><legend>Installed</legend><div class="pills"><label class="pill"><input type="radio" name="options.location" value="Indoor" /><span>Indoor</span></label><label class="pill"><input type="radio" name="options.location" value="Outdoor" /><span>Outdoor</span></label></div></fieldset>
+              <fieldset class="bfield"><legend>Cable entry</legend><div class="pills"><label class="pill"><input type="radio" name="options.entry" value="Bottom" /><span>Bottom</span></label><label class="pill"><input type="radio" name="options.entry" value="Top" /><span>Top</span></label></div></fieldset>
+            </div>
+          </section>
+
+          <!-- 5. Project -->
+          <section class="bstep" data-step="4" hidden>
+            <header><h2>Project details</h2><p>Helps us plan delivery and quote accurately.</p></header>
+            <div class="bgrid2">
+              <label class="field"><span class="flabel">Project / plant name</span><input class="input" name="project.name" placeholder="e.g. 2 MLD STP, Whitefield" /></label>
+              <label class="field"><span class="flabel">Site location (city)</span><input class="input" name="project.site" placeholder="e.g. Mumbai" /></label>
+              <label class="field"><span class="flabel">Number of identical panels</span><input class="input" type="number" min="1" max="999" name="project.quantity" data-num /></label>
+              <label class="field"><span class="flabel">Required by</span><input class="input" type="date" name="project.requiredBy" /></label>
+            </div>
+            <label class="field"><span class="flabel">Based on (optional)</span><input class="input" name="project.reference" placeholder="e.g. a panel from our catalogue, or a consultant spec" /></label>
+            <label class="field"><span class="flabel">Anything else we should know?</span><textarea class="input" name="project.notes" rows="4" placeholder="Special interlocks, approvals (CEIG), consultant name, existing drawings, etc."></textarea></label>
+          </section>
+
+          <!-- 6. Review -->
+          <section class="bstep" data-step="5" hidden>
+            <header><h2>Review your panel</h2><p>Check everything below. Use <b>Edit</b> on any step to make changes.</p></header>
+            <div class="review" data-review></div>
+
+            <div class="contact-box" data-contact-anon hidden>
+              <h3>Your contact details</h3>
+              <p class="muted">We'll email you to confirm the request. <a data-login-link href={url('/portal/login/')}>Have an account? Sign in</a> to track it online.</p>
+              <div class="bgrid2">
+                <label class="field"><span class="flabel">Your name *</span><input class="input" name="contact.name" autocomplete="name" /></label>
+                <label class="field"><span class="flabel">Company</span><input class="input" name="contact.company" autocomplete="organization" /></label>
+                <label class="field"><span class="flabel">Email *</span><input class="input" type="email" name="contact.email" autocomplete="email" /></label>
+                <label class="field"><span class="flabel">Phone *</span><input class="input" type="tel" name="contact.phone" autocomplete="tel" /></label>
+              </div>
+            </div>
+            <div class="contact-box contact-box--me" data-contact-me hidden></div>
+
+            <fieldset class="bfield"><legend>What would you like to do?</legend>
+              <div class="optgrid optgrid--2">
+                <label class="optcard optcard--big"><input type="radio" name="submitKind" value="quote" checked /><strong>Request a quotation</strong><span>Free, no obligation. We review your requirement and send a price.</span></label>
+                <label class="optcard optcard--big"><input type="radio" name="submitKind" value="order" /><strong>Place an order</strong><span>Confirm you want this panel built. Final price is confirmed in our order acknowledgement. Requires a client account.</span></label>
+              </div>
+            </fieldset>
+            <p class="form-error" data-submit-error hidden></p>
+          </section>
+
+          <div class="bnav">
+            <button type="button" class="btn btn--ghost" data-prev><Icon name="arrow-left" size={18} />Back</button>
+            <button type="button" class="link-reset" data-reset>Start over</button>
+            <button type="button" class="btn btn--red" data-next>Next <Icon name="arrow" size={18} /></button>
+            <button type="button" class="btn btn--red" data-submit hidden>Review & confirm <Icon name="arrow" size={18} /></button>
+          </div>
+        </form>
+
+        <!-- Success -->
+        <div class="bdone" data-done hidden>
+          <span class="bdone__icon"><Icon name="check" size={30} /></span>
+          <h2 data-done-title>Request received</h2>
+          <p class="bdone__ref mono" data-done-ref></p>
+          <p data-done-text></p>
+          <div class="bdone__actions" data-done-actions></div>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <aside class="bside" data-side>
+        <div class="bside__card">
+          <div class="bside__head"><span class="mono">Live preview</span><span class="led" aria-hidden="true"></span></div>
+          <p class="bside__title" data-sum-title>Choose an application to begin</p>
+          <div class="bside__svg" data-svg></div>
+          <dl class="bside__kpis">
+            <div><dt>Connected load</dt><dd data-kpi="kw">—</dd></div>
+            <div><dt>Running current</dt><dd data-kpi="amps">—</dd></div>
+            <div><dt>Suggested incomer</dt><dd data-kpi="inc">—</dd></div>
+            <div><dt>Loads</dt><dd data-kpi="loads">—</dd></div>
+          </dl>
+          <p class="bside__note">Estimates are indicative. Our engineers verify every rating before quoting.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <dialog class="confirm" data-confirm>
+    <form method="dialog" class="confirm__inner">
+      <h2 data-confirm-title>Confirm your request</h2>
+      <p class="confirm__panel" data-confirm-panel></p>
+      <ul class="confirm__list" data-confirm-list></ul>
+      <label class="check"><input type="checkbox" data-confirm-check /><span data-confirm-label>I confirm the requirements above are correct.</span></label>
+      <div class="confirm__actions">
+        <button type="button" class="btn btn--ghost" data-confirm-cancel>Go back</button>
+        <button type="button" class="btn btn--red" data-confirm-ok disabled>Submit</button>
+      </div>
+    </form>
+  </dialog>
+</Base>
+
+<script>
+  import '../../scripts/builder';
+</script>
+
+<style>
+  .bhero { padding-block: clamp(40px, 6vw, 72px); }
+  .bhero h1 { margin-top: 14px; font-size: clamp(32px, 4.6vw, 54px); color: #fff; }
+  .bhero p { margin-top: 14px; max-width: 64ch; color: #b7c1d8; font-size: 17px; }
+
+  .builder { padding-block: 28px 96px; }
+  .builder__grid { display: grid; grid-template-columns: 210px minmax(0, 1fr) 380px; gap: 28px; align-items: start; }
+
+  .bsteps { position: sticky; top: 96px; }
+  .bsteps ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .bstep-btn {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 10px 12px; border: 0; border-radius: 10px; background: none; cursor: pointer;
+    font-size: 14.5px; font-weight: 500; color: var(--muted); text-align: left;
+  }
+  .bstep-btn:hover:not(:disabled) { background: var(--white); color: var(--ink); }
+  .bstep-btn:disabled { cursor: not-allowed; opacity: .55; }
+  .bstep-btn__n {
+    display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%;
+    border: 1.5px solid var(--line-2); font-family: var(--font-mono); font-size: 12px; font-weight: 600; background: var(--white);
+  }
+  .bstep-btn.is-done .bstep-btn__n { background: var(--live); border-color: var(--live); color: #fff; }
+  .bstep-btn.is-current { background: var(--white); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .bstep-btn.is-current .bstep-btn__n { background: var(--navy-800); border-color: var(--navy-800); color: #fff; }
+  .bsteps__mobile, .bsteps__bar { display: none; }
+
+  .builder__main { min-width: 0; }
+  form[data-form], .bdone { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: clamp(20px, 3vw, 32px); box-shadow: var(--shadow-sm); }
+  .bstep header { margin-bottom: 22px; }
+  .bstep h2 { font-size: clamp(24px, 2.6vw, 30px); }
+  .bstep header p { margin-top: 6px; color: var(--ink-2); }
+
+  .appgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .appcard {
+    position: relative; display: grid; gap: 6px; align-content: start;
+    padding: 18px 16px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer;
+    transition: border-color .2s, box-shadow .2s, transform .2s var(--ease);
+  }
+  .appcard:hover { border-color: var(--line-2); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .appcard input { position: absolute; opacity: 0; pointer-events: none; }
+  .appcard__icon {
+    display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px;
+    background: var(--paper); color: var(--navy-700); font-weight: 800; font-size: 18px; font-stretch: 110%;
+  }
+  .appcard__t { font-weight: 700; font-size: 16px; margin-top: 6px; }
+  .appcard__d { font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+  .appcard__check { position: absolute; top: 12px; right: 12px; display: none; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--red); color: #fff; }
+  .appcard:has(input:checked) { border-color: var(--red); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-accent) 10%, transparent); }
+  .appcard:has(input:checked) .appcard__icon { background: var(--red); color: #fff; }
+  .appcard:has(input:checked) .appcard__check { display: grid; }
+  .appcard:has(input:focus-visible) { outline: 2px solid var(--red); outline-offset: 2px; }
+
+  .bfield { border: 0; padding: 0; margin: 0 0 22px; min-width: 0; }
+  .bfield legend, .flabel { display: block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { position: relative; cursor: pointer; }
+  .pill input { position: absolute; opacity: 0; }
+  .pill span { display: inline-block; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 14.5px; font-weight: 500; transition: all .15s; }
+  .pill:hover span { border-color: var(--line-2); }
+  .pill input:checked + span { border-color: var(--navy-700); background: color-mix(in srgb, var(--brand-primary) 6%, transparent); color: var(--navy-800); box-shadow: inset 0 0 0 1px var(--navy-700); }
+  .pill input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+  .bfield .input { margin-top: 10px; }
+
+  .optgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .optgrid--2 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .optcard { position: relative; display: grid; gap: 4px; padding: 14px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; transition: all .15s; }
+  .optcard input { position: absolute; opacity: 0; }
+  .optcard strong { font-size: 15px; }
+  .optcard span { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .optcard:has(input:checked) { border-color: var(--navy-700); background: color-mix(in srgb, var(--brand-primary) 5%, transparent); box-shadow: inset 0 0 0 1px var(--navy-700); }
+  .optcard--big { padding: 18px; }
+  .optcard--big strong { font-size: 17px; }
+
+  .bgrid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 18px; }
+  .bgrid3 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  .field { display: grid; gap: 0; margin-bottom: 16px; }
+  .checks { display: grid; gap: 10px; }
+  .checks--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; cursor: pointer; }
+  .check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--navy-700); flex: none; }
+
+  .loads { display: grid; gap: 12px; margin-bottom: 26px; }
+  .loads__sub { font-size: 18px; margin-top: 6px; }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chips__label { font-size: 13px; color: var(--muted); margin-right: 2px; }
+  .chips :global(.qchip) { padding: 6px 11px; border: 1px dashed var(--line-2); border-radius: 999px; background: var(--paper); font-size: 13px; cursor: pointer; transition: all .15s; }
+  .chips :global(.qchip:hover) { border-style: solid; border-color: var(--navy-700); color: var(--navy-700); background: var(--white); }
+  .lhead { display: grid; grid-template-columns: minmax(0, 1.6fr) 170px 120px 150px 36px; gap: 8px; padding: 0 12px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .lhead--f { grid-template-columns: minmax(0, 1.6fr) 120px 120px 200px 36px; }
+  .tip { display: flex; gap: 8px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: #fff8e6; color: #6b4e00; font-size: 13.5px; line-height: 1.5; }
+  .tip :global(svg) { flex: none; margin-top: 2px; color: #d99a00; }
+
+  .bnav { display: flex; align-items: center; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .bnav [data-next], .bnav [data-submit] { margin-left: auto; }
+  .link-reset { border: 0; background: none; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+  .bside { position: sticky; top: 96px; }
+  .bside__card { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); }
+  .bside__head { display: flex; align-items: center; justify-content: space-between; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .led { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 8px var(--live); }
+  .bside__title { margin-top: 10px; font-weight: 700; font-size: 16px; line-height: 1.35; min-height: 2.7em; }
+  .bside__svg { margin-top: 12px; padding: 12px; border-radius: 12px; background: radial-gradient(100% 80% at 50% 0%, #fff, var(--plate)); border: 1px solid var(--line); }
+  .bside__svg :global(svg) { width: 100%; height: auto; max-height: 360px; display: block; }
+  .bside__kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 14px 0 0; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .bside__kpis div { background: var(--paper); padding: 10px 12px; }
+  .bside__kpis dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .bside__kpis dd { margin: 3px 0 0; font-family: var(--font-mono); font-weight: 600; font-size: 15px; }
+  .bside__note { margin-top: 12px; font-size: 12px; color: var(--muted); }
+
+  .contact-box { margin: 26px 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+  .contact-box h3 { font-size: 18px; }
+  .contact-box .muted { margin: 4px 0 16px; color: var(--muted); font-size: 14px; }
+  .contact-box .muted a { color: var(--navy-700); text-decoration: underline; }
+  .form-error { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--red-050); color: var(--red-600); font-size: 14px; }
+
+  .bdone { text-align: center; padding-block: 48px; }
+  .bdone__icon { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: rgb(34 197 94 / 14%); color: #15803d; }
+  .bdone h2 { margin-top: 18px; font-size: 30px; }
+  .bdone__ref { margin-top: 10px; font-size: 18px; font-weight: 600; color: var(--navy-700); }
+  .bdone p { max-width: 54ch; margin: 12px auto 0; color: var(--ink-2); }
+  .bdone__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 24px; }
+
+  .confirm { width: min(560px, calc(100vw - 32px)); border: 0; border-radius: 18px; padding: 0; box-shadow: var(--shadow-lg); }
+  .confirm::backdrop { background: rgb(8 17 41 / 55%); backdrop-filter: blur(3px); }
+  .confirm__inner { padding: 26px; display: grid; gap: 14px; }
+  .confirm h2 { font-size: 24px; }
+  .confirm__panel { font-weight: 600; color: var(--navy-800); }
+  .confirm__list { margin: 0; padding: 14px 14px 14px 32px; border-radius: 10px; background: var(--paper); font-size: 14px; color: var(--ink-2); display: grid; gap: 4px; }
+  .confirm__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+  @media (max-width: 1180px) {
+    .builder__grid { grid-template-columns: minmax(0, 1fr) 340px; }
+    .bsteps { grid-column: 1 / -1; position: static; }
+    .bsteps ol { display: none; }
+    .bsteps__mobile { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .bsteps__bar { display: block; height: 6px; margin-top: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
+    .bsteps__bar span { display: block; height: 100%; background: var(--red); transition: width .3s var(--ease); }
+  }
+  @media (max-width: 900px) {
+    .builder__grid { grid-template-columns: 1fr; }
+    .bside { position: static; order: -1; }
+    .bside__svg :global(svg) { max-height: 220px; }
+    .lhead { display: none; }
+  }
+  @media (max-width: 600px) {
+    .bgrid2, .bgrid3, .checks--grid { grid-template-columns: 1fr; }
+    .bnav { flex-wrap: wrap; }
+  }
+</style>

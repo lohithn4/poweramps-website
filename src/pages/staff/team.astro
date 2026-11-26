@@ -1,0 +1,69 @@
+---
+import Base from '../../layouts/Base.astro';
+import StaffNav from '../../components/StaffNav.astro';
+---
+<Base title="Team & clients" noindex>
+  <section class="portal">
+    <div class="wrap">
+      <div class="portal-head">
+        <div><h1>Team & clients</h1><p>Manage who can access the staff portal.</p></div>
+        <StaffNav active="team" />
+      </div>
+      <div class="pgrid">
+        <div class="pstack">
+          <div class="pcard">
+            <div class="pcard__h"><h2>Staff</h2></div>
+            <div data-staff><div class="skeleton"></div></div>
+          </div>
+          <div class="pcard">
+            <div class="pcard__h"><h2>Registered clients</h2></div>
+            <div data-clients><div class="skeleton"></div></div>
+          </div>
+        </div>
+        <div class="pcard" data-invite-card hidden>
+          <div class="pcard__h"><h2>Add a staff member</h2></div>
+          <form class="pform" data-invite novalidate>
+            <label class="field"><span class="flabel">Name</span><input class="input" name="name" required /></label>
+            <label class="field"><span class="flabel">Email</span><input class="input" type="email" name="email" required /></label>
+            <label class="field"><span class="flabel">Access</span><select class="input" name="role"><option value="staff">Staff: manage requests & orders</option><option value="admin">Admin: also manage team</option></select></label>
+            <p class="form-error" data-error hidden></p>
+            <button class="btn btn--red" type="submit">Send invitation</button>
+            <p style="font-size:13px;color:var(--muted)">They'll get an email to set their password. They can also sign in with Google using the same email.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>.flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }</style>
+
+<script>
+  import { api, requireAuth, type Me } from '../../scripts/api';
+  import { $, bindForm, esc, fmtDate, toast } from '../../scripts/ui';
+
+  let me: Me;
+  async function load() {
+    const [{ users: staff }, { users: clients }] = await Promise.all([api('/staff/users'), api('/staff/users?role=client')]);
+    const isAdmin = me.role === 'admin';
+    $('[data-staff]').innerHTML = `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Name</th><th>Role</th><th>Status</th>${isAdmin ? '<th></th>' : ''}</tr></thead><tbody>
+      ${staff.map((u: any) => `<tr><td>${esc(u.name)}<span class="sub">${esc(u.email)}</span></td>
+        <td><span class="badge badge--${u.role === 'admin' ? 'red' : 'blue'}">${u.role}</span></td>
+        <td>${u.active ? '<span class="badge badge--green">Active</span>' : '<span class="badge badge--muted">Disabled</span>'}</td>
+        ${isAdmin ? `<td>${u.id === me.id ? '<span class="sub">You</span>' : `<button class="btn btn--ghost btn--sm" data-toggle="${u.id}" data-active="${u.active}">${u.active ? 'Disable' : 'Enable'}</button>`}</td>` : ''}</tr>`).join('')}
+      </tbody></table></div>`;
+    $('[data-clients]').innerHTML = clients.length ? `<div class="ptable-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Phone</th><th>Requests</th><th>Joined</th></tr></thead><tbody>
+      ${clients.map((u: any) => `<tr><td>${esc(u.name)}<span class="sub">${esc(u.company ?? '')} ${esc(u.email)}</span></td><td>${esc(u.phone ?? '—')}</td><td>${u.requests}</td><td>${fmtDate(u.created_at)}</td></tr>`).join('')}
+      </tbody></table></div>` : '<div class="pempty">No registered clients yet.</div>';
+    $('[data-staff]').querySelectorAll<HTMLButtonElement>('[data-toggle]').forEach((b) => b.addEventListener('click', async () => {
+      const active = b.dataset.active === '1';
+      if (!confirm(`${active ? 'Disable' : 'Enable'} this staff account?`)) return;
+      try { await api(`/staff/users/${b.dataset.toggle}`, { method: 'PATCH', body: { active: !active } }); toast('Updated'); load(); } catch (e: any) { toast(e.message, 'err'); }
+    }));
+  }
+
+  bindForm($('[data-invite]'), async (d) => { await api('/staff/users', { body: d }); toast(`Invitation sent to ${d.email}`); ($('[data-invite]') as HTMLFormElement).reset(); load(); });
+
+  requireAuth('staff').then((u) => { me = u; $('[data-invite-card]').hidden = u.role !== 'admin'; return load(); })
+    .catch((e) => { if (e.message !== 'redirecting') $('[data-staff]').innerHTML = `<p class="form-error">${esc(e.message)}</p>`; });
+</script>

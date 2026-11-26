@@ -3,7 +3,7 @@ import site from '../data/site.json';
 const a = site.address;
 
 export const fullAddress = `${a.line1}, ${a.line2}, ${a.city}, ${a.state} ${a.pincode}, ${a.country}`;
-export const shortAddress = `Yelachenahalli, Kanakapura Road, ${a.city}`;
+export const shortAddress = [a.locality, a.city].filter(Boolean).join(', ');
 
 // Exact pin from Site settings → Map location. Falls back to the locality
 // (not the street address, which makes Google show unrelated businesses).

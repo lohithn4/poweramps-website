@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base title="Choose a new password" noindex>
+  <section class="auth">
+    <div class="auth__card">
+      <h1>Choose a password</h1>
+      <p class="auth__sub">At least 8 characters. Use something you don't use elsewhere.</p>
+      <form class="auth__form" data-form novalidate>
+        <label class="field"><span class="flabel">New password</span>
+          <span class="pw-wrap"><input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required /><button type="button" class="pw-toggle" data-pw>Show</button></span>
+        </label>
+        <label class="field"><span class="flabel">Confirm password</span><input class="input" type="password" name="confirm" autocomplete="new-password" required /></label>
+        <p class="form-error" data-error hidden></p>
+        <button class="btn btn--red btn--block" type="submit">Save password</button>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<style>.flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }</style>
+
+<script>
+  import { api, markSignedIn, sitePath, homeFor, type Me } from '../../scripts/api';
+  import { $, bindForm, qs, toast } from '../../scripts/ui';
+  const pw = $<HTMLInputElement>('input[name=password]');
+  $('[data-pw]').addEventListener('click', (e) => { const show = pw.type === 'password'; pw.type = show ? 'text' : 'password'; (e.target as HTMLElement).textContent = show ? 'Hide' : 'Show'; });
+  bindForm($('[data-form]'), async (d) => {
+    if (d.password !== d.confirm) throw new Error('The two passwords do not match.');
+    const r = await api<{ user: Me }>('/auth/reset', { body: { token: qs('token'), password: d.password } });
+    markSignedIn(true);
+    toast('Password saved. You are signed in.');
+    setTimeout(() => (location.href = sitePath(r.user ? homeFor(r.user) : '/portal/')), 900);
+  });
+</script>

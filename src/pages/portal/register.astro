@@ -1,0 +1,78 @@
+---
+import Base from '../../layouts/Base.astro';
+import SocialButtons from '../../components/SocialButtons.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Create account" noindex>
+  <section class="auth">
+    <div class="auth__card">
+      <div data-step-form>
+        <h1>Create your account</h1>
+        <p class="auth__sub">Build panels, get quotations and track your orders in one place.</p>
+
+        <SocialButtons mode="register" />
+
+        <form class="auth__form" data-register novalidate>
+          <label class="field"><span class="flabel">Full name *</span><input class="input" name="name" autocomplete="name" required /></label>
+          <div class="row2">
+            <label class="field"><span class="flabel">Company</span><input class="input" name="company" autocomplete="organization" /></label>
+            <label class="field"><span class="flabel">Phone</span><input class="input" type="tel" name="phone" autocomplete="tel" /></label>
+          </div>
+          <label class="field"><span class="flabel">Work email *</span><input class="input" type="email" name="email" autocomplete="email" required /></label>
+          <label class="field"><span class="flabel">Password * <small>(min. 8 characters)</small></span>
+            <span class="pw-wrap"><input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required /><button type="button" class="pw-toggle" data-pw>Show</button></span>
+          </label>
+          <label class="check"><input type="checkbox" name="consent" required /><span class="auth__fine">I agree to the <a href={url('/privacy/')} target="_blank">privacy policy</a> and to receive emails about my quotes and orders.</span></label>
+          <p class="form-error" data-error hidden></p>
+          <button class="btn btn--red btn--block" type="submit">Create account</button>
+        </form>
+        <p class="auth__alt">Already have an account? <a data-login href={url('/portal/login/')}>Sign in</a></p>
+      </div>
+
+      <div data-step-done hidden>
+        <h1>Check your inbox</h1>
+        <p class="auth__sub" data-done-text></p>
+        <p class="auth__fine" style="margin-top:14px">Didn't get it? Check spam, or <button type="button" class="auth__link" data-resend style="border:0;background:none;padding:0;cursor:pointer">send it again</button>.</p>
+        <p data-dev hidden style="margin-top:14px"></p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .flabel small { text-transform: none; letter-spacing: 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; }
+  .check input { margin-top: 3px; accent-color: var(--navy-700); }
+  @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  import { api, API_URL, sitePath } from '../../scripts/api';
+  import { $, bindForm, esc, qs, toast } from '../../scripts/ui';
+
+  const emailParam = qs('email');
+  if (emailParam) $<HTMLInputElement>('input[name=email]').value = emailParam;
+  if (qs('next')) ($('[data-login]') as HTMLAnchorElement).href = sitePath(`/portal/login/?next=${encodeURIComponent(qs('next')!)}`);
+  const pw = $<HTMLInputElement>('input[name=password]');
+  $('[data-pw]').addEventListener('click', (e) => { const show = pw.type === 'password'; pw.type = show ? 'text' : 'password'; (e.target as HTMLElement).textContent = show ? 'Hide' : 'Show'; });
+
+  let lastEmail = '';
+  bindForm($('[data-register]'), async (d) => {
+    if (!d.consent) throw new Error('Please accept the privacy policy to continue.');
+    const r = await api<{ devToken?: string }>('/auth/register', { body: d });
+    lastEmail = d.email;
+    $('[data-step-form]').hidden = true;
+    $('[data-step-done]').hidden = false;
+    $('[data-done-text]').innerHTML = `We've sent a verification link to <strong>${esc(d.email)}</strong>. Click it to activate your account.`;
+    if (r.devToken && API_URL.includes('localhost')) {
+      const dev = $('[data-dev]');
+      dev.hidden = false;
+      dev.innerHTML = `<a class="btn btn--ghost btn--sm" href="${sitePath(`/portal/verify/?token=${r.devToken}`)}">Dev only: verify now</a>`;
+    }
+  });
+  $('[data-resend]').addEventListener('click', async () => {
+    try { const r = await api('/auth/resend', { body: { email: lastEmail } }); toast(r.message); } catch (e: any) { toast(e.message, 'err'); }
+  });
+</script>

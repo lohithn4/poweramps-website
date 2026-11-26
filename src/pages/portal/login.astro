@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import SocialButtons from '../../components/SocialButtons.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Sign in" noindex>
+  <section class="auth">
+    <div class="auth__card">
+      <h1>Sign in</h1>
+      <p class="auth__sub">Clients: track orders and quotes. Staff: manage the business.</p>
+      <p class="notice" data-notice hidden style="margin-top:16px"></p>
+
+      <SocialButtons />
+
+      <form class="auth__form" data-login novalidate>
+        <label class="field"><span class="flabel">Email</span><input class="input" type="email" name="email" autocomplete="email" required /></label>
+        <label class="field"><span class="flabel">Password</span>
+          <span class="pw-wrap"><input class="input" type="password" name="password" autocomplete="current-password" required /><button type="button" class="pw-toggle" data-pw>Show</button></span>
+        </label>
+        <div class="auth__row"><span></span><a class="auth__link" href={url('/portal/forgot/')}>Forgot password?</a></div>
+        <p class="form-error" data-error hidden></p>
+        <button class="btn btn--red btn--block" type="submit">Sign in</button>
+        <button class="btn btn--ghost btn--block" type="button" data-resend hidden>Resend verification email</button>
+      </form>
+      <p class="auth__alt">New client? <a data-register href={url('/portal/register/')}>Create a free account</a></p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+</style>
+
+<script>
+  import { api, getMe, markSignedIn, sitePath, homeFor, type Me } from '../../scripts/api';
+  import { $, bindForm, qs, toast } from '../../scripts/ui';
+
+  const next = qs('next');
+  const go = (me: Me) => {
+    const dest = next && !(me.role !== 'client' && next.startsWith('/portal')) ? next : homeFor(me);
+    location.href = sitePath(dest);
+  };
+  getMe().then((me) => me && go(me)).catch(() => {});
+
+  if (next) ($('[data-register]') as HTMLAnchorElement).href = sitePath(`/portal/register/?next=${encodeURIComponent(next)}`);
+
+  const notice = $('[data-notice]');
+  const msgs: Record<string, string> = {
+    verify_sent: `We've sent a verification link to ${qs('email') ?? 'your email'}. Click it to finish signing in.`,
+    cancelled: 'Sign-in was cancelled.',
+    expired: 'That sign-in attempt expired. Please try again.',
+    invalid: 'We could not verify that sign-in. Please try again.',
+    exchange: 'The sign-in provider did not respond. Please try again.',
+    email_in_use: 'An account with this email already exists. Sign in with your password (or reset it), then you can use social sign-in.',
+    no_email: 'Your sign-in provider did not share an email address.',
+    disabled: 'This account has been disabled. Please contact us.',
+    provider: 'That sign-in method is not available.',
+  };
+  const code = qs('notice') ?? qs('error');
+  if (qs('reason') === 'order') { notice.textContent = 'Sign in or create a free account to place your order. Your panel design is saved.'; notice.hidden = false; }
+  else if (code && msgs[code]) { notice.textContent = msgs[code]; notice.hidden = false; }
+
+  const pw = $<HTMLInputElement>('input[name=password]');
+  $('[data-pw]').addEventListener('click', (e) => { const show = pw.type === 'password'; pw.type = show ? 'text' : 'password'; (e.target as HTMLElement).textContent = show ? 'Hide' : 'Show'; });
+
+  const resend = $<HTMLButtonElement>('[data-resend]');
+  resend.addEventListener('click', async () => {
+    const email = $<HTMLInputElement>('input[name=email]').value;
+    try { const r = await api('/auth/resend', { body: { email } }); toast(r.message); } catch (e: any) { toast(e.message, 'err'); }
+  });
+
+  bindForm($('[data-login]'), async (d) => {
+    resend.hidden = true;
+    try {
+      const r = await api<{ user: Me }>('/auth/login', { body: { email: d.email, password: d.password } });
+      markSignedIn(true);
+      go(r.user);
+    } catch (e: any) {
+      if (e.code === 'unverified') resend.hidden = false;
+      throw e;
+    }
+  });
+</script>

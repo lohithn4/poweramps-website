@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Forgot password" noindex>
+  <section class="auth">
+    <div class="auth__card">
+      <h1>Reset your password</h1>
+      <p class="auth__sub">Enter your email and we'll send you a reset link.</p>
+      <form class="auth__form" data-form novalidate>
+        <label class="field"><span class="flabel">Email</span><input class="input" type="email" name="email" autocomplete="email" required /></label>
+        <p class="form-error" data-error hidden></p>
+        <p class="form-ok" data-ok hidden></p>
+        <button class="btn btn--red btn--block" type="submit">Send reset link</button>
+      </form>
+      <p class="auth__alt"><a href={url('/portal/login/')}>Back to sign in</a></p>
+    </div>
+  </section>
+</Base>
+
+<style>.flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }</style>
+
+<script>
+  import { api, API_URL, sitePath } from '../../scripts/api';
+  import { $, bindForm } from '../../scripts/ui';
+  bindForm($('[data-form]'), async (d) => {
+    const r = await api<{ message: string; devToken?: string }>('/auth/forgot', { body: d });
+    const ok = $('[data-ok]');
+    ok.hidden = false;
+    ok.innerHTML = r.message + (r.devToken && API_URL.includes('localhost') ? ` <a href="${sitePath(`/portal/reset/?token=${r.devToken}`)}">Dev: open reset link</a>` : '');
+  });
+</script>

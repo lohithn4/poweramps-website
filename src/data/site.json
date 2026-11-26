@@ -3,6 +3,29 @@
   "legalName": "Poweramps Technology Private Limited",
   "tagline": "Electrical control & power distribution panels, engineered in Bengaluru.",
   "description": "Poweramps Technology designs, manufactures and services LT electrical panels: MCC, PLC, VFD, AMF, DG synchronization, fire-fighting, UPS distribution and bus duct tap-off panels.",
+  "seoTitle": "Electrical Control & Distribution Panels, Bengaluru",
+  "brand": {
+    "wordmark": "POWERAMPS",
+    "wordmarkSub": "TECHNOLOGY PVT. LTD.",
+    "logoImage": "",
+    "primary": "#024998",
+    "accent": "#cd030d",
+    "dark": "#081129"
+  },
+  "refPrefix": "PA",
+  "apiUrl": "https://api.poweramps.in",
+  "hero": {
+    "eyebrow": "LT panel manufacturer",
+    "headline": "Electrical panels that keep your",
+    "lead": "We design, build, test and install control & power distribution panels for factories, water plants, hospitals, data centres and buildings."
+  },
+  "about": {
+    "headline": "Engineering panels in Bengaluru since 1997.",
+    "story": [
+      "Since 1997, Poweramps Technology has manufactured, supplied and serviced electrical panels and control equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.",
+      "Under the direction of K. V. V. Chalapathi, our team combines in-house design, fabrication and testing with installation and maintenance services. Every panel is built from quality components sourced from trusted vendors, and we deal transparently and deliver on time."
+    ]
+  },
   "established": 1997,
   "director": "K. V. V. Chalapathi",
   "phone": "",
@@ -14,7 +37,8 @@
     "city": "Bengaluru",
     "state": "Karnataka",
     "pincode": "560078",
-    "country": "India"
+    "country": "India",
+    "locality": "Yelachenahalli, Kanakapura Rd"
   },
   "gst": "29AAHCP3915D1ZG",
   "cin": "U31501KA2013PTC070871",

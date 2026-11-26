@@ -39,7 +39,7 @@ const gallery = [
       <nav class="crumbs" aria-label="Breadcrumb">
         <a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>About</span>
       </nav>
-      <h1>Engineering panels in Bengaluru since {site.established}.</h1>
+      <h1>{site.about.headline}</h1>
       <p>{site.legalName} manufactures, supplies and services electrical control and power distribution panels for industry, infrastructure and buildings.</p>
     </div>
   </section>
@@ -49,16 +49,7 @@ const gallery = [
       <div class="story__text prose reveal">
         <span class="eyebrow">Our story</span>
         <h2 class="story__h">A trusted name for control panels and electrical equipment.</h2>
-        <p>
-          Since {site.established}, {site.name} has manufactured, supplied and serviced electrical panels and control
-          equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization
-          panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.
-        </p>
-        <p>
-          Under the direction of <strong>{site.director}</strong>, our team combines in-house design, fabrication and
-          testing with installation and maintenance services. Every panel is built from quality components sourced from
-          trusted vendors, and we deal transparently and deliver on time.
-        </p>
+        {site.about.story.map((p) => <p>{p}</p>)}
         <a class="btn btn--red" href={url('/contact')}>Work with us <Icon name="arrow" size={18} /></a>
       </div>
 

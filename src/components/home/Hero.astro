@@ -61,10 +61,10 @@ const DURATION = 5000;
 
   <div class="wrap hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">LT panel manufacturer · {site.address.city} · Since {site.established}</span>
+      <span class="eyebrow">{site.hero.eyebrow} · {site.address.city} · Since {site.established}</span>
 
       <h1>
-        Electrical panels that keep your
+        {site.hero.headline}
         <span class="sr-only">{slides.map((s) => s.phrase).join(', ')}.</span>
         <span class="rot" aria-hidden="true">
           {slides.map((s, i) => (
@@ -74,8 +74,7 @@ const DURATION = 5000;
       </h1>
 
       <p class="hero__lead">
-        We design, build, test and install control &amp; power distribution panels for factories, water plants,
-        hospitals, data centres and buildings: <strong>one {site.address.city} team, from drawing to commissioning.</strong>
+        {site.hero.lead} <strong>One {site.address.city} team, from drawing to commissioning.</strong>
       </p>
 
       <div class="hero__actions">
@@ -87,7 +86,7 @@ const DURATION = 5000;
         <span class="hero__loc-icon"><Icon name="pin" size={18} /></span>
         <span class="hero__loc-text">
           <span class="hero__loc-label">Visit our works</span>
-          <span class="hero__loc-addr">No. 113, Yelachenahalli, Kanakapura Rd, {site.address.city}</span>
+          <span class="hero__loc-addr">{[site.address.line1.split(",")[0], site.address.locality, site.address.city].filter(Boolean).join(", ")}</span>
         </span>
         <span class="hero__loc-go"><span class="hero__loc-go-label">Directions</span> <Icon name="arrow" size={16} /></span>
       </a>
@@ -231,7 +230,7 @@ const DURATION = 5000;
   .rot { display: grid; margin-top: 2px; }
   .rot__item {
     grid-area: 1 / 1;
-    color: #ff5258;
+    color: color-mix(in srgb, var(--brand-accent) 72%, white);
     opacity: 0;
     transform: translateY(0.45em);
     transition: opacity .5s var(--ease), transform .6s var(--ease);
@@ -263,7 +262,7 @@ const DURATION = 5000;
   .hero__loc:hover { background: rgb(255 255 255 / 9%); border-color: rgb(255 255 255 / 28%); }
   .hero__loc-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--red); color: #fff; }
   .hero__loc-text { display: grid; gap: 2px; min-width: 0; line-height: 1.3; }
-  .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #ff8a8e; }
+  .hero__loc-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--brand-accent) 50%, white); }
   .hero__loc-addr { font-size: 15px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hero__loc-go {
     display: inline-flex; align-items: center; gap: 6px; flex: none;
@@ -371,10 +370,10 @@ const DURATION = 5000;
 
   /* ---- Single-line diagram background ---- */
   .hero__sld { position: absolute; right: -60px; top: 40px; width: min(760px, 70vw); opacity: .5; pointer-events: none; }
-  .sld-lines { fill: none; stroke: #2c4a94; stroke-width: 1.5; }
-  .sld-bus { stroke-width: 5; stroke: #35569f; }
-  .sld-flow path { fill: none; stroke: #ff4d55; stroke-width: 2; stroke-dasharray: 3 14; animation: flow 1.6s linear infinite; }
-  .sld-text { fill: #5a75b5; font-family: var(--font-mono); font-size: 12px; }
+  .sld-lines { fill: none; stroke: color-mix(in srgb, var(--brand-primary) 70%, var(--brand-dark)); stroke-width: 1.5; }
+  .sld-bus { stroke-width: 5; stroke: color-mix(in srgb, var(--brand-primary) 80%, var(--brand-dark)); }
+  .sld-flow path { fill: none; stroke: color-mix(in srgb, var(--brand-accent) 75%, white); stroke-width: 2; stroke-dasharray: 3 14; animation: flow 1.6s linear infinite; }
+  .sld-text { fill: color-mix(in srgb, var(--brand-primary) 55%, white); font-family: var(--font-mono); font-size: 12px; }
   @keyframes flow { to { stroke-dashoffset: -34; } }
 
   @media (max-width: 560px) {

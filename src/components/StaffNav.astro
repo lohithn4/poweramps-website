@@ -1,0 +1,11 @@
+---
+import { url } from '../lib/url';
+interface Props { active: 'requests' | 'team' }
+const { active } = Astro.props;
+---
+<nav class="portal-tabs" aria-label="Staff">
+  <a href={url('/staff/')} class:list={{ 'is-active': active === 'requests' }}>Requests & orders</a>
+  <a href={url('/staff/team/')} class:list={{ 'is-active': active === 'team' }}>Team & clients</a>
+  <a href={url('/admin/')} target="_blank" rel="noopener">Website content ↗</a>
+  <a href={url('/portal/')}>My account</a>
+</nav>

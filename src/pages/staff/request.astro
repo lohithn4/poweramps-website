@@ -1,0 +1,136 @@
+---
+import Base from '../../layouts/Base.astro';
+import StaffNav from '../../components/StaffNav.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Manage request" noindex>
+  <section class="portal">
+    <div class="wrap">
+      <div class="portal-head">
+        <div>
+          <nav class="crumbs" aria-label="Breadcrumb"><a href={url('/staff/')}>Staff dashboard</a><span aria-hidden="true">/</span><span data-crumb>Request</span></nav>
+          <h1 data-title style="margin-top:8px">Loading…</h1><p data-meta></p>
+        </div>
+        <StaffNav active="requests" />
+      </div>
+
+      <div class="pgrid">
+        <div class="pstack">
+          <div class="pcard" style="margin-bottom:18px"><div data-tracker></div></div>
+          <div class="pcard">
+            <div class="pcard__h"><h2>Client requirement</h2><button class="btn btn--ghost btn--sm" type="button" data-print>Print / PDF</button></div>
+            <div class="req-svg" data-svg></div>
+            <div data-summary></div>
+          </div>
+        </div>
+
+        <div class="pstack">
+          <div class="pcard">
+            <div class="pcard__h"><h2>Client</h2><span data-badges></span></div>
+            <dl class="kv" data-client></dl>
+          </div>
+
+          <div class="pcard">
+            <div class="pcard__h"><h2>Update status</h2></div>
+            <form class="pform" data-status-form novalidate>
+              <label class="field"><span class="flabel">New status</span><select class="input" name="status" data-status-select></select></label>
+              <label class="field"><span class="flabel">Message / note</span><textarea class="input" name="note" rows="3" placeholder="e.g. Drawings approved, fabrication started. Expected dispatch 12 Dec."></textarea></label>
+              <label class="switch"><input type="checkbox" name="internal" /> Internal note only (client won't see it)</label>
+              <label class="switch"><input type="checkbox" name="notify" checked /> Email the client about this update</label>
+              <p class="form-error" data-error hidden></p>
+              <button class="btn btn--red" type="submit">Save update</button>
+            </form>
+          </div>
+
+          <div class="pcard">
+            <div class="pcard__h"><h2>Send quotation</h2></div>
+            <div data-current-quote></div>
+            <form class="pform" data-quote-form novalidate>
+              <div class="row2">
+                <label class="field"><span class="flabel">Amount (₹, excl. GST)</span><input class="input" type="number" min="1" step="1" name="amount" required /></label>
+                <label class="field"><span class="flabel">Valid for (days)</span><input class="input" type="number" min="1" max="365" name="validity_days" value="30" /></label>
+              </div>
+              <label class="field"><span class="flabel">Terms / notes for client</span><textarea class="input" name="note" rows="4" placeholder="Scope, make of components, delivery period, payment terms…"></textarea></label>
+              <p class="form-error" data-error hidden></p>
+              <button class="btn btn--ghost" type="submit">Send quotation to client</button>
+            </form>
+          </div>
+
+          <div class="pcard">
+            <div class="pcard__h"><h2>History</h2></div>
+            <ol class="timeline" data-timeline></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .flabel { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  @media print {
+    :global(.topbar), :global(.header), :global(.footer), .portal-head :global(nav.portal-tabs), .pgrid > .pstack:last-child { display: none !important; }
+    .pgrid { display: block; }
+  }
+</style>
+
+<script>
+  import { api, requireAuth } from '../../scripts/api';
+  import { $, bindForm, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
+  import { panelSVG, summaryHTML, compute, normalize } from '../../scripts/panel';
+
+  const id = Number(qs('id'));
+  let loaded = false;
+
+  async function load() {
+    const { request: r, events, statuses } = await api(`/requests/${id}`);
+    document.title = `${r.ref} | Staff | ${document.title.split(" | ").pop()}`;
+    $('[data-crumb]').textContent = r.ref;
+    $('[data-title]').textContent = r.title;
+    $('[data-meta]').innerHTML = `<span class="mono">${esc(r.ref)}</span> · Received ${fmtDate(r.created_at, true)} · Qty ${r.quantity}${r.required_by ? ` · Needed by ${esc(r.required_by)}` : ''}`;
+    $('[data-badges]').innerHTML = `${kindBadge(r.kind)} ${statusBadge(r.status, statuses)}`;
+    $('[data-tracker]').innerHTML = tracker(r.status);
+    const tel = r.contact_phone ? `<a href="tel:${esc(r.contact_phone)}">${esc(r.contact_phone)}</a> · <a href="https://wa.me/${esc(String(r.contact_phone).replace(/\D/g, '').replace(/^(\d{10})$/, '91$1'))}" target="_blank" rel="noopener">WhatsApp</a>` : '—';
+    $('[data-client]').innerHTML = `
+      <dt>Name</dt><dd>${esc(r.contact_name)}</dd>
+      <dt>Company</dt><dd>${esc(r.contact_company ?? '—')}</dd>
+      <dt>Email</dt><dd><a href="mailto:${esc(r.contact_email)}?subject=${encodeURIComponent(`${r.ref}: ${r.title}`)}">${esc(r.contact_email)}</a> ${r.email_verified ? '✓' : '(unverified)'}</dd>
+      <dt>Phone</dt><dd>${tel}</dd>
+      <dt>Site</dt><dd>${esc(r.site_location ?? '—')}</dd>
+      <dt>Account</dt><dd>${r.user_id ? 'Registered client' : 'Guest (no account yet)'}</dd>`;
+
+    const cfg = normalize(r.config);
+    const s = compute(cfg);
+    $('[data-svg]').innerHTML = panelSVG(cfg, s);
+    $('[data-summary]').innerHTML = summaryHTML(cfg, s);
+
+    const sel = $<HTMLSelectElement>('[data-status-select]');
+    sel.innerHTML = `<option value="">(no change)</option>` + Object.entries(statuses).filter(([k]) => k !== 'pending_verification')
+      .map(([k, v]) => `<option value="${k}">${esc(v as string)}${k === r.status ? ' (current)' : ''}</option>`).join('');
+
+    $('[data-current-quote]').innerHTML = r.quote_amount
+      ? `<p class="notice" style="margin-bottom:12px">Last quote: <strong>${inr(r.quote_amount)}</strong> on ${fmtDate(r.quoted_at)} (valid ${r.quote_validity_days} days). Sending again replaces it.</p>` : '';
+
+    $('[data-timeline]').innerHTML = [...events].reverse().map((e: any) => `<li class="${e.visible_to_client ? '' : 'is-internal'}">
+      <div class="timeline__meta">${fmtDate(e.created_at, true)}${e.actor ? ` · ${esc(e.actor)}` : ''}${e.status ? ` · ${statusBadge(e.status, statuses)}` : ''}${e.visible_to_client ? '' : '<span class="timeline__tag">Internal</span>'}</div>
+      ${e.note ? `<div class="timeline__note">${esc(e.note)}</div>` : ''}</li>`).join('');
+    loaded = true;
+  }
+
+  bindForm($('[data-status-form]'), async (d) => {
+    await api(`/requests/${id}`, { method: 'PATCH', body: { status: d.status || undefined, note: d.note, internal: !!d.internal, notify: !!d.notify } });
+    toast('Update saved');
+    ($('[data-status-form]') as HTMLFormElement).reset();
+    await load();
+  });
+  bindForm($('[data-quote-form]'), async (d) => {
+    if (!confirm(`Send quotation of ₹${Number(d.amount).toLocaleString('en-IN')} to the client?`)) return;
+    await api(`/requests/${id}/quote`, { body: d });
+    toast('Quotation sent to client');
+    ($('[data-quote-form]') as HTMLFormElement).reset();
+    await load();
+  });
+  $('[data-print]').addEventListener('click', () => window.print());
+
+  requireAuth('staff').then(load).catch((e) => { if (e.message !== 'redirecting' && !loaded) { $('[data-title]').textContent = 'Not found'; $('[data-meta]').textContent = e.message; } });
+</script>

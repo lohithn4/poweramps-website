@@ -1,0 +1,95 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { url } from '../../lib/url';
+---
+<Base title="Order tracking" noindex>
+  <section class="portal">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href={url('/portal/')}>My account</a><span aria-hidden="true">/</span><span data-crumb>Request</span></nav>
+      <div class="portal-head" style="margin-top:12px">
+        <div><h1 data-title>Loading…</h1><p data-meta></p></div>
+        <div data-badges></div>
+      </div>
+
+      <div class="pcard" style="margin-bottom:18px"><div data-tracker><div class="skeleton"></div></div></div>
+
+      <div class="pgrid">
+        <div class="pcard">
+          <div class="pcard__h"><h2>Your requirement</h2><a class="btn btn--ghost btn--sm" data-reorder href={url('/build/')}><Icon name="layers" size={16} />Build similar</a></div>
+          <div class="req-svg" data-svg></div>
+          <div data-summary></div>
+        </div>
+        <div class="pstack">
+          <div class="pcard" data-quote-card hidden>
+            <div class="pcard__h"><h2>Quotation</h2></div>
+            <div data-quote></div>
+          </div>
+          <div class="pcard">
+            <div class="pcard__h"><h2>Updates</h2></div>
+            <ol class="timeline" data-timeline></ol>
+          </div>
+          <div class="pcard" data-cancel-card hidden>
+            <p style="font-size:14px;color:var(--muted)">Plans changed? You can cancel this request before production starts.</p>
+            <button class="btn btn--ghost btn--sm" type="button" data-cancel style="margin-top:10px">Cancel request</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { api, requireAuth } from '../../scripts/api';
+  import { $, esc, fmtDate, inr, kindBadge, qs, statusBadge, toast, tracker } from '../../scripts/ui';
+  import { panelSVG, summaryHTML, compute, normalize } from '../../scripts/panel';
+
+  const id = Number(qs('id'));
+  async function load() {
+    await requireAuth();
+    const { request: r, events, statuses } = await api(`/requests/${id}`);
+    document.title = `${r.ref} | ${document.title.split(" | ").pop()}`;
+    $('[data-crumb]').textContent = r.ref;
+    $('[data-title]').textContent = r.title;
+    $('[data-meta]').innerHTML = `<span class="mono">${esc(r.ref)}</span> · Submitted ${fmtDate(r.created_at)} · Qty ${r.quantity}${r.site_location ? ` · ${esc(r.site_location)}` : ''}`;
+    $('[data-badges]').innerHTML = `${kindBadge(r.kind)} ${statusBadge(r.status, statuses)}`;
+    $('[data-tracker]').innerHTML = r.status === 'cancelled' ? `<p class="form-error">This ${r.kind} was cancelled.</p>${tracker(r.status)}` : r.status === 'on_hold' ? `<p class="notice" style="margin-bottom:14px">This ${r.kind} is on hold. See updates for details.</p>${tracker('accepted')}` : tracker(r.status);
+
+    const cfg = normalize(r.config);
+    const s = compute(cfg);
+    $('[data-svg]').innerHTML = panelSVG(cfg, s);
+    $('[data-summary]').innerHTML = summaryHTML(cfg, s);
+
+    const qc = $('[data-quote-card]');
+    if (r.quote_amount) {
+      qc.hidden = false;
+      const canAccept = r.status === 'quoted';
+      $('[data-quote]').innerHTML = `<div class="quote-box">
+        <div class="quote-box__amt">${inr(r.quote_amount)} <small>+ GST as applicable</small></div>
+        <p style="margin-top:6px;font-size:14px;color:var(--ink-2)">For ${r.quantity} panel${r.quantity > 1 ? 's' : ''} · valid ${r.quote_validity_days} days from ${fmtDate(r.quoted_at)}</p>
+        ${r.quote_note ? `<p style="margin-top:10px;font-size:14.5px;white-space:pre-line">${esc(r.quote_note)}</p>` : ''}
+        ${canAccept ? `<button class="btn btn--red btn--block" style="margin-top:14px" data-accept>Accept quotation & confirm order</button>` : ''}
+      </div>`;
+      $('[data-quote]').querySelector('[data-accept]')?.addEventListener('click', accept);
+    }
+    $('[data-cancel-card]').hidden = !['new', 'reviewing', 'quoted'].includes(r.status);
+    $('[data-timeline]').innerHTML = [...events].reverse().map((e: any) => `<li>
+      <div class="timeline__meta">${fmtDate(e.created_at, true)}${e.status ? ` · ${statusBadge(e.status, statuses)}` : ''}</div>
+      ${e.note ? `<div class="timeline__note">${esc(e.note)}</div>` : ''}</li>`).join('');
+  }
+
+  async function accept(this: HTMLButtonElement) {
+    if (!confirm('Accept this quotation and confirm your order?')) return;
+    this.classList.add('is-busy');
+    try { await api(`/requests/${id}/accept`, { body: {} }); toast('Order confirmed. Thank you!'); await load(); }
+    catch (e: any) { toast(e.message, 'err'); this.classList.remove('is-busy'); }
+  }
+
+  $('[data-cancel]').addEventListener('click', async () => {
+    const reason = prompt('Reason for cancelling (optional):');
+    if (reason === null) return;
+    try { await api(`/requests/${id}/cancel`, { body: { reason } }); toast('Request cancelled'); await load(); } catch (e: any) { toast(e.message, 'err'); }
+  });
+
+  load().catch((e) => { if (e.message !== 'redirecting') { $('[data-title]').textContent = 'Not found'; $('[data-meta]').textContent = e.message; } });
+</script>
