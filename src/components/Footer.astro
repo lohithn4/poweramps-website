@@ -62,7 +62,7 @@ const a = site.address;
 
     <div class="footer__base">
       <span>© {year} {site.legalName}</span>
-      <span class="mono">GSTIN {site.gst}</span>
+      <span class="mono footer__gst" title="GST verified">GSTIN <Icon name="check" size={13} />{site.gst}</span>
     </div>
   </div>
 </footer>
@@ -98,6 +98,8 @@ const a = site.address;
   @media (prefers-reduced-motion: reduce) { .fab, .fab::before, .fab__icon { animation: none; } }
   .footer { padding-block: 72px 28px; color: #aab4cc; }
   .footer--fab { padding-bottom: 92px; }
+  .footer__gst { display: inline-flex; align-items: center; gap: 5px; }
+  .footer__gst :global(svg) { color: #4ade80; stroke-width: 2.6; }
   .footer__grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1.1fr;
