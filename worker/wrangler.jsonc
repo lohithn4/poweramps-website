@@ -19,7 +19,7 @@
     {
       "binding": "DB",
       "database_name": "poweramps",              // from `npx wrangler d1 create <name>`
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "756e98e2-43b4-4fd8-b89d-7339f25c4f79",
       "migrations_dir": "migrations"
     }
   ],
