@@ -61,7 +61,10 @@ const org = {
   ...(site.email ? { email: site.email } : {}),
   ...((site as any).gst ? { taxID: (site as any).gst } : {}),
   ...((site as any).indiamart || (site as any).map?.link ? { sameAs: [(site as any).indiamart, (site as any).map?.link].filter(Boolean) } : {}),
-  areaServed: { '@type': 'Country', name: 'India' },
+  areaServed: [
+    { '@type': 'City', name: site.address.city, ...(site.address.city === 'Bengaluru' ? { alternateName: 'Bangalore' } : {}) },
+    { '@type': 'Country', name: 'India' },
+  ],
   makesOffer: { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Custom electric panel builder (online)', url: new URL(url('/build/'), Astro.site).href } },
   knowsAbout: ['Custom electrical panels', 'MCC panels', 'PLC panels', 'VFD panels', 'AMF panels', 'DG synchronization panels', 'Fire fighting panels', 'Power distribution panels', 'LT panels'],
 };

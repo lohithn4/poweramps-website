@@ -34,6 +34,10 @@ export const siteFaqs: Faq[] = [
     link: { href: url('/about/'), text: `About ${brand}` },
   },
   {
+    q: `Is ${brand} the same as the Poweramp music app?`,
+    a: `No. ${brand}, spelt with an "s", is ${site.legalName}, an electrical panel manufacturer in ${a.city} (Bangalore). We are not connected with the Poweramp music player app. Our website is ${domain}.`,
+  },
+  {
     q: `Can I build a custom electric panel online at ${brand}?`,
     a: `Yes. Our online panel builder at ${domain}/build lets you pick what the panel is for, list your motors or feeders, and choose every component and make. Ratings are calculated and the panel is drawn as you go. Send it to us and our engineers reply with a quotation, usually within 1–2 days.`,
     link: { href: url('/build/'), text: 'Build your panel online' },
@@ -57,12 +61,13 @@ export const siteFaqs: Faq[] = [
     a: `Yes. Every panel is factory tested at our ${a.city} works before it is dispatched.`,
   },
   {
-    q: 'Do you supply panels outside Bengaluru?',
-    a: `Yes. Panels are built in ${a.city} and supplied across India. We also handle installation, commissioning and maintenance.`,
+    q: 'Do you supply panels outside Bangalore / Bengaluru?',
+    a: `Yes. Panels are built in ${a.city} and supplied across Karnataka and India. We also handle installation, commissioning and maintenance.`,
+    link: { href: url('/electrical-panel-manufacturer-india/'), text: 'Ordering from anywhere in India' },
   },
   {
     q: `Where is ${brand} located?`,
-    a: `Our works are at ${a.line1}, ${a.line2}, ${a.city}, ${a.state} ${a.pincode}.`,
+    a: `Our works are at ${a.line1}, ${a.line2}, ${a.city} (Bangalore), ${a.state} ${a.pincode}.`,
     ...(site.map?.link ? { link: { href: site.map.link, text: 'Open in Google Maps' } } : {}),
   },
   {
