@@ -53,3 +53,16 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+      # Ask Bing & co. (IndexNow) to recrawl after content changes. Google has no such API:
+      # use Search Console > URL inspection > Request indexing for Google.
+      - uses: actions/checkout@v7
+        if: github.event_name != 'schedule'
+        with:
+          sparse-checkout: |
+            public
+            scripts
+      - name: Ping IndexNow
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node scripts/indexnow.mjs "${{ steps.deployment.outputs.page_url }}"

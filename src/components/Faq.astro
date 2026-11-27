@@ -1,0 +1,51 @@
+---
+/**
+ * Visible FAQ accordion. Pair it with faqJsonLd() from src/data/faqs.ts so the
+ * same questions also go into the page's FAQPage structured data.
+ */
+import type { Faq } from '../data/faqs';
+
+interface Props {
+  title: string;
+  eyebrow?: string;
+  intro?: string;
+  faqs: Faq[];
+  id?: string;
+}
+const { title, eyebrow = 'Questions', intro, faqs, id = 'faq' } = Astro.props;
+---
+<section class="section faq" id={id}>
+  <div class="wrap faq__grid">
+    <div>
+      <span class="eyebrow">{eyebrow}</span>
+      <h2>{title}</h2>
+      {intro && <p class="faq__intro">{intro}</p>}
+    </div>
+    <div class="faq__list">
+      {faqs.map((f, i) => (
+        <details open={i === 0}>
+          <summary>{f.q}</summary>
+          <p>{f.a}{f.link && <> <a href={f.link.href}>{f.link.text}</a></>}</p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq { border-top: 1px solid var(--line); }
+  .faq__grid { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+  .faq h2 { margin-top: 8px; font-size: clamp(24px, 2.8vw, 34px); }
+  .faq__intro { margin-top: 10px; color: var(--ink-2); font-size: 15.5px; line-height: 1.6; }
+  .faq__list { display: grid; gap: 10px; }
+  .faq details { border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
+  .faq summary { cursor: pointer; padding: 14px 16px; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; flex: none; font-size: 20px; line-height: 1; color: var(--action); }
+  .faq details[open] summary::after { content: '−'; }
+  .faq details p { padding: 0 16px 14px; color: var(--ink-2); font-size: 15.5px; line-height: 1.65; }
+  .faq details a { color: var(--action); font-weight: 600; }
+  @media (max-width: 900px) {
+    .faq__grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

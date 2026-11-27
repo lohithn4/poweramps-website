@@ -60,9 +60,8 @@ const DURATION = 5000;
 
   <div class="wrap hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">{site.hero.eyebrow} · {site.address.city} · Since {site.established}</span>
-
       <h1>
+        <span class="eyebrow hero__kicker"><span class="hero__brand">{(site as any).shortName || site.name}</span> · {site.hero.eyebrow} · {site.address.city} · Since {site.established}</span>
         {site.hero.headline}
         <span class="sr-only">{slides.map((s) => s.phrase).join(', ')}.</span>
         <span class="rot" aria-hidden="true">
@@ -215,11 +214,15 @@ const DURATION = 5000;
 
   /* ---- Headline with rotating benefit ---- */
   .hero h1 {
-    margin-top: 10px;
+    margin-top: 0;
     font-size: clamp(30px, min(3.7vw, 6.6vh), 52px);
     line-height: 1.04;
     color: #fff;
   }
+  /* Brand line sits inside the h1 so the main heading reads "Poweramps · LT panel manufacturer … Electrical panels that keep your …" */
+  .hero__kicker { display: block; margin-bottom: 10px; line-height: 1.6; }
+  .hero__kicker::before { display: inline-block; vertical-align: middle; margin: -2px 10px 0 0; }
+  .hero__brand { color: #fff; font-weight: 600; }
   .rot { display: grid; margin-top: 2px; }
   .rot__item {
     grid-area: 1 / 1;

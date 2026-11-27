@@ -14,6 +14,8 @@ import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
 import { url } from '../lib/url';
 import { directionsUrl, openMapUrl } from '../lib/location';
 import { APPS } from '../scripts/panel';
+import Faq from '../components/Faq.astro';
+import { siteFaqs, faqJsonLd } from '../data/faqs';
 
 const panels = await getPanels();
 const categories = await getCategories();
@@ -70,7 +72,7 @@ const steps = [
   { icon: 'wrench', title: 'Install & maintain', text: 'On-site installation, commissioning and ongoing maintenance support.' },
 ] as const;
 ---
-<Base>
+<Base description={(site as any).homeDescription || site.description} jsonLd={{ '@graph': [faqJsonLd(siteFaqs)] }}>
   <Hero panels={panels} categories={categories} />
   <IndustryTicker />
 
@@ -78,9 +80,9 @@ const steps = [
   <section class="launch blueprint on-dark" id="build">
     <div class="wrap launch__grid">
       <div class="launch__copy reveal">
-        <span class="launch__badge"><span class="led" aria-hidden="true"></span>Online panel builder</span>
-        <h2>Build your panel online.<br /><span>Get a quotation in 1–2 days.</span></h2>
-        <p>Pick what the panel is for, add your motors or feeders, and choose every component and make. We calculate the ratings and draw your panel as you go.</p>
+        <span class="launch__badge"><span class="led" aria-hidden="true"></span>Online electric panel builder · India</span>
+        <h2>Build a custom electric panel online.<br /><span>Get a quotation in 1–2 days.</span></h2>
+        <p>Our free electric panel builder works from anywhere in India. Pick what the panel is for, add your motors or feeders, and choose every component and make. We calculate the ratings and draw your panel as you go.</p>
         <ol class="launch__steps">
           <li><b>1</b>Sign up &amp; verify email</li>
           <li><b>2</b>Configure your panels</li>
@@ -278,6 +280,9 @@ const steps = [
       <LocationMap class="visit__map reveal" ratio="16 / 11" />
     </div>
   </section>
+
+  <!-- ================= FAQ (also FAQPage structured data) ================= -->
+  <Faq title={`${(site as any).shortName || site.name} FAQs`} intro="Quick answers about our panels and the online electric panel builder." faqs={siteFaqs} />
 
   <!-- ================= CTA ================= -->
   <section class="section--tight cta-wrap">

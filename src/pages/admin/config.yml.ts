@@ -156,10 +156,12 @@ collections:
         format: json
         fields:
           - { label: Company name, name: name, widget: string }
+          - { label: Short brand name, name: shortName, widget: string, required: false, hint: "The name people type into Google, e.g. Poweramps. Leads the home page title and is the site name in search results." }
           - { label: Legal name, name: legalName, widget: string }
           - { label: Tagline, name: tagline, widget: string }
           - { label: SEO description, name: description, widget: text }
-          - { label: Home page title (SEO), name: seoTitle, widget: string, hint: "Shown after the company name in browser tabs and Google, e.g. Electrical Control Panels, Pune" }
+          - { label: Home page description (SEO), name: homeDescription, widget: text, required: false, hint: "The Google snippet for the home page. Mention the brand and the online panel builder." }
+          - { label: Home page title (SEO), name: seoTitle, widget: string, hint: "Shown after the short brand name in browser tabs and Google, e.g. Electrical Control Panels, Pune" }
           - label: Brand (logo & colours)
             name: brand
             widget: object
