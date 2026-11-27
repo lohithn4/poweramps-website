@@ -25,8 +25,10 @@ const { title, fullTitle: fullTitleProp, description = site.description, image, 
 // Client portal, staff screens and the content editor are private: never in search results.
 const privatePage = /\/(portal|staff|admin)(\/|$)/.test(Astro.url.pathname);
 const noindex = noindexProp || privatePage;
-// Section-by-section scrolling on public pages (off where people fill in forms: builder, portal, staff).
-const snap = !privatePage && !/\/build(\/|$)/.test(Astro.url.pathname);
+// Screen-by-screen swiping on phones for the overview pages. Off where people fill in forms
+// (builder, portal, staff) and where they look closely at one thing (panel catalogue and
+// product pages, articles, projects): there the page must stay exactly where it is scrolled to.
+const snap = !privatePage && !/\/(build|panels|articles|projects)(\/|$)/.test(Astro.url.pathname);
 // Short brand ("Poweramps") is what people type into Google; it leads the home title and is the site name.
 const brand: string = (site as any).shortName || site.name;
 const fullTitle = fullTitleProp ?? (title ? `${title} | ${brand}` : `${brand} | ${site.seoTitle}`);

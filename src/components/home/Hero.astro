@@ -182,6 +182,16 @@ const DURATION = 5000;
       io.observe(root);
       document.addEventListener('visibilitychange', () => root.classList.toggle('is-paused', document.hidden));
 
+      // touch screens: touching the showcase holds the current panel (no hover there), and it
+      // carries on rotating 12 s after the last touch
+      const show = root.querySelector<HTMLElement>('.show');
+      let holdTimer = 0;
+      show?.addEventListener('touchstart', () => {
+        root.classList.add('is-held');
+        clearTimeout(holdTimer);
+        holdTimer = window.setTimeout(() => root.classList.remove('is-held'), 12000);
+      }, { passive: true });
+
       // swipe on touch screens
       const frame = root.querySelector<HTMLElement>('.show__frame');
       let x0: number | null = null;
@@ -283,7 +293,8 @@ const DURATION = 5000;
   @keyframes fill { from { width: 0; } to { width: 100%; } }
   .show:hover .show__bar.is-active span,
   .show:focus-within .show__bar.is-active span,
-  .hero.is-paused .show__bar.is-active span { animation-play-state: paused; }
+  .hero.is-paused .show__bar.is-active span,
+  .hero.is-held .show__bar.is-active span { animation-play-state: paused; }
   .hero.is-static .show__bar.is-active span { animation: none; width: 100%; }
 
   .show__slide {
