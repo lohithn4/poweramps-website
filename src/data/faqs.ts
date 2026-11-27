@@ -75,6 +75,8 @@ export const siteFaqs: Faq[] = [
     a: [
       'Build your panel online, or send your requirements through the enquiry form on our contact page.',
       site.phone ? `You can also call ${site.contactName ? `${site.contactName}${site.contactRole ? ` (${site.contactRole})` : ''} on ` : ''}${site.phone}.` : '',
+      site.whatsapp ? `WhatsApp: ${site.whatsapp}.` : '',
+      site.email ? `Email: ${site.email}.` : '',
     ].filter(Boolean).join(' '),
     link: { href: url('/contact/'), text: 'Contact us' },
   },

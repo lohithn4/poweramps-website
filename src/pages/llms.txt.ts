@@ -18,6 +18,7 @@ export const GET: APIRoute = ({ site: siteUrl }) => {
     '',
     `- Address: ${a.line1}, ${a.line2}, ${a.city} (Bangalore), ${a.state} ${a.pincode}, ${a.country}`,
     ...(site.phone ? [`- Phone: ${site.phone}${site.contactName ? ` (${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''})` : ''}`] : []),
+    ...(site.whatsapp ? [`- WhatsApp: ${site.whatsapp}`] : []),
     ...(site.email ? [`- Email: ${site.email}`] : []),
     ...((site as any).gst ? [`- GSTIN: ${(site as any).gst}`] : []),
     `- Website: ${abs('/')}`,

@@ -13,7 +13,8 @@ import { getPanels } from '../lib/panels';
  */
 const panels = await getPanels();
 const endpoint = site.formEndpoint;
-const fallback = site.email ? 'email' : site.whatsapp ? 'whatsapp' : 'indiamart';
+// WhatsApp first: works on phones and WhatsApp Web; mailto often does nothing on PCs without a mail app.
+const fallback = site.whatsapp ? 'whatsapp' : site.email ? 'email' : 'indiamart';
 ---
 <form
   class="form"
@@ -69,6 +70,7 @@ const fallback = site.email ? 'email' : site.whatsapp ? 'whatsapp' : 'indiamart'
         : fallback === 'whatsapp'
           ? 'Opens WhatsApp with the enquiry filled in.'
           : 'Your enquiry is copied, then our IndiaMART enquiry page opens.'}
+    {!endpoint && fallback === 'whatsapp' && site.email && <> Prefer email? Write to <a href={`mailto:${site.email}`}>{site.email}</a>.</>}
   </p>
 </form>
 

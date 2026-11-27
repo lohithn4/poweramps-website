@@ -62,6 +62,10 @@ const org = {
   ...((site as any).map?.link ? { hasMap: (site as any).map.link } : {}),
   ...(site.phone ? { telephone: site.phone } : {}),
   ...(site.email ? { email: site.email } : {}),
+  contactPoint: [
+    ...(site.phone ? [{ '@type': 'ContactPoint', contactType: 'sales', telephone: site.phone, ...(site.email ? { email: site.email } : {}), areaServed: 'IN' }] : []),
+    ...(site.whatsapp ? [{ '@type': 'ContactPoint', contactType: 'customer service', name: 'WhatsApp', telephone: site.whatsapp, url: `https://wa.me/${site.whatsapp.replace(/\D/g, '')}`, areaServed: 'IN' }] : []),
+  ],
   ...((site as any).gst ? { taxID: (site as any).gst } : {}),
   ...((site as any).indiamart || (site as any).map?.link ? { sameAs: [(site as any).indiamart, (site as any).map?.link].filter(Boolean) } : {}),
   areaServed: [
