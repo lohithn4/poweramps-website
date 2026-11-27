@@ -6,7 +6,7 @@ import { url } from '../lib/url';
 import { getClients } from '../lib/clients';
 import { getTestimonials } from '../lib/testimonials';
 import { getArticles, getProjects } from '../lib/content';
-import { extraContacts } from '../lib/contacts';
+import { extraContacts, whatsappOwner } from '../lib/contacts';
 import { PANEL_TYPES, typeHref } from '../data/panel-types';
 
 const year = new Date().getFullYear();
@@ -26,7 +26,7 @@ const a = site.address;
         <div class="footer__contact">
           {site.phone && <a href={`tel:${site.phone.replace(/\s/g, '')}`} title={site.contactName ? `${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}` : undefined}><Icon name="phone" size={16} />{site.phone}</a>}
           {extraContacts.map((c) => <a href={c.tel} title={`${c.name}${c.role ? `, ${c.role}` : ''}`}><Icon name="phone" size={16} />{c.phone} ({c.name})</a>)}
-          {site.whatsapp && <a href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener"><Icon name="whatsapp" size={16} />WhatsApp {site.whatsapp}</a>}
+          {site.whatsapp && <a href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener"><Icon name="whatsapp" size={16} />{whatsappOwner ? `WhatsApp ${whatsappOwner.name}` : `WhatsApp ${site.whatsapp}`}</a>}
           {site.email && <a href={`mailto:${site.email}`}><Icon name="mail" size={16} />{site.email}</a>}
           <a href={site.indiamart} target="_blank" rel="noopener"><Icon name="external" size={16} />View us on IndiaMART</a>
         </div>

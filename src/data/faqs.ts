@@ -8,7 +8,7 @@
 import site from './site.json';
 import { PANEL_TYPES, typeHref } from './panel-types';
 import { url } from '../lib/url';
-import { extraContacts, contactLine } from '../lib/contacts';
+import { extraContacts, contactLine, whatsappOwner } from '../lib/contacts';
 
 export interface Faq {
   q: string;
@@ -77,7 +77,7 @@ export const siteFaqs: Faq[] = [
       'Build your panel online, or send your requirements through the enquiry form on our contact page.',
       site.phone ? `You can also call ${site.contactName ? `${site.contactName}${site.contactRole ? ` (${site.contactRole})` : ''} on ` : ''}${site.phone}.` : '',
       ...extraContacts.map((c) => `Or call ${contactLine(c)}.`),
-      site.whatsapp ? `WhatsApp: ${site.whatsapp}.` : '',
+      site.whatsapp && !whatsappOwner ? `WhatsApp: ${site.whatsapp}.` : '',
       site.email ? `Email: ${site.email}.` : '',
     ].filter(Boolean).join(' '),
     link: { href: url('/contact/'), text: 'Contact us' },

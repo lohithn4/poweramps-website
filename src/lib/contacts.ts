@@ -14,5 +14,12 @@ export const extraContacts: Contact[] = (((site as any).contacts ?? []) as any[]
     wa: c.whatsapp ? `https://wa.me/${String(c.phone).replace(/\D/g, '')}` : undefined,
   }));
 
+const digits = (s: unknown) => String(s ?? '').replace(/\D/g, '').slice(-10);
+
+/** The named contact whose number is the site's WhatsApp (so it is not listed twice). */
+export const whatsappOwner: Contact | undefined = site.whatsapp
+  ? extraContacts.find((c) => digits(c.phone) === digits(site.whatsapp))
+  : undefined;
+
 /** "Rajshekar (Director) on +91 98450 79640 (also on WhatsApp)" */
 export const contactLine = (c: Contact) => `${c.name}${c.role ? ` (${c.role})` : ''} on ${c.phone}${c.whatsapp ? ' (also on WhatsApp)' : ''}`;

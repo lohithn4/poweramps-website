@@ -2,6 +2,7 @@
 import Icon from './Icon.astro';
 import site from '../data/site.json';
 import { getPanels } from '../lib/panels';
+import { whatsappOwner } from '../lib/contacts';
 
 /**
  * Enquiry form for a static site.
@@ -68,7 +69,7 @@ const fallback = site.whatsapp ? 'whatsapp' : site.email ? 'email' : 'indiamart'
       : fallback === 'email'
         ? 'Opens your email app with the enquiry filled in.'
         : fallback === 'whatsapp'
-          ? 'Opens WhatsApp with the enquiry filled in.'
+          ? `Opens WhatsApp with the enquiry filled in${whatsappOwner ? `, to ${whatsappOwner.name}${whatsappOwner.role ? ` (${whatsappOwner.role})` : ''}` : ''}.`
           : 'Your enquiry is copied, then our IndiaMART enquiry page opens.'}
     {!endpoint && fallback === 'whatsapp' && site.email && <> Prefer email? Write to <a href={`mailto:${site.email}`}>{site.email}</a>.</>}
   </p>

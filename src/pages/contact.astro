@@ -6,7 +6,7 @@ import site from '../data/site.json';
 import LocationMap from '../components/LocationMap.astro';
 import { url } from '../lib/url';
 import { fullAddress, directionsUrl } from '../lib/location';
-import { extraContacts } from '../lib/contacts';
+import { extraContacts, whatsappOwner } from '../lib/contacts';
 
 const a = site.address;
 ---
@@ -50,13 +50,13 @@ const a = site.address;
         {extraContacts.map((c) => (
           <div class="info-card">
             <span class="info-card__icon"><Icon name="phone" /></span>
-            <div><h3>{c.name}{c.role && `, ${c.role}`}</h3><p><a href={c.tel}>{c.phone}</a>{c.wa && <> · <a class="info-card__wa" href={c.wa} target="_blank" rel="noopener">WhatsApp</a></>}</p></div>
+            <div><h3>{c.name}{c.role && `, ${c.role}`}</h3><p><a href={c.tel}>{c.phone}</a>{c.wa && c !== whatsappOwner && <> · <a class="info-card__wa" href={c.wa} target="_blank" rel="noopener">WhatsApp</a></>}</p></div>
           </div>
         ))}
         {site.whatsapp && (
           <a class="info-card" href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener">
             <span class="info-card__icon info-card__icon--wa"><Icon name="whatsapp" /></span>
-            <div><h3>WhatsApp</h3><p>{site.whatsapp}</p></div>
+            <div><h3>WhatsApp</h3><p>{site.whatsapp}</p>{whatsappOwner && <p class="info-card__who">Chat with {whatsappOwner.name}{whatsappOwner.role && `, ${whatsappOwner.role}`}</p>}</div>
           </a>
         )}
         {site.email && (

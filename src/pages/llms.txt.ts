@@ -3,7 +3,7 @@ import site from '../data/site.json';
 import { PANEL_TYPES, typeHref } from '../data/panel-types';
 import { REGIONS, regionHref } from '../data/regions';
 import { siteFaqs } from '../data/faqs';
-import { extraContacts } from '../lib/contacts';
+import { extraContacts, whatsappOwner } from '../lib/contacts';
 import { getArticles, getProjects } from '../lib/content';
 
 // /llms.txt: a plain summary of the business for AI assistants and AI search
@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ site: siteUrl }) => {
     `- Address: ${a.line1}, ${a.line2}, ${a.city} (Bangalore), ${a.state} ${a.pincode}, ${a.country}`,
     ...(site.phone ? [`- Phone: ${site.phone}${site.contactName ? ` (${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''})` : ''}`] : []),
     ...extraContacts.map((c) => `- Phone: ${c.phone} (${c.name}${c.role ? `, ${c.role}` : ''}${c.whatsapp ? '; also WhatsApp' : ''})`),
-    ...(site.whatsapp ? [`- WhatsApp: ${site.whatsapp}`] : []),
+    ...(site.whatsapp && !whatsappOwner ? [`- WhatsApp: ${site.whatsapp}`] : []),
     ...(site.email ? [`- Email: ${site.email}`] : []),
     ...((site as any).gst ? [`- GSTIN: ${(site as any).gst}`] : []),
     `- Website: ${abs('/')}`,
