@@ -10,6 +10,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import site from '../data/site.json';
 import { url } from '../lib/url';
+import { extraContacts } from '../lib/contacts';
 
 interface Props {
   title?: string;
@@ -62,6 +63,10 @@ const org = {
   ...((site as any).map?.link ? { hasMap: (site as any).map.link } : {}),
   ...(site.phone ? { telephone: site.phone } : {}),
   ...(site.email ? { email: site.email } : {}),
+  employee: [
+    ...(site.contactName ? [{ '@type': 'Person', name: site.contactName, ...(site.contactRole ? { jobTitle: site.contactRole } : {}), ...(site.phone ? { telephone: site.phone } : {}) }] : []),
+    ...extraContacts.map((c) => ({ '@type': 'Person', name: c.name, ...(c.role ? { jobTitle: c.role } : {}), telephone: c.phone })),
+  ],
   contactPoint: [
     ...(site.phone ? [{ '@type': 'ContactPoint', contactType: 'sales', telephone: site.phone, ...(site.email ? { email: site.email } : {}), areaServed: 'IN' }] : []),
     ...(site.whatsapp ? [{ '@type': 'ContactPoint', contactType: 'customer service', name: 'WhatsApp', telephone: site.whatsapp, url: `https://wa.me/${site.whatsapp.replace(/\D/g, '')}`, areaServed: 'IN' }] : []),

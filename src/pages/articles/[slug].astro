@@ -1,0 +1,139 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Faq from '../../components/Faq.astro';
+import StoryCard from '../../components/StoryCard.astro';
+import site from '../../data/site.json';
+import { faqJsonLd } from '../../data/faqs';
+import { getArticles, topicLinks, fmtDate, readMinutes, type Article } from '../../lib/content';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const articles = await getArticles();
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article, all: articles } }));
+}
+interface Props { article: Article; all: Article[] }
+const { article, all } = Astro.props;
+const d = article.data;
+const { Content } = await render(article);
+
+const brand: string = (site as any).shortName || site.name;
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const pageUrl = abs(`/articles/${article.id}/`);
+const topics = topicLinks(d.topics);
+const minutes = readMinutes(article.body);
+// Related: share a topic first, then the newest others.
+const related = [
+  ...all.filter((a) => a.id !== article.id && a.data.topics.some((t) => d.topics.includes(t))),
+  ...all.filter((a) => a.id !== article.id && !a.data.topics.some((t) => d.topics.includes(t))),
+].slice(0, 3);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BlogPosting',
+      '@id': `${pageUrl}#article`,
+      headline: d.title,
+      description: d.description,
+      url: pageUrl,
+      mainEntityOfPage: pageUrl,
+      datePublished: d.date.toISOString(),
+      dateModified: (d.updated ?? d.date).toISOString(),
+      ...(d.image ? { image: abs(d.image) } : { image: abs('/brand/og.png') }),
+      author: { '@type': 'Organization', name: d.author, url: abs('/about/') },
+      publisher: { '@id': abs('/#business') },
+      inLanguage: 'en-IN',
+      ...(topics.length ? { about: topics.map((t) => ({ '@type': 'Thing', name: t.name })) } : {}),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+        { '@type': 'ListItem', position: 2, name: 'Articles', item: abs('/articles/') },
+        { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
+      ],
+    },
+    ...(d.faqs.length ? [faqJsonLd(d.faqs)] : []),
+  ],
+};
+---
+<Base title={d.title} description={d.description} image={d.image} jsonLd={jsonLd}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span>
+        <a href={url('/articles/')}>Articles</a><span aria-hidden="true">/</span>
+        <span>{topics[0]?.label ?? 'Guide'}</span>
+      </nav>
+      <h1>{d.title}</h1>
+      <p>{d.description}</p>
+      <p class="ameta mono">
+        <span>{d.author}</span> · <time datetime={d.date.toISOString()}>{fmtDate(d.date)}</time>
+        {d.updated && <> · Updated <time datetime={d.updated.toISOString()}>{fmtDate(d.updated)}</time></>} · {minutes} min read
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap agrid">
+      <article class="amain">
+        {d.image && <img class="acover" src={url(d.image)} alt={d.imageAlt ?? d.title} width="960" height="540" />}
+        <div class="prose"><Content /></div>
+      </article>
+
+      <aside class="aside">
+        <div class="acard">
+          <h2>Build your panel online</h2>
+          <p>Choose every component and make in our free electric panel builder and get a quotation from our {site.address.city} engineers, usually within 1–2 working days.</p>
+          <a class="btn btn--primary btn--block" href={url('/build/')}><Icon name="layers" size={18} />Start building</a>
+          <a class="btn btn--ghost btn--block" href={url('/contact/')}>Ask an engineer</a>
+        </div>
+        {topics.length > 0 && (
+          <div class="acard">
+            <h2>Panels in this article</h2>
+            <ul class="alinks">{topics.map((t) => <li><a href={url(t.href)}>{t.name} manufacturer <Icon name="arrow" size={14} /></a></li>)}</ul>
+          </div>
+        )}
+      </aside>
+    </div>
+  </section>
+
+  {d.faqs.length > 0 && <Faq id="article-faq" title="Frequently asked" faqs={d.faqs} />}
+
+  {related.length > 0 && (
+    <section class="section arel">
+      <div class="wrap">
+        <div class="section-head"><span class="eyebrow">Keep reading</span><h2>More guides from {brand}</h2></div>
+        <div class="sgrid">
+          {related.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`${readMinutes(a.body)} min read`} />)}
+        </div>
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .ameta { margin-top: 12px !important; font-size: 12.5px !important; letter-spacing: .04em; color: #8fa0c4 !important; }
+  .agrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: clamp(24px, 4vw, 48px); align-items: start; }
+  .amain { max-width: 760px; }
+  .acover { width: 100%; height: auto; max-height: 420px; object-fit: contain; border: 1px solid var(--line); border-radius: var(--radius-lg); background: radial-gradient(120% 80% at 50% 0%, #fff 0%, var(--plate) 100%); padding: 16px; mix-blend-mode: multiply; margin-bottom: 22px; }
+  .amain :global(.prose h2) { font-size: clamp(21px, 2.2vw, 25px); }
+  .amain :global(.prose h3) { font-size: 19px; }
+  .amain :global(.prose ol) { padding-left: 1.3em; }
+  .amain :global(.prose li + li) { margin-top: .35em; }
+  .amain :global(.prose table) { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; }
+  .amain :global(.prose th), .amain :global(.prose td) { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  .amain :global(.prose th) { background: var(--paper); color: var(--ink); }
+  .aside { position: sticky; top: calc(var(--masthead-h) + 16px); display: grid; gap: 14px; }
+  .acard { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--line); border-top: 4px solid var(--action); border-radius: 16px; background: var(--white); box-shadow: var(--shadow-sm); }
+  .acard h2 { font-size: 18px; }
+  .acard p { color: var(--ink-2); font-size: 14.5px; line-height: 1.55; }
+  .alinks { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .alinks a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14.5px; color: var(--navy-700); }
+  .alinks a:hover { color: var(--action); }
+  .arel { background: var(--paper); border-top: 1px solid var(--line); }
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-top: 16px; }
+  @media (max-width: 900px) { .agrid { grid-template-columns: minmax(0, 1fr); } .aside { position: static; } }
+</style>

@@ -14,6 +14,9 @@ import { getPanels, getCategories, getCategoryMap } from '../lib/panels';
 import { url } from '../lib/url';
 import { directionsUrl, openMapUrl } from '../lib/location';
 import { APPS } from '../scripts/panel';
+import { extraContacts } from '../lib/contacts';
+import StoryCard from '../components/StoryCard.astro';
+import { getArticles, getProjects, projectFor, readMinutes } from '../lib/content';
 import Faq from '../components/Faq.astro';
 import { siteFaqs, faqJsonLd } from '../data/faqs';
 
@@ -24,6 +27,8 @@ const clients = await getClients();
 const homeStories = [...clients.filter((c) => c.data.quote && c.data.featured), ...clients.filter((c) => c.data.quote && !c.data.featured)].map((c) => c.data);
 const portalStories = (await getTestimonials()).map(toCard);
 const stories3 = [...homeStories, ...portalStories].slice(0, 3);
+const projects3 = (await getProjects()).slice(0, 3);
+const articles3 = (await getArticles()).slice(0, 3);
 const featured = panels.filter((p) => p.data.featured).slice(0, 6);
 const examplesFor = (id: string) => [...new Set(panels.filter((p) => p.data.category.id === id).map((p) => p.data.title.split(',')[0]))].slice(0, 3);
 const countFor = (id: string) => panels.filter((p) => p.data.category.id === id).length;
@@ -201,6 +206,24 @@ const steps = [
     </section>
   )}
 
+  <!-- ================= PROJECTS (shown once case studies are added in /admin) ================= -->
+  {projects3.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head section-head--split reveal">
+          <div style="display:grid;gap:14px">
+            <span class="eyebrow">Projects</span>
+            <h2>Panels we've built, on site.</h2>
+          </div>
+          <a class="btn btn--ghost" href={url('/projects/')}>All projects <Icon name="arrow" size={18} /></a>
+        </div>
+        <div class="home-cards">
+          {projects3.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
+        </div>
+      </div>
+    </section>
+  )}
+
   <!-- ================= CAPABILITIES ================= -->
   <section id="capabilities" class="section caps">
     <div class="wrap caps__grid">
@@ -272,6 +295,12 @@ const steps = [
             </span>
           </a>
         )}
+        {extraContacts.map((c) => (
+          <a class="visit__addr visit__phone" href={c.tel}>
+            <span class="visit__addr-icon"><Icon name="phone" size={20} /></span>
+            <span><strong>{c.name}{c.role && `, ${c.role}`}</strong>{c.phone}{c.whatsapp && ' · WhatsApp'}</span>
+          </a>
+        ))}
         <div class="visit__actions">
           <a class="btn btn--primary" href={directionsUrl} target="_blank" rel="noopener"><Icon name="pin" size={18} />Get directions</a>
           <a class="btn btn--ghost" href={openMapUrl} target="_blank" rel="noopener">Open in Google Maps <Icon name="external" size={16} /></a>
@@ -280,6 +309,24 @@ const steps = [
       <LocationMap class="visit__map reveal" ratio="16 / 11" />
     </div>
   </section>
+
+  <!-- ================= GUIDES (latest articles) ================= -->
+  {articles3.length > 0 && (
+    <section class="section guides-sec">
+      <div class="wrap">
+        <div class="section-head section-head--split reveal">
+          <div style="display:grid;gap:14px">
+            <span class="eyebrow">Guides</span>
+            <h2>Electrical panel guides from our engineers.</h2>
+          </div>
+          <a class="btn btn--ghost" href={url('/articles/')}>All articles <Icon name="arrow" size={18} /></a>
+        </div>
+        <div class="home-cards">
+          {articles3.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`Guide · ${readMinutes(a.body)} min read`} />)}
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- ================= FAQ (also FAQPage structured data) ================= -->
   <Faq title={`${(site as any).shortName || site.name} FAQs`} intro="Quick answers about our panels and the online electric panel builder." faqs={siteFaqs} />
@@ -292,7 +339,7 @@ const steps = [
           <span class="eyebrow">Get a quote</span>
           <h2>Have an SLD, BOQ or motor list?</h2>
           <p>Send it over. We'll come back with a panel proposal and price.</p>
-          {site.phone && site.contactName && <p class="cta__who">Or call {site.contactName}{site.contactRole && ` (${site.contactRole})`} directly on <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>.</p>}
+          {site.phone && site.contactName && <p class="cta__who">Or call {site.contactName}{site.contactRole && ` (${site.contactRole})`} directly on <a href={`tel:${site.phone.replace(/\s/g, '')}`}>{site.phone}</a>{extraContacts.map((c) => <>, or {c.name}{c.role && ` (${c.role})`} on <a href={c.tel}>{c.phone}</a></>)}.</p>}
         </div>
         <div class="cta__actions">
           <a class="btn btn--primary" href={url('/contact')}>Send enquiry <Icon name="arrow" size={18} /></a>
@@ -436,6 +483,8 @@ const steps = [
 
   /* ---------- Clients ---------- */
   .clients-sec { background: var(--paper); }
+  .guides-sec { background: var(--paper); border-top: 1px solid var(--line); }
+  .home-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-top: 18px; }
   .home-stories { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-bottom: 20px; align-items: start; }
 
   /* ---------- Capabilities ---------- */

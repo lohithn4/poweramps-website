@@ -3,10 +3,14 @@ import site from '../data/site.json';
 import { PANEL_TYPES, typeHref } from '../data/panel-types';
 import { REGIONS, regionHref } from '../data/regions';
 import { siteFaqs } from '../data/faqs';
+import { extraContacts } from '../lib/contacts';
+import { getArticles, getProjects } from '../lib/content';
 
 // /llms.txt: a plain summary of the business for AI assistants and AI search
 // (llmstxt.org format). Built from the same data as the pages, so it stays in sync.
-export const GET: APIRoute = ({ site: siteUrl }) => {
+export const GET: APIRoute = async ({ site: siteUrl }) => {
+  const articles = await getArticles();
+  const projects = await getProjects();
   const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   const abs = (p: string) => new URL(`${base}${p.replace(/^\//, '')}`, siteUrl).href;
   const brand = (site as any).shortName || site.name;
@@ -18,6 +22,7 @@ export const GET: APIRoute = ({ site: siteUrl }) => {
     '',
     `- Address: ${a.line1}, ${a.line2}, ${a.city} (Bangalore), ${a.state} ${a.pincode}, ${a.country}`,
     ...(site.phone ? [`- Phone: ${site.phone}${site.contactName ? ` (${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''})` : ''}`] : []),
+    ...extraContacts.map((c) => `- Phone: ${c.phone} (${c.name}${c.role ? `, ${c.role}` : ''}${c.whatsapp ? '; also WhatsApp' : ''})`),
     ...(site.whatsapp ? [`- WhatsApp: ${site.whatsapp}`] : []),
     ...(site.email ? [`- Email: ${site.email}`] : []),
     ...((site as any).gst ? [`- GSTIN: ${(site as any).gst}`] : []),
@@ -36,6 +41,8 @@ export const GET: APIRoute = ({ site: siteUrl }) => {
     '',
     ...REGIONS.map((r) => `- [${r.h1}](${abs(regionHref(r.slug))}): ${r.description}`),
     '',
+    ...(projects.length ? ['## Projects', '', ...projects.map((p) => `- [${p.data.title}](${abs(`/projects/${p.id}/`)}): ${p.data.summary}`), ''] : []),
+    ...(articles.length ? ['## Guides', '', ...articles.map((x) => `- [${x.data.title}](${abs(`/articles/${x.id}/`)}): ${x.data.description}`), ''] : []),
     '## FAQ',
     '',
     ...siteFaqs.flatMap((f) => [`### ${f.q}`, '', f.a, '']),

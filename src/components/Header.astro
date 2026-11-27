@@ -6,12 +6,15 @@ import { url, isActive } from '../lib/url';
 import { openMapUrl } from '../lib/location';
 import { getClients } from '../lib/clients';
 import { getTestimonials } from '../lib/testimonials';
+import { getArticles, getProjects } from '../lib/content';
 
 const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
 const nav = [
   { href: '/panels', label: 'Panels' },
   { href: '/build', label: 'Build a panel' },
+  ...((await getProjects()).length ? [{ href: '/projects', label: 'Projects' }] : []),
   ...(hasClients ? [{ href: '/clients', label: 'Clients' }] : []),
+  ...((await getArticles()).length ? [{ href: '/articles', label: 'Articles' }] : []),
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];

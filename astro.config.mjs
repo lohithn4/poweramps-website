@@ -12,6 +12,10 @@ const base = process.env.BASE_PATH || '/';
 // Leave the Clients page out of the sitemap until real clients are added in /admin.
 const clientsDir = './src/content/clients';
 const hasClients = fs.existsSync(clientsDir) && fs.readdirSync(clientsDir).some((f) => f.endsWith('.json'));
+// Same for Projects and Articles (published = has a .md file that is not a draft).
+const published = (dir) => fs.existsSync(dir) && fs.readdirSync(dir).some((f) => f.endsWith('.md') && !/^draft:\s*true\s*$/m.test(fs.readFileSync(`${dir}/${f}`, 'utf8')));
+const hasProjects = published('./src/content/projects');
+const hasArticles = published('./src/content/articles');
 
 export default defineConfig({
   site,
@@ -20,7 +24,7 @@ export default defineConfig({
   integrations: [
     sitemap({
       // Public pages only: no client portal, staff screens or content editor.
-      filter: (page) => !/\/(portal|staff|admin)(\/|$)/.test(new URL(page).pathname) && (hasClients || !page.includes('/clients')),
+      filter: (page) => !/\/(portal|staff|admin)(\/|$)/.test(new URL(page).pathname) && (hasClients || !page.includes('/clients')) && (hasProjects || !page.includes('/projects')) && (hasArticles || !page.includes('/articles')),
     }),
   ],
 });

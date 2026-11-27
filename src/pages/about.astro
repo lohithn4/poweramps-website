@@ -12,7 +12,7 @@ const a = site.address;
 const facts = [
   { label: 'Established', value: String(site.established) },
   { label: 'Business', value: 'Manufacturer, supplier & service provider' },
-  { label: 'Director', value: site.director },
+  { label: site.director.includes(',') ? 'Directors' : 'Director', value: site.director },
   { label: 'Legal status', value: 'Private limited company' },
   { label: 'Location', value: `${a.city}, ${a.state}` },
   { label: 'GSTIN', value: site.gst },

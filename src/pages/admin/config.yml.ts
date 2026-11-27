@@ -1,4 +1,8 @@
 import type { APIRoute } from 'astro';
+import { PANEL_TYPES } from '../../data/panel-types';
+
+// Panel-type choices for the "topics" fields of Projects and Articles.
+const typeOptions = PANEL_TYPES.map((t) => `{ label: "${t.name}", value: ${t.slug} }`).join(', ');
 
 /**
  * Generates /admin/config.yml for Sveltia CMS at build time.
@@ -145,6 +149,91 @@ collections:
       - { label: Sort order, name: order, widget: number, value_type: int, default: 99 }
       - { label: Published, name: published, widget: boolean, default: true, hint: "Turn off to hide without deleting." }
 
+  - name: projects
+    label: Projects (case studies)
+    label_singular: Project
+    description: Real projects you have delivered. Name a client only with their permission; otherwise describe them (e.g. "Pharmaceutical plant"). The Projects page, menu link and home section appear once at least one is published.
+    folder: src/content/projects
+    extension: md
+    format: frontmatter
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    identifier_field: title
+    summary: "{{title}} ({{city}})"
+    sortable_fields: [title, year, order]
+    media_folder: /public/uploads/projects
+    public_folder: /uploads/projects
+    fields:
+      - { label: Project title, name: title, widget: string, hint: "Say what and where, e.g. MCC and VFD panels for a 2 MLD sewage treatment plant" }
+      - { label: Short summary, name: summary, widget: text, hint: "One or two sentences for cards and Google." }
+      - { label: Client name (with permission), name: client, widget: string, required: false }
+      - { label: Type of client (if not named), name: clientType, widget: string, required: false, hint: "e.g. Pharmaceutical plant, 500-bed hospital, IT park" }
+      - { label: Industry, name: industry, widget: string, required: false }
+      - { label: City, name: city, widget: string, hint: "e.g. Bengaluru, Mysuru, Hosur" }
+      - { label: State, name: state, widget: string, default: Karnataka }
+      - { label: Year, name: year, widget: number, value_type: int, required: false }
+      - { label: Panels supplied, name: topics, widget: select, multiple: true, required: false, options: [${typeOptions}], hint: "Links the project to those panel pages." }
+      - { label: Main photo, name: image, widget: image, hint: "A real photo of the panel or site." }
+      - label: More photos
+        name: gallery
+        widget: list
+        required: false
+        field: { label: Photo, name: photo, widget: image }
+      - label: Key ratings (max 4)
+        name: highlights
+        widget: list
+        required: false
+        max: 4
+        summary: "{{fields.label}}: {{fields.value}}"
+        hint: "e.g. Busbar / 2500 A, Feeders / 24"
+        fields:
+          - { label: Label, name: label, widget: string }
+          - { label: Value, name: value, widget: string }
+      - { label: Client quote, name: quote, widget: text, required: false, hint: "Only the client's own words, with permission." }
+      - { label: Quote by (name), name: person, widget: string, required: false }
+      - { label: Quote by (role), name: role, widget: string, required: false }
+      - { label: Feature on home page, name: featured, widget: boolean, default: false }
+      - { label: Sort order, name: order, widget: number, value_type: int, default: 99 }
+      - { label: Draft (hide from site), name: draft, widget: boolean, default: false }
+      - { label: Project story, name: body, widget: markdown, default: "## The challenge\\n\\nWhat the client needed and why.\\n\\n## Our solution\\n\\nWhat we designed and built: panel types, ratings, makes, special features.\\n\\n## The result\\n\\nWhat changed on site after commissioning." }
+
+  - name: articles
+    label: Articles
+    label_singular: Article
+    description: Guides on electrical panels. Write for buyers and engineers; link to panel pages and the panel builder. New articles appear on the Articles page, home page and the related panel pages.
+    folder: src/content/articles
+    extension: md
+    format: frontmatter
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    identifier_field: title
+    summary: "{{title}}"
+    sortable_fields: [date, title]
+    media_folder: /public/uploads/articles
+    public_folder: /uploads/articles
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Use the words people search for, e.g. How to choose an AMF panel" }
+      - { label: Description, name: description, widget: text, hint: "One or two sentences for cards and the Google snippet." }
+      - { label: Published on, name: date, widget: datetime, time_format: false, format: "YYYY-MM-DD", date_format: "DD MMM YYYY" }
+      - { label: Updated on, name: updated, widget: datetime, time_format: false, format: "YYYY-MM-DD", date_format: "DD MMM YYYY", required: false }
+      - { label: Author, name: author, widget: string, default: "Poweramps engineering team" }
+      - { label: Cover image, name: image, widget: image, required: false }
+      - { label: Cover image description, name: imageAlt, widget: string, required: false }
+      - { label: Panel topics, name: topics, widget: select, multiple: true, required: false, options: [${typeOptions}], hint: "Shows the article on those panel pages." }
+      - label: FAQs
+        name: faqs
+        widget: list
+        required: false
+        summary: "{{fields.q}}"
+        fields:
+          - { label: Question, name: q, widget: string }
+          - { label: Answer, name: a, widget: text }
+      - { label: Featured, name: featured, widget: boolean, default: false }
+      - { label: Draft (hide from site), name: draft, widget: boolean, default: false }
+      - { label: Article, name: body, widget: markdown }
+
   - name: settings
     label: Site settings
     editor:
@@ -193,9 +282,20 @@ collections:
                 widget: list
                 field: { label: Paragraph, name: paragraph, widget: text }
           - { label: Year established, name: established, widget: number, value_type: int }
-          - { label: Director, name: director, widget: string }
+          - { label: Director(s), name: director, widget: string, hint: "Separate several names with commas" }
           - { label: Contact person, name: contactName, widget: string, required: false, hint: "Shown next to the phone number, e.g. on the home and contact pages" }
           - { label: Contact person role, name: contactRole, widget: string, required: false, hint: "e.g. Director, Sales Manager" }
+          - label: More contact people
+            name: contacts
+            widget: list
+            required: false
+            summary: "{{fields.name}} ({{fields.role}}): {{fields.phone}}"
+            hint: "Shown on the contact page, home page and footer, e.g. a second director"
+            fields:
+              - { label: Name, name: name, widget: string }
+              - { label: Role, name: role, widget: string, required: false }
+              - { label: Phone, name: phone, widget: string, hint: "e.g. +91 98450 00000" }
+              - { label: On WhatsApp, name: whatsapp, widget: boolean, default: false }
           - { label: Phone, name: phone, widget: string, required: false, hint: "e.g. +91 98450 00000" }
           - { label: WhatsApp number, name: whatsapp, widget: string, required: false, hint: "With country code, e.g. 919845000000" }
           - { label: Email, name: email, widget: string, required: false }

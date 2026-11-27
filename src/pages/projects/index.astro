@@ -1,0 +1,75 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import StoryCard from '../../components/StoryCard.astro';
+import site from '../../data/site.json';
+import { getProjects, projectFor } from '../../lib/content';
+import { url } from '../../lib/url';
+
+const projects = await getProjects();
+const brand: string = (site as any).shortName || site.name;
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Projects', item: abs('/projects/') },
+    ] },
+    { '@type': 'ItemList', name: `${brand} projects`, itemListElement: projects.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: abs(`/projects/${p.id}/`), name: p.data.title })) },
+  ],
+};
+---
+<Base
+  title="Electrical Panel Projects & Case Studies"
+  description={`Electrical panel projects by ${brand}: MCC, PLC, AMF, DG synchronization and distribution panels designed, built and commissioned for sites in Bangalore, Karnataka and across India.`}
+  jsonLd={jsonLd}
+  noindex={projects.length === 0}
+>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href={url('/')}>Home</a><span aria-hidden="true">/</span><span>Projects</span></nav>
+      <h1>Panels at work: our projects</h1>
+      <p>What we built, where it went and the problem it solved, in factories, plants and buildings across {site.address.state} and India.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      {projects.length > 0 ? (
+        <div class="sgrid">
+          {projects.map((p) => (
+            <StoryCard
+              href={`/projects/${p.id}/`}
+              title={p.data.title}
+              text={p.data.summary}
+              image={p.data.image}
+              imageAlt={p.data.title}
+              kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')}
+              cta="View project"
+            />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">Project case studies will appear here soon.</p>
+      )}
+    </div>
+  </section>
+
+  <section class="section--tight">
+    <div class="wrap">
+      <div class="pcta">
+        <div><h2>Planning a similar project?</h2><p>Configure your panels online and get one quotation, usually within 1–2 working days.</p></div>
+        <a class="btn btn--primary" href={url('/build/')}><Icon name="layers" size={18} />Build your panel online</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+  .empty { color: var(--muted); }
+  .pcta { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; padding: 20px 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--white); }
+  .pcta h2 { font-size: 21px; }
+  .pcta p { color: var(--ink-2); font-size: 15px; margin-top: 4px; }
+</style>

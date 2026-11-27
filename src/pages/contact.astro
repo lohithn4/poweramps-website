@@ -6,6 +6,7 @@ import site from '../data/site.json';
 import LocationMap from '../components/LocationMap.astro';
 import { url } from '../lib/url';
 import { fullAddress, directionsUrl } from '../lib/location';
+import { extraContacts } from '../lib/contacts';
 
 const a = site.address;
 ---
@@ -46,6 +47,12 @@ const a = site.address;
             <div><h3>Call us</h3><p>{site.phone}</p>{site.contactName && <p class="info-card__who">{site.contactName}{site.contactRole && `, ${site.contactRole}`}</p>}</div>
           </a>
         )}
+        {extraContacts.map((c) => (
+          <div class="info-card">
+            <span class="info-card__icon"><Icon name="phone" /></span>
+            <div><h3>{c.name}{c.role && `, ${c.role}`}</h3><p><a href={c.tel}>{c.phone}</a>{c.wa && <> · <a class="info-card__wa" href={c.wa} target="_blank" rel="noopener">WhatsApp</a></>}</p></div>
+          </div>
+        ))}
         {site.whatsapp && (
           <a class="info-card" href={`https://wa.me/${site.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener">
             <span class="info-card__icon info-card__icon--wa"><Icon name="whatsapp" /></span>
@@ -102,6 +109,8 @@ const a = site.address;
     width: 42px; height: 42px; border-radius: 10px;
     background: var(--action-050); color: var(--action);
   }
+  .info-card a:not(.info-card) { color: inherit; }
+  .info-card .info-card__wa { color: #1f9d55; font-weight: 600; }
   .info-card__icon--wa { background: rgb(31 157 85 / 12%); color: #1f9d55; }
   .info-card h3 { font-size: 16px; font-stretch: 100%; }
   .info-card p, .info-card address { margin-top: 4px; color: var(--ink-2); font-style: normal; font-size: 15px; }

@@ -59,4 +59,55 @@ const clients = defineCollection({
   }),
 });
 
-export const collections = { categories, panels, clients };
+const faq = z.object({ q: z.string(), a: z.string() });
+
+/**
+ * Articles / guides. Edited in /admin → Articles. Written for buyers and engineers
+ * searching for panel topics; each links to the relevant panel pages and the builder.
+ */
+const articles = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/articles' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(), // one or two sentences: card text and Google snippet
+    date: z.coerce.date(),
+    updated: z.coerce.date().optional(),
+    author: z.string().default('Poweramps engineering team'),
+    image: z.string().optional(),
+    imageAlt: z.string().optional(),
+    topics: z.array(z.string()).default([]), // panel-type slugs from src/data/panel-types.ts, e.g. "mcc-panel"
+    faqs: z.array(faq).default([]),
+    featured: z.boolean().default(false),
+    draft: z.boolean().default(false),
+  }),
+});
+
+/**
+ * Case studies of real projects. Edited in /admin → Projects. The Projects pages,
+ * menu link and home section appear only once at least one is published.
+ */
+const projects = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
+  schema: z.object({
+    title: z.string(), // e.g. "MCC and VFD panels for a 2 MLD sewage treatment plant"
+    summary: z.string(),
+    client: z.string().optional(), // name only with the client's permission; otherwise leave empty
+    clientType: z.string().optional(), // shown when the client is not named, e.g. "Pharmaceutical plant"
+    industry: z.string().optional(),
+    city: z.string(),
+    state: z.string().default('Karnataka'),
+    year: z.number().int().optional(),
+    topics: z.array(z.string()).default([]), // panel-type slugs supplied on this project
+    image: z.string(),
+    gallery: z.array(z.string()).default([]),
+    highlights: z.array(spec).max(4).default([]), // e.g. Busbar / 2500 A
+    quote: z.string().optional(),
+    person: z.string().optional(),
+    role: z.string().optional(),
+    featured: z.boolean().default(false),
+    order: z.number().default(99),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { categories, panels, clients, articles, projects };

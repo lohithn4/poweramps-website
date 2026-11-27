@@ -26,13 +26,16 @@
     "headline": "Engineering panels in Bengaluru since 1997.",
     "story": [
       "Since 1997, Poweramps Technology has manufactured, supplied and serviced electrical panels and control equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.",
-      "Under the direction of K. V. V. Chalapathi, our team combines in-house design, fabrication and testing with installation and maintenance services. Every panel is built from quality components sourced from trusted vendors, and we deal transparently and deliver on time."
+      "Led by directors K. V. V. Chalapathi and Rajshekar, our team combines in-house design, fabrication and testing with installation and maintenance services. Every panel is built from quality components sourced from trusted vendors, and we deal transparently and deliver on time."
     ]
   },
   "established": 1997,
-  "director": "K. V. V. Chalapathi",
+  "director": "K. V. V. Chalapathi, Rajshekar",
   "contactName": "K. V. V. Chalapathi",
   "contactRole": "Director",
+  "contacts": [
+    { "name": "Rajshekar", "role": "Director", "phone": "+91 98450 79640", "whatsapp": true }
+  ],
   "phone": "+91 98452 18655",
   "whatsapp": "+91 98440 27920",
   "email": "powerampsindia@gmail.com",

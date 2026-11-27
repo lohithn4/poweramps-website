@@ -1,0 +1,148 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import StoryCard from '../../components/StoryCard.astro';
+import site from '../../data/site.json';
+import { getProjects, topicLinks, projectFor, type Project } from '../../lib/content';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project, all: projects } }));
+}
+interface Props { project: Project; all: Project[] }
+const { project, all } = Astro.props;
+const d = project.data;
+const { Content } = await render(project);
+
+const abs = (p: string) => new URL(url(p), Astro.site).href;
+const pageUrl = abs(`/projects/${project.id}/`);
+const topics = topicLinks(d.topics);
+const forWhom = projectFor(d);
+const facts = [
+  forWhom && { label: d.client ? 'Client' : 'For', value: forWhom },
+  d.industry && d.industry !== forWhom && { label: 'Industry', value: d.industry },
+  { label: 'Location', value: [d.city, d.state].filter(Boolean).join(', ') },
+  d.year && { label: 'Year', value: String(d.year) },
+].filter(Boolean) as { label: string; value: string }[];
+const images = [d.image, ...d.gallery];
+const more = all.filter((p) => p.id !== project.id).slice(0, 3);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      '@id': `${pageUrl}#case-study`,
+      headline: d.title,
+      description: d.summary,
+      url: pageUrl,
+      image: images.map((i) => abs(i)),
+      author: { '@id': abs('/#business') },
+      publisher: { '@id': abs('/#business') },
+      inLanguage: 'en-IN',
+      contentLocation: { '@type': 'Place', name: [d.city, d.state, 'India'].filter(Boolean).join(', ') },
+      ...(topics.length ? { about: topics.map((t) => ({ '@type': 'Service', name: `${t.name} manufacturing`, url: abs(t.href) })) } : {}),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+        { '@type': 'ListItem', position: 2, name: 'Projects', item: abs('/projects/') },
+        { '@type': 'ListItem', position: 3, name: d.title, item: pageUrl },
+      ],
+    },
+  ],
+};
+---
+<Base title={`${d.title} (${d.city})`} description={d.summary} image={d.image} jsonLd={jsonLd}>
+  <section class="page-hero blueprint on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('/')}>Home</a><span aria-hidden="true">/</span>
+        <a href={url('/projects/')}>Projects</a><span aria-hidden="true">/</span>
+        <span>{d.city}</span>
+      </nav>
+      <h1>{d.title}</h1>
+      <p>{d.summary}</p>
+      <dl class="pfacts">{facts.map((f) => <div><dt class="mono">{f.label}</dt><dd>{f.value}</dd></div>)}</dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap pgrid">
+      <article class="pmain">
+        <div class="pgallery">
+          {images.map((src, i) => <img src={url(src)} alt={i === 0 ? d.title : `${d.title}, photo ${i + 1}`} width="720" height="540" loading={i === 0 ? 'eager' : 'lazy'} />)}
+        </div>
+        <div class="prose"><Content /></div>
+        {d.quote && (
+          <figure class="pquote">
+            <blockquote>“{d.quote}”</blockquote>
+            {(d.person || d.role) && <figcaption>{[d.person, d.role, d.client].filter(Boolean).join(', ')}</figcaption>}
+          </figure>
+        )}
+      </article>
+
+      <aside class="paside">
+        {d.highlights.length > 0 && (
+          <div class="pcard">
+            <h2>Key ratings</h2>
+            <dl class="phl">{d.highlights.map((h) => <div><dt class="mono">{h.label}</dt><dd>{h.value}</dd></div>)}</dl>
+          </div>
+        )}
+        {topics.length > 0 && (
+          <div class="pcard">
+            <h2>Panels supplied</h2>
+            <ul class="plinks">{topics.map((t) => <li><a href={url(t.href)}>{t.name} <Icon name="arrow" size={14} /></a></li>)}</ul>
+          </div>
+        )}
+        <div class="pcard">
+          <h2>Need something similar?</h2>
+          <p>Build your panel online and get a quotation, usually within 1–2 working days.</p>
+          <a class="btn btn--primary btn--block" href={url('/build/')}><Icon name="layers" size={18} />Build your panel</a>
+          <a class="btn btn--ghost btn--block" href={url('/contact/')}>Talk to an engineer</a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {more.length > 0 && (
+    <section class="section pmore">
+      <div class="wrap">
+        <div class="section-head"><span class="eyebrow">More projects</span><h2>Other panels we've built</h2></div>
+        <div class="sgrid">
+          {more.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
+        </div>
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .pfacts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 14px 0 0; }
+  .pfacts dt { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8fa0c4; }
+  .pfacts dd { margin: 2px 0 0; color: #fff; font-weight: 600; font-size: 15px; }
+  .pgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: clamp(24px, 4vw, 48px); align-items: start; }
+  .pmain { max-width: 780px; }
+  .pgallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; margin-bottom: 22px; }
+  .pgallery img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border: 1px solid var(--line); border-radius: 12px; background: var(--plate); }
+  .pgallery img:first-child { grid-column: 1 / -1; aspect-ratio: 16 / 9; object-fit: contain; background: radial-gradient(120% 80% at 50% 0%, #fff 0%, var(--plate) 100%); }
+  .pmain :global(.prose h2) { font-size: clamp(21px, 2.2vw, 25px); }
+  .pquote { margin: 26px 0 0; padding: 18px 20px; border-left: 4px solid var(--action); background: var(--paper); border-radius: 0 12px 12px 0; }
+  .pquote blockquote { margin: 0; font-size: 18px; line-height: 1.6; color: var(--ink); }
+  .pquote figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .paside { position: sticky; top: calc(var(--masthead-h) + 16px); display: grid; gap: 14px; }
+  .pcard { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--line); border-top: 4px solid var(--action); border-radius: 16px; background: var(--white); box-shadow: var(--shadow-sm); }
+  .pcard h2 { font-size: 18px; }
+  .pcard p { color: var(--ink-2); font-size: 14.5px; line-height: 1.55; }
+  .phl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+  .phl dt { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .phl dd { margin: 2px 0 0; font-weight: 700; color: var(--ink); }
+  .plinks { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .plinks a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14.5px; color: var(--navy-700); }
+  .pmore { background: var(--paper); border-top: 1px solid var(--line); }
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-top: 16px; }
+  @media (max-width: 900px) { .pgrid { grid-template-columns: minmax(0, 1fr); } .paside { position: static; } }
+</style>

@@ -7,6 +7,8 @@ import site from '../data/site.json';
 import { getPanels, getCategoryMap } from '../lib/panels';
 import { PANEL_TYPES, typeBySlug, typeHref, type PanelType } from '../data/panel-types';
 import { url } from '../lib/url';
+import StoryCard from '../components/StoryCard.astro';
+import { getArticles, getProjects, projectFor, readMinutes } from '../lib/content';
 
 export function getStaticPaths() {
   return PANEL_TYPES.map((t) => ({ params: { type: `${t.slug}-manufacturer` }, props: { t } }));
@@ -17,6 +19,8 @@ const { t } = Astro.props;
 const all = await getPanels();
 const catMap = await getCategoryMap();
 const panels = t.panels.map((id) => all.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
+const guides = (await getArticles()).filter((a) => a.data.topics.includes(t.slug)).slice(0, 3);
+const typeProjects = (await getProjects()).filter((p) => p.data.topics.includes(t.slug)).slice(0, 3);
 const related = t.related.map((s) => typeBySlug.get(s)).filter((r): r is PanelType => !!r);
 const abs = (p: string) => new URL(url(p), Astro.site).href;
 const pageUrl = abs(typeHref(t.slug));
@@ -142,6 +146,28 @@ const jsonLd = {
     </div>
   </section>
 
+  {typeProjects.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><span class="eyebrow">Projects</span><h2>{t.short.charAt(0).toUpperCase() + t.short.slice(1)} on site</h2></div>
+        <div class="pt-cards" style="margin-top:16px">
+          {typeProjects.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {guides.length > 0 && (
+    <section class="section pt-guides">
+      <div class="wrap">
+        <div class="section-head"><span class="eyebrow">Guides</span><h2>Learn more about {t.short}</h2></div>
+        <div class="pt-cards" style="margin-top:16px">
+          {guides.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`Guide · ${readMinutes(a.body)} min read`} />)}
+        </div>
+      </div>
+    </section>
+  )}
+
   {related.length > 0 && (
     <section class="section--tight pt-related">
       <div class="wrap">
@@ -190,6 +216,7 @@ const jsonLd = {
   .pt-faq details[open] summary::after { content: '−'; }
   .pt-faq details p { padding: 0 16px 14px; color: var(--ink-2); font-size: 15.5px; line-height: 1.65; }
 
+  .pt-guides { border-top: 1px solid var(--line); }
   .pt-related { background: var(--paper); border-top: 1px solid var(--line); }
   .pt-related h2 { font-size: 20px; margin-bottom: 12px; }
   .pt-related ul { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
