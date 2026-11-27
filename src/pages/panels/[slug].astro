@@ -34,17 +34,37 @@ const waHref = site.whatsapp ? `https://wa.me/${site.whatsapp.replace(/\D/g, '')
 
 const ptype = typeForPanel(panel.id);
 const abs = (p: string) => new URL(url(p), Astro.site).href;
-const product = {
-  '@type': 'Product',
-  url: abs(`/panels/${panel.id}/`),
-  name: d.title,
-  description: d.summary,
-  image: images.map((i) => new URL(url(i), Astro.site).href),
-  category: category?.data.title,
-  brand: { '@type': 'Brand', name: site.name },
-  manufacturer: { '@type': 'Organization', name: site.legalName },
-  additionalProperty: d.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
-};
+// Google's Product rich results insist on a price, reviews or a rating. Panels are built to
+// order and prices are not shown, so they are described as a made-to-order Service from the
+// manufacturer. Only when prices are switched on (Site settings) and this panel has a real
+// numeric price is it published as a Product with an Offer.
+const priceNum = Number(String(d.price ?? '').replace(/[^\d.]/g, ''));
+const pageUrl = abs(`/panels/${panel.id}/`);
+const imageUrls = images.map((i) => new URL(url(i), Astro.site).href);
+const product = site.showPrices && priceNum > 0
+  ? {
+      '@type': 'Product',
+      url: pageUrl,
+      name: d.title,
+      description: d.summary,
+      image: imageUrls,
+      category: category?.data.title,
+      brand: { '@type': 'Brand', name: site.name },
+      manufacturer: { '@id': abs('/#business') },
+      additionalProperty: d.specs.map((s) => ({ '@type': 'PropertyValue', name: s.label, value: s.value })),
+      offers: { '@type': 'Offer', url: pageUrl, price: String(priceNum), priceCurrency: 'INR', availability: 'https://schema.org/MadeToOrder', seller: { '@id': abs('/#business') } },
+    }
+  : {
+      '@type': 'Service',
+      url: pageUrl,
+      name: d.title,
+      description: d.summary,
+      image: imageUrls,
+      serviceType: `${category?.data.title ?? 'Electrical panel'} manufacturing`,
+      category: category?.data.title,
+      provider: { '@id': abs('/#business') },
+      areaServed: { '@type': 'Country', name: 'India' },
+    };
 const crumbs = [
   { name: 'Home', item: abs('/') },
   { name: 'Panels', item: abs('/panels/') },

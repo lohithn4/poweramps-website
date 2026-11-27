@@ -16,19 +16,18 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
-      '@type': 'WebApplication',
+      // A Service, not a WebApplication: Google's software-app rich results require a star rating.
+      '@type': 'Service',
       '@id': abs('/build/#app'),
       name: `${brand} Electric Panel Builder`,
       alternateName: ['Online electric panel builder', 'Custom electric panel builder', 'Electrical panel configurator'],
-      description: `Online electric panel builder for India. Build a custom electric panel at ${brand}: choose the application, loads, every component and make, with live ratings, then get a quotation.`,
+      serviceType: 'Online electrical panel configuration and quotation',
+      description: `Online electric panel builder for India. Build a custom electric panel at ${brand}: choose the application, loads, every component and make, with live ratings, then get a quotation. Free to use.`,
       url: abs('/build/'),
-      applicationCategory: 'BusinessApplication',
-      operatingSystem: 'Any (web browser)',
-      isAccessibleForFree: true,
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR', description: 'Free account; no charge to configure panels or request a quotation' },
       areaServed: { '@type': 'Country', name: 'India' },
       provider: { '@id': abs('/#business') },
-      featureList: buildTypes.map((t) => `${t.name} builder`),
+      hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Panels you can build online', itemListElement: buildTypes.map((t) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: `${t.name} (custom, built to order)` } })) },
     },
     {
       '@type': 'BreadcrumbList',

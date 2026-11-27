@@ -54,7 +54,8 @@ const jsonLd = {
       hasOfferCatalog: {
         '@type': 'OfferCatalog',
         name: t.short,
-        itemListElement: panels.map((p) => ({ '@type': 'Offer', itemOffered: { '@type': 'Product', name: p.data.title, url: abs(`/panels/${p.id}/`), image: abs(p.data.image) } })),
+        // Built-to-order panels without public prices: offered as Services (a "Product" would need a price or reviews).
+        itemListElement: panels.map((p) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: p.data.title, url: abs(`/panels/${p.id}/`), image: abs(p.data.image), provider: { '@id': abs('/#business') } } })),
       },
     },
     {
