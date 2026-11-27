@@ -112,7 +112,7 @@ const jsonLd = {
     <section class="section pmore">
       <div class="wrap">
         <div class="section-head"><span class="eyebrow">More projects</span><h2>Other panels we've built</h2></div>
-        <div class="sgrid">
+        <div class="sgrid rail">
           {more.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
         </div>
       </div>

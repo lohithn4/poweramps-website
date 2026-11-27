@@ -111,17 +111,17 @@ const a = site.address;
   @keyframes fab-tilt { 0%, 70%, 100% { transform: none; } 78% { transform: rotate(-10deg); } 86% { transform: rotate(6deg); } 92% { transform: none; } }
   @media (max-width: 480px) { .fab { padding: 12px 16px; font-size: 14.5px; gap: 8px; } }
   @media (prefers-reduced-motion: reduce) { .fab, .fab::before, .fab__icon { animation: none; } }
-  .footer { padding-block: 72px 28px; color: #aab4cc; }
+  .footer { padding-block: clamp(32px, 4.5vw, 52px) 24px; color: #aab4cc; }
   .footer--fab { padding-bottom: 92px; }
   .footer__gst { display: inline-flex; align-items: center; gap: 5px; }
   .footer__gst :global(svg) { color: #4ade80; stroke-width: 2.6; }
   .footer__grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1.1fr;
-    gap: 40px;
+    gap: clamp(20px, 3vw, 36px);
   }
   .footer__brand p { margin-top: 18px; max-width: 34ch; }
-  .footer__contact { display: grid; gap: 10px; margin-top: 22px; }
+  .footer__contact { display: grid; gap: 8px; margin-top: 16px; }
   .footer__contact a { display: inline-flex; align-items: center; gap: 10px; color: #dfe5f2; width: fit-content; }
   .footer__contact a:hover { color: #fff; }
   .footer__h {
@@ -132,9 +132,9 @@ const a = site.address;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--brand-dark) 45%, white);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
-  .footer__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .footer__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .footer__list a { color: #dfe5f2; }
   .footer__list a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
   .footer__addr { font-style: normal; line-height: 1.7; color: #dfe5f2; }
@@ -142,7 +142,7 @@ const a = site.address;
   .footer__map:hover { text-decoration: underline; text-underline-offset: 4px; }
   .footer__base {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
-    margin-top: 56px; padding-top: 22px;
+    margin-top: clamp(24px, 3vw, 40px); padding-top: 18px;
     border-top: 1px solid rgb(255 255 255 / 10%);
     font-size: 13px;
   }
@@ -150,7 +150,12 @@ const a = site.address;
     .footer__grid { grid-template-columns: 1fr 1fr; }
     .footer__brand { grid-column: 1 / -1; }
   }
+  /* Phones: two link columns side by side, smaller type: about half the old height, nothing removed */
   @media (max-width: 520px) {
-    .footer__grid { grid-template-columns: 1fr; }
+    .footer__grid { grid-template-columns: 1fr 1fr; gap: 20px 16px; font-size: 14px; }
+    .footer__brand p { margin-top: 10px; }
+    .footer__grid > :last-child { grid-column: 1 / -1; }
+    .footer__list { gap: 7px; }
+    .footer__addr { line-height: 1.55; }
   }
 </style>

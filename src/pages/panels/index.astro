@@ -170,6 +170,23 @@ const countFor = (id: string) => panels.filter((p) => p.data.category.id === id)
   .result { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 22px; }
   .cards :global([hidden]) { display: none; }
+  /* Wide screens: four per row. Phones: compact rows (photo beside the details) so the
+     whole catalogue is a short scroll, with every rating still visible. */
+  @media (min-width: 1200px) { .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .cards :global(.card__link) { flex-direction: row; }
+    .cards :global(.card__media) { flex: none; width: 112px; aspect-ratio: auto; border-bottom: 0; border-right: 1px solid var(--line); }
+    .cards :global(.card__media img) { padding: 8px; }
+    .cards :global(.card__led) { display: none; }
+    .cards :global(.card__tag) { top: 8px; left: 8px; }
+    .cards :global(.card__body) { padding: 10px 12px 12px; gap: 6px; min-width: 0; }
+    .cards :global(.card__title) { font-size: 16px; }
+    .cards :global(.card__specs) { margin: 0; }
+    .cards :global(.card__specs div) { padding: 5px 8px; }
+    .cards :global(.card__specs dd) { font-size: 12px; }
+    .cards :global(.card__more) { font-size: 13px; }
+  }
 
   .empty {
     display: grid; justify-items: center; gap: 10px; text-align: center;

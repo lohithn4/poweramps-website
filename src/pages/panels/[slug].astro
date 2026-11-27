@@ -170,7 +170,7 @@ const jsonLd = {
         <h2>{related.length ? 'Related panels' : 'More panels'}</h2>
         <a class="link-arrow" href={url('/panels')}>Full catalogue <Icon name="arrow" /></a>
       </div>
-      <div class="cards">
+      <div class="cards rail">
         {[...related, ...more].map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
       </div>
     </div>

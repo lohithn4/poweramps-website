@@ -122,7 +122,7 @@ const jsonLd = {
           </div>
           <a class="btn btn--ghost" href={url('/panels')}>All panels <Icon name="arrow" size={18} /></a>
         </div>
-        <div class="pt-cards">
+        <div class="pt-cards rail">
           {panels.map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
         </div>
       </div>
@@ -150,7 +150,7 @@ const jsonLd = {
     <section class="section">
       <div class="wrap">
         <div class="section-head"><span class="eyebrow">Projects</span><h2>{t.short.charAt(0).toUpperCase() + t.short.slice(1)} on site</h2></div>
-        <div class="pt-cards" style="margin-top:16px">
+        <div class="pt-cards rail" style="margin-top:16px">
           {typeProjects.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
         </div>
       </div>
@@ -161,7 +161,7 @@ const jsonLd = {
     <section class="section pt-guides">
       <div class="wrap">
         <div class="section-head"><span class="eyebrow">Guides</span><h2>Learn more about {t.short}</h2></div>
-        <div class="pt-cards" style="margin-top:16px">
+        <div class="pt-cards rail" style="margin-top:16px">
           {guides.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`Guide · ${readMinutes(a.body)} min read`} />)}
         </div>
       </div>

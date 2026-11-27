@@ -106,7 +106,7 @@ const jsonLd = {
     <section class="section arel">
       <div class="wrap">
         <div class="section-head"><span class="eyebrow">Keep reading</span><h2>More guides from {brand}</h2></div>
-        <div class="sgrid">
+        <div class="sgrid rail">
           {related.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`${readMinutes(a.body)} min read`} />)}
         </div>
       </div>

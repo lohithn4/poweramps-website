@@ -13,8 +13,10 @@ interface Props {
   id?: string;
 }
 const { title, eyebrow = 'Questions', intro, faqs, id = 'faq' } = Astro.props;
+// Long lists: heading on top and the questions in two columns on wide screens (half the height).
+const many = faqs.length > 6;
 ---
-<section class="section faq" id={id}>
+<section class:list={['section faq', { 'faq--many': many }]} id={id}>
   <div class="wrap faq__grid">
     <div>
       <span class="eyebrow">{eyebrow}</span>
@@ -23,7 +25,7 @@ const { title, eyebrow = 'Questions', intro, faqs, id = 'faq' } = Astro.props;
     </div>
     <div class="faq__list">
       {faqs.map((f, i) => (
-        <details open={i === 0}>
+        <details open={i === 0 && !many}>
           <summary>{f.q}</summary>
           <p>{f.a}{f.link && <> <a href={f.link.href}>{f.link.text}</a></>}</p>
         </details>
@@ -39,12 +41,19 @@ const { title, eyebrow = 'Questions', intro, faqs, id = 'faq' } = Astro.props;
   .faq__intro { margin-top: 10px; color: var(--ink-2); font-size: 15.5px; line-height: 1.6; }
   .faq__list { display: grid; gap: 10px; }
   .faq details { border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
-  .faq summary { cursor: pointer; padding: 14px 16px; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary { cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
   .faq summary::-webkit-details-marker { display: none; }
   .faq summary::after { content: '+'; flex: none; font-size: 20px; line-height: 1; color: var(--action); }
   .faq details[open] summary::after { content: '−'; }
   .faq details p { padding: 0 16px 14px; color: var(--ink-2); font-size: 15.5px; line-height: 1.65; }
   .faq details a { color: var(--action); font-weight: 600; }
+  @media (min-width: 1000px) {
+    .faq--many .faq__grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .faq--many .faq__grid > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; }
+    .faq--many .faq__grid > div:first-child .eyebrow { flex-basis: 100%; }
+    .faq--many .faq__intro { margin-top: 0; }
+    .faq--many .faq__list { grid-template-columns: 1fr 1fr; align-items: start; }
+  }
   @media (max-width: 900px) {
     .faq__grid { grid-template-columns: minmax(0, 1fr); }
   }

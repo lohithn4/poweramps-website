@@ -179,7 +179,7 @@ const steps = [
         </div>
         <a class="btn btn--ghost" href={url('/panels')}>View all {panels.length} panels <Icon name="arrow" size={18} /></a>
       </div>
-      <div class="cards">
+      <div class="cards rail">
         {featured.map((p, i) => <PanelCard panel={p} category={catMap.get(p.data.category.id)} index={i} />)}
       </div>
     </div>
@@ -197,7 +197,7 @@ const steps = [
           <a class="btn btn--ghost" href={url('/clients')}>All clients &amp; stories <Icon name="arrow" size={18} /></a>
         </div>
         {stories3.length > 0 && (
-          <div class="home-stories">
+          <div class="home-stories rail--m">
             {stories3.map((c, i) => <Testimonial data={c} index={i} />)}
           </div>
         )}
@@ -217,7 +217,7 @@ const steps = [
           </div>
           <a class="btn btn--ghost" href={url('/projects/')}>All projects <Icon name="arrow" size={18} /></a>
         </div>
-        <div class="home-cards">
+        <div class="home-cards rail">
           {projects3.map((p) => <StoryCard href={`/projects/${p.id}/`} title={p.data.title} text={p.data.summary} image={p.data.image} imageAlt={p.data.title} kicker={[projectFor(p.data), p.data.city].filter(Boolean).join(' · ')} cta="View project" />)}
         </div>
       </div>
@@ -236,7 +236,7 @@ const steps = [
         </p>
         <a class="link-arrow" href={url('/contact')}>Discuss your specification <Icon name="arrow" /></a>
       </div>
-      <div class="caps__cards">
+      <div class="caps__cards rail--m">
         {capabilities.map((c, i) => (
           <div class="cap reveal" style={`transition-delay:${i * 80}ms`}>
             <span class="cap__icon"><Icon name={c.icon} size={22} /></span>
@@ -257,7 +257,7 @@ const steps = [
         <h2>From single-line diagram to switched-on.</h2>
         <p>One team handles design, fabrication, testing and service, so you have one point of responsibility.</p>
       </div>
-      <ol class="steps">
+      <ol class="steps rail--m">
         {steps.map((s, i) => (
           <li class="step reveal" style={`transition-delay:${i * 70}ms`}>
             <span class="step__num">{String(i + 1).padStart(2, '0')}</span>
@@ -321,7 +321,7 @@ const steps = [
           </div>
           <a class="btn btn--ghost" href={url('/articles/')}>All articles <Icon name="arrow" size={18} /></a>
         </div>
-        <div class="home-cards">
+        <div class="home-cards rail">
           {articles3.map((a) => <StoryCard href={`/articles/${a.id}/`} title={a.data.title} text={a.data.description} image={a.data.image} imageAlt={a.data.imageAlt ?? a.data.title} kicker={`Guide · ${readMinutes(a.body)} min read`} />)}
         </div>
       </div>
@@ -476,6 +476,13 @@ const steps = [
     .feeder__drop::after { display: none; }
     .feeder__card { border-top: 1px solid var(--line); border-left: 3px solid var(--navy-800); border-radius: 0 12px 12px 0; }
     .feeder:hover .feeder__card { border-top-color: var(--line); border-left-color: var(--action); }
+    /* compact rows: examples run inline instead of one per line */
+    .feeder__card { padding: 12px 14px; gap: 5px; }
+    .feeder__title { font-size: 17px; }
+    .feeder__ex { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 0; }
+    .feeder__ex li { font-size: 13px; }
+    .feeder__go { font-size: 13.5px; padding-top: 2px; }
+    .visit__map :global([style*='aspect-ratio']) { aspect-ratio: 16 / 9 !important; }
   }
 
   /* ---------- Cards grid ---------- */

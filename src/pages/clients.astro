@@ -38,7 +38,7 @@ const stories = [...(await getTestimonials()).map(toCard), ...clients.filter((c)
           <span class="eyebrow">Testimonials</span>
           <h2>In our clients' words</h2>
         </div>
-        <div class="stories">
+        <div class="stories rail--m">
           {stories.map((c, i) => <Testimonial data={c} index={i} />)}
         </div>
       </div>
