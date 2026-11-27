@@ -7,7 +7,13 @@ import { openMapUrl } from '../lib/location';
 import { getClients } from '../lib/clients';
 import { getTestimonials } from '../lib/testimonials';
 import { getArticles, getProjects } from '../lib/content';
+import { extraContacts } from '../lib/contacts';
 
+// Top bar phone numbers: the main contact plus any extra contacts (e.g. both directors).
+const phones = [
+  ...(site.phone ? [{ phone: site.phone, name: site.contactName, role: site.contactRole }] : []),
+  ...extraContacts.map((c) => ({ phone: c.phone, name: c.name, role: c.role })),
+].map((p) => ({ ...p, tel: `tel:${p.phone.replace(/\s/g, '')}`, short: p.phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '') }));
 const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
 const nav = [
   { href: '/panels', label: 'Panels' },
@@ -34,14 +40,21 @@ const path = Astro.url.pathname;
       <a class="topbar__item topbar__loc" href={openMapUrl} target="_blank" rel="noopener" title="Open our location in Google Maps">
         <Icon name="pin" size={14} />{site.address.locality && <span class="topbar__loc-long">{site.address.locality}, </span>}<span class="topbar__loc-city">{site.address.city}</span>
       </a>
-      {site.phone && (
-        <a class="topbar__item topbar__phone" href={`tel:${site.phone.replace(/\s/g, '')}`}
-          aria-label={site.contactName ? `Call ${site.contactName}${site.contactRole ? `, ${site.contactRole}` : ''}: ${site.phone}` : `Call ${site.phone}`}>
-          <Icon name="phone" size={14} /><span class="topbar__num">{site.phone}</span><span class="topbar__num-c">{site.phone.replace(/\s/g, '')}</span>
-          {site.contactName && <span class="topbar__who" aria-hidden="true">{site.contactName}{site.contactRole && <small>{site.contactRole}</small>}</span>}
-        </a>
+      {phones.length > 0 && (
+        <span class="topbar__item topbar__phones">
+          <Icon name="phone" size={14} />
+          <span class="topbar__nums">
+            {phones.map((p) => (
+              <a class="topbar__phone" href={p.tel}
+                aria-label={p.name ? `Call ${p.name}${p.role ? `, ${p.role}` : ''}: ${p.phone}` : `Call ${p.phone}`}>
+                <span class="topbar__num">{p.phone}</span><span class="topbar__num-c">{p.short}</span>
+                {p.name && <span class="topbar__who" aria-hidden="true">{p.name}{p.role && <small>{p.role}</small>}</span>}
+              </a>
+            ))}
+          </span>
+        </span>
       )}
-      {site.email && <a class="topbar__item topbar__extra" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
+      {site.email && phones.length < 2 && <a class="topbar__item topbar__extra" href={`mailto:${site.email}`}><Icon name="mail" size={14} />{site.email}</a>}
       <button class="tb-menu" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu-btn tabindex="-1">
         <span class="sr-only">Menu</span>
         <Icon name="menu" size={18} class="i-open" />
@@ -213,24 +226,39 @@ const path = Astro.url.pathname;
   @keyframes pin-hop { 0%, 60%, 100% { transform: none; } 70% { transform: translateY(-3px); } 80% { transform: none; } 88% { transform: translateY(-1.5px); } }
   @keyframes pin-ring { 0%, 62% { opacity: 0; transform: scale(.4); } 70% { opacity: .55; } 100% { opacity: 0; transform: scale(3.2); } }
   /* Phone icon: red, with a short ring wiggle that runs between the pin hops */
-  .topbar__phone > :global(svg) { color: var(--topbar-red); transform-origin: 50% 50%; animation: phone-ring 2.8s ease-in-out 1.4s infinite; }
-  .topbar__phone:hover > :global(svg) { color: #fff; }
+  .topbar__phones > :global(svg) { color: var(--topbar-red); transform-origin: 50% 50%; animation: phone-ring 2.8s ease-in-out 1.4s infinite; }
+  .topbar__phones:hover > :global(svg) { color: #fff; }
+  /* Two (or more) numbers: side by side with a dot on wide screens, stacked on phones */
+  .topbar__nums { display: inline-flex; align-items: center; }
+  .topbar__phone + .topbar__phone::before { content: '·'; margin: 0 8px; color: #8d98b3; }
+  .topbar__phone:hover { color: #fff; }
   @keyframes phone-ring { 0%, 64%, 100% { transform: none; } 68% { transform: rotate(-14deg); } 72% { transform: rotate(12deg); } 76% { transform: rotate(-10deg); } 80% { transform: rotate(6deg); } 84% { transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .topbar__loc :global(svg), .topbar__loc::before, .topbar__phone > :global(svg) { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .topbar__loc :global(svg), .topbar__loc::before, .topbar__phones > :global(svg) { animation: none; } }
   .topbar__loc:hover { text-decoration: underline; text-underline-offset: 3px; }
-  @media (max-width: 1100px) {
+  @media (max-width: 1240px) {
     .topbar__extra { display: none; }
+  }
+  @media (max-width: 1080px) {
+    .topbar__since { display: none; }
   }
   @media (max-width: 900px) {
     .topbar__since { display: none; }
   }
   @media (max-width: 720px) {
-    .topbar__loc-long { display: none; }
     .topbar__inner { gap: 8px; }
     .topbar__gst { gap: 8px; }
   }
-  /* Phone number: spaced on wide screens, digits run together on phones to save room */
+  /* Phone numbers: spaced and side by side on wide screens. Tablets and phones: stacked on two
+     lines, digits only without +91 (the link still dials the full number) */
   .topbar__num-c { display: none; }
+  @media (max-width: 900px) {
+    .topbar__loc-long { display: none; }
+    .topbar__right { gap: 14px; }
+    .topbar__num { display: none; }
+    .topbar__num-c { display: inline; }
+    .topbar__nums { flex-direction: column; align-items: flex-start; font-size: 10.5px; line-height: 1.15; }
+    .topbar__phone + .topbar__phone::before { content: none; }
+  }
   /* Phones: GSTIN, location (city) and phone all on one line */
   @media (max-width: 480px) {
     .topbar { font-size: 11px; letter-spacing: 0; }
@@ -238,8 +266,6 @@ const path = Astro.url.pathname;
     .topbar__right { gap: 10px; }
     .topbar__item, .gstin, .gstin__num { gap: 4px; }
     .gstin__label { display: none; }
-    .topbar__num { display: none; }
-    .topbar__num-c { display: inline; }
   }
   @media (max-width: 480px) {
     .masthead.is-compact .topbar__right { gap: 8px; }
