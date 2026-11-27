@@ -33,7 +33,10 @@ const fullTitle = fullTitleProp ?? (title ? `${title} | ${brand}` : `${brand} | 
 const hex = (v: string, d: string) => (/^#[0-9a-f]{3,8}$/i.test(v ?? '') ? v : d);
 const brandCss = `html:root{--brand-primary:${hex(site.brand.primary, '#024998')};--brand-accent:${hex(site.brand.accent, '#cd030d')};--brand-dark:${hex(site.brand.dark, '#081129')};--brand-action:${hex((site.brand as any).action, '#1f5fcc')}}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = new URL(url(image ?? '/brand/logo.png'), Astro.site).href;
+// Default share card (WhatsApp / LinkedIn / Facebook previews) is a 1200×630 image; product pages pass their photo.
+const ogImage = new URL(url(image ?? '/brand/og.png'), Astro.site).href;
+// Google wants a roughly square logo (min 112 px) for the business; the wide wordmark stays for og/brand use.
+const logoSquare = new URL(url('/brand/logo-square.png'), Astro.site).href;
 
 const lat = Number((site as any).map?.lat), lng = Number((site as any).map?.lng);
 const org = {
@@ -43,9 +46,9 @@ const org = {
   legalName: site.legalName,
   alternateName: [...new Set([brand, site.legalName, (site.brand as any).wordmark && `${site.brand.wordmark} ${site.brand.wordmarkSub ?? ''}`.trim()].filter((n) => n && n !== site.name))],
   description: site.description,
-  image: new URL(url('/brand/logo.png'), Astro.site).href,
+  image: [new URL(url('/brand/og.png'), Astro.site).href, new URL(url('/brand/logo.png'), Astro.site).href],
   url: new URL(url('/'), Astro.site).href,
-  logo: new URL(url('/brand/logo.png'), Astro.site).href,
+  logo: logoSquare,
   foundingDate: String(site.established),
   address: {
     '@type': 'PostalAddress',
@@ -83,7 +86,7 @@ const pageNodes = jsonLd ? ((jsonLd['@graph'] as unknown[]) ?? [(({ ['@context']
 const graph = { '@context': 'https://schema.org', '@graph': [website, org, ...pageNodes] };
 ---
 <!doctype html>
-<html lang="en" class:list={[{ snap }]} data-brand={site.name} data-api={import.meta.env.PUBLIC_API_URL || site.apiUrl}>
+<html lang="en-IN" class:list={[{ snap }]} data-brand={site.name} data-api={import.meta.env.PUBLIC_API_URL || site.apiUrl}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -92,6 +95,8 @@ const graph = { '@context': 'https://schema.org', '@graph': [website, org, ...pa
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <link rel="icon" type="image/png" sizes="512x512" href={url('/brand/logo-square.png')} />
+    <link rel="apple-touch-icon" href={url('/brand/logo-square.png')} />
     <link rel="sitemap" href={url('/sitemap-index.xml')} />
     <meta name="theme-color" content={hex(site.brand.dark, "#081129")} />
     <style set:html={brandCss}></style>
@@ -101,6 +106,7 @@ const graph = { '@context': 'https://schema.org', '@graph': [website, org, ...pa
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="en_IN" />
     <meta name="twitter:card" content="summary_large_image" />
     {!noindex && <script type="application/ld+json" set:html={JSON.stringify(graph)} />}
   </head>

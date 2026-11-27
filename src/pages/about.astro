@@ -33,7 +33,10 @@ const gallery = [
   { src: '/uploads/panels/facility-3.webp', caption: 'Manufacturing team' },
 ];
 ---
-<Base title="About Us" description={`${site.legalName}: electrical panel manufacturer in ${a.city} since ${site.established}.`}>
+<Base
+  fullTitle={`About ${(site as any).shortName || site.name}: Electrical Panel Manufacturer, ${a.city} (Bangalore)`}
+  description={`About ${site.legalName}: electric panel builder and manufacturer in ${a.city} (Bangalore), ${a.state}, since ${site.established}. In-house design, testing, installation and service, supplying panels across India.`}
+>
   <section class="page-hero blueprint on-dark">
     <div class="wrap">
       <nav class="crumbs" aria-label="Breadcrumb">
