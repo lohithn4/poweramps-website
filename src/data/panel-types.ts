@@ -21,6 +21,7 @@ export interface PanelType {
   panels: string[]; // catalogue panel ids shown on the page
   app: string; // builder application id (/build/?app=…)
   related: string[]; // other type slugs
+  umbrella?: true; // general page (LT panels, control panels): kept out of the per-type lists
 }
 
 export const PANEL_TYPES: PanelType[] = [
@@ -50,7 +51,37 @@ export const PANEL_TYPES: PanelType[] = [
     ],
     panels: ['mcc-panel-25ka', 'amf-panel-15ka', 'dg-synchronization-panel-25ka', 'fire-pump-control-panel', 'ups-distribution-panel', 'plc-control-panel-5hp'],
     app: 'other',
-    related: ['mcc-panel', 'amf-panel', 'dg-synchronization-panel', 'fire-fighting-panel', 'power-distribution-panel', 'plc-control-panel'],
+    related: ['control-panel', 'mcc-panel', 'amf-panel', 'dg-synchronization-panel', 'fire-fighting-panel', 'power-distribution-panel'],
+    umbrella: true,
+  },
+  {
+    slug: 'control-panel',
+    name: 'Electrical Control Panel',
+    short: 'control panels',
+    h1: 'Electrical Control Panel Manufacturer in Bengaluru',
+    title: 'Electrical Control Panel Manufacturer in Bangalore / Bengaluru',
+    description: 'Electric control panel and panel board manufacturer in Bengaluru (Bangalore) since 1997: PLC, VFD, MCC, AMF, fire pump, STP and RO control panels, built to order and factory tested.',
+    lead: 'Electric control panels and control panel boards for motors, pumps, generators, machines and plants, designed, wired and factory tested at our works on Kanakapura Road, Bengaluru, and supplied across India.',
+    what: 'An electrical control panel (also called a control panel board or electric control panel) houses the switchgear, starters, relays, controllers and indication that run and protect a piece of equipment: a motor, a pump set, a generator, a treatment plant or a machine. It can be a simple starter panel, a PLC automation panel, a VFD speed-control panel or a full motor control centre.',
+    build: [
+      'PLC / HMI automation panels with SCADA connectivity',
+      'VFD and soft-starter panels for pumps, fans and conveyors',
+      'MCC panels with DOL, star-delta, soft-starter and VFD feeders',
+      'AMF and DG synchronization panels for standby generators',
+      'Fire pump, jockey and booster pump control panels',
+      'STP, ETP and RO plant control panels',
+    ],
+    uses: ['Manufacturing plants & machines', 'Pumping stations', 'Water, STP & RO plants', 'Generator rooms', 'Fire-fighting systems', 'HVAC & building services'],
+    faqs: [
+      { q: 'Is a control panel the same as an electrical panel board?', a: 'The terms overlap. "Electrical panel board" usually means any switchboard that distributes power, while a control panel runs and protects specific equipment such as motors, pumps or generators. We build both: control panels and LT power distribution panels.' },
+      { q: 'Which control panels do you make?', a: 'PLC, VFD, MCC, AMF, DG synchronization, fire pump, STP and RO control panels, each built to order to your ratings, drawings and preferred component make.' },
+      { q: 'Can you build a control panel for our machine or plant?', a: 'Yes. Send your single-line diagram, motor list or I/O list, or configure the panel online with our panel builder, and we will send a quotation, usually within 1–2 working days.' },
+      { q: 'Are control panels tested before dispatch?', a: 'Yes. Every panel is wired, checked and function tested at our Bengaluru works before it is dispatched.' },
+    ],
+    panels: ['plc-control-panel-5hp', 'vfd-control-panel-5hp', 'mcc-panel-25ka', 'amf-panel-15ka', 'fire-pump-control-panel', 'stp-control-panel-3hp', 'ro-plant-control-panel-5hp'],
+    app: 'other',
+    related: ['plc-control-panel', 'vfd-panel', 'mcc-panel', 'amf-panel', 'fire-fighting-panel', 'stp-ro-control-panel', 'lt-panel'],
+    umbrella: true,
   },
   {
     slug: 'mcc-panel',
@@ -289,4 +320,6 @@ export const PANEL_TYPES: PanelType[] = [
 export const typeHref = (slug: string) => `/${slug}-manufacturer/`;
 export const typeBySlug = new Map(PANEL_TYPES.map((t) => [t.slug, t]));
 /** Best landing page for a catalogue panel (used for links from panel pages). */
-export const typeForPanel = (panelId: string) => PANEL_TYPES.find((t) => t.slug !== 'lt-panel' && t.panels[0] === panelId) ?? PANEL_TYPES.find((t) => t.slug !== 'lt-panel' && t.panels.includes(panelId));
+/** Panel types with their own product range (not the general LT / control panel pages). */
+export const SPECIFIC_TYPES = PANEL_TYPES.filter((t) => !t.umbrella);
+export const typeForPanel = (panelId: string) => SPECIFIC_TYPES.find((t) => t.panels[0] === panelId) ?? SPECIFIC_TYPES.find((t) => t.panels.includes(panelId));

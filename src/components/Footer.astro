@@ -7,7 +7,7 @@ import { getClients } from '../lib/clients';
 import { getTestimonials } from '../lib/testimonials';
 import { getArticles, getProjects } from '../lib/content';
 import { extraContacts, whatsappOwner } from '../lib/contacts';
-import { PANEL_TYPES, typeHref } from '../data/panel-types';
+import { SPECIFIC_TYPES, typeHref } from '../data/panel-types';
 
 const year = new Date().getFullYear();
 const hasClients = (await getClients()).length > 0 || (await getTestimonials()).length > 0;
@@ -35,7 +35,8 @@ const a = site.address;
       <div>
         <h3 class="footer__h">Panels</h3>
         <ul class="footer__list">
-          {PANEL_TYPES.filter((t) => t.slug !== 'lt-panel').map((t) => <li><a href={url(typeHref(t.slug))}>{t.short.charAt(0).toUpperCase() + t.short.slice(1)}</a></li>)}
+          {SPECIFIC_TYPES.map((t) => <li><a href={url(typeHref(t.slug))}>{t.short.charAt(0).toUpperCase() + t.short.slice(1)}</a></li>)}
+          <li><a href={url(typeHref('control-panel'))}>Control panels</a></li>
           <li><a href={url(typeHref('lt-panel'))}>LT panels</a></li>
           <li><a href={url('/panels')}>All panels →</a></li>
         </ul>

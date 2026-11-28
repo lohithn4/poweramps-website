@@ -5,13 +5,13 @@ import { APPS, HP_SIZES, KVA_SIZES, PART_GROUPS, PART_SECTIONS } from '../../scr
 import { url } from '../../lib/url';
 import Faq from '../../components/Faq.astro';
 import site from '../../data/site.json';
-import { PANEL_TYPES, typeHref } from '../../data/panel-types';
+import { SPECIFIC_TYPES, typeHref } from '../../data/panel-types';
 import { builderFaqs, faqJsonLd } from '../../data/faqs';
 
 // SEO: this page answers "electric panel builder India" and "build a custom electric panel online".
 const brand: string = (site as any).shortName || site.name;
 const abs = (p: string) => new URL(url(p), Astro.site).href;
-const buildTypes = PANEL_TYPES.filter((t) => t.slug !== 'lt-panel');
+const buildTypes = SPECIFIC_TYPES;
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [

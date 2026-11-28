@@ -6,7 +6,7 @@
  * Keep every answer true: it is published as the company's own statement.
  */
 import site from './site.json';
-import { PANEL_TYPES, typeHref } from './panel-types';
+import { SPECIFIC_TYPES, typeHref } from './panel-types';
 import { url } from '../lib/url';
 import { extraContacts, contactLine, whatsappOwner } from '../lib/contacts';
 
@@ -19,7 +19,7 @@ export interface Faq {
 const brand = (site as any).shortName || site.name;
 const a = site.address;
 // "MCC panels, PLC panels, … and STP & RO control panels" (acronyms kept in capitals)
-const types = PANEL_TYPES.filter((t) => t.slug !== 'lt-panel').map((t) => {
+const types = SPECIFIC_TYPES.map((t) => {
   const [first, ...rest] = t.short.split(' ');
   return [first === first.toUpperCase() ? first : first.toLowerCase(), ...rest].join(' ');
 });
