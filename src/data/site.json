@@ -25,18 +25,57 @@
   "about": {
     "headline": "Engineering panels in Bengaluru since 2008.",
     "story": [
-      "We started building electrical panels in Bengaluru in 2008 as Venus Enterprises, and incorporated as Poweramps Technology Pvt. Ltd. in 2013. Since then we have manufactured, supplied and serviced electrical panels and control equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.",
-      "Led by directors K. V. V. Chalapathi and Rajshekar, our team combines in-house design, fabrication and testing with installation and maintenance services. Every panel is built from quality components sourced from trusted vendors, and we deal transparently and deliver on time."
+      "We started building electrical panels in Bengaluru in 2008 as Venus Enterprises, and incorporated as Poweramps Technology Pvt. Ltd. in 2013. We design, manufacture and service power, distribution and instrumentation panels for building, industrial and commercial customers: motor control centres (MCC), power control centres (PCC), DG AMF and synchronizing panels, capacitor and APFC panels, metering panels, AC drive (VFD) and soft-starter panels, PLC panels, bus ducts, AC and DC distribution boards and custom-built instrumentation panels.",
+      "Our R&D centre at Malagala, Vijayanagar designs electronics and instrumentation in-house, including AMF logic control relays, battery chargers, earth leakage relays (ELR), earth fault relays (EFR) and instrumentation controllers. We also handle earthing design, bus duct design and installation, and automation and SCADA instrumentation.",
+      "Led by directors K. V. Venkatachalapathi and V. Rajashekar, with technical advisers T. Venkatesh and Muniraj, our team combines in-house design, fabrication and testing with installation and maintenance. Our quality policy: reliability, performance and customer satisfaction."
+    ],
+    "rnd": "Malagala, Vijayanagar, Bengaluru",
+    "quality": "Reliability, performance and customer satisfaction",
+    "team": [
+      {
+        "name": "K. V. Venkatachalapathi",
+        "role": "Director",
+        "points": [
+          "Design engineer at Lotus Power Gear Pvt. Ltd., 1994–1997",
+          "Founded Zenith Electrical Systems in 1997: battery chargers, AMF and LT panels, special-purpose panels and starters",
+          "Projects include panel renovation at MGHE Jog Falls, Bhilai Steel Plant, MRPL, BWSSB and KPTCL"
+        ]
+      },
+      {
+        "name": "V. Rajashekar",
+        "role": "Director",
+        "points": [
+          "Worked at ABB and Lotus Power Gear Pvt. Ltd.",
+          "Projects include a cement plant in Rajasthan for Kirloskar and power panel installation in Bihar for ABB"
+        ]
+      },
+      {
+        "name": "T. Venkatesh",
+        "role": "Technical Adviser · B.E. (Electrical)",
+        "points": [
+          "Over 40 years in electrical engineering: transformers, captive power generation and power plants",
+          "Former Chief of the Design Department, Mysore Electrical Industries (MEI)",
+          "Technical Adviser / Senior Consultant to Poweramps on projects"
+        ]
+      },
+      {
+        "name": "Muniraj",
+        "role": "Technical Adviser",
+        "points": [
+          "Electrical engineer with 25 years in India's power sector",
+          "Planning, design and execution of substations, transmission lines and LT/HT distribution systems"
+        ]
+      }
     ]
   },
   "established": 2008,
   "incorporated": 2013,
   "formerName": "Venus Enterprises",
-  "director": "K. V. V. Chalapathi, Rajshekar",
-  "contactName": "K. V. V. Chalapathi",
+  "director": "K. V. Venkatachalapathi, V. Rajashekar",
+  "contactName": "K. V. Venkatachalapathi",
   "contactRole": "Director",
   "contacts": [
-    { "name": "Rajshekar", "role": "Director", "phone": "+91 98450 79640", "whatsapp": true }
+    { "name": "V. Rajashekar", "role": "Director", "phone": "+91 98450 79640", "whatsapp": true }
   ],
   "phone": "+91 98452 18655",
   "whatsapp": "+91 98450 79640",
@@ -46,7 +85,7 @@
     "line2": "Opp. J.C. Industrial Area",
     "city": "Bengaluru",
     "state": "Karnataka",
-    "pincode": "560078",
+    "pincode": "560062",
     "country": "India",
     "locality": "Yelachenahalli, Kanakapura Rd"
   },
@@ -64,15 +103,21 @@
   "industries": [
     "Manufacturing plants",
     "Water & wastewater",
-    "Pharma & chemicals",
+    "Sugar & distilleries",
+    "Dairy & milk chilling centres",
+    "Hydro, co-generation & power plants",
     "Hospitals",
+    "Hotels & resorts",
+    "Granite industries",
+    "Petrol pumps",
+    "Engineering colleges",
+    "Pharma & chemicals",
+    "Food processing",
     "Data centres",
     "IT parks",
     "Residential towers",
-    "Hotels & malls",
-    "Warehouses",
+    "Malls & warehouses",
     "Telecom sites",
-    "Food processing",
     "Infrastructure"
   ]
 }

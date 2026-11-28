@@ -16,6 +16,8 @@ const facts = [
   { label: site.director.includes(',') ? 'Directors' : 'Director', value: site.director },
   { label: 'Legal status', value: 'Private limited company' },
   { label: 'Location', value: `${a.city}, ${a.state}` },
+  ...((site.about as any).rnd ? [{ label: 'R&D', value: (site.about as any).rnd }] : []),
+  ...((site.about as any).quality ? [{ label: 'Quality policy', value: (site.about as any).quality }] : []),
   { label: 'GSTIN', value: site.gst },
   { label: 'CIN', value: site.cin },
   { label: 'IEC', value: site.iec },
@@ -27,6 +29,8 @@ const values = [
   { icon: 'layers', title: 'Large product line', text: `${panels.length} panel models across ${categories.length} product lines, from tap-off boxes to DG synchronization.` },
   { icon: 'truck', title: 'On-time delivery', text: 'Standard panels dispatch in 3–7 days, with customised packaging for safe transit.' },
 ] as const;
+
+const team: { name: string; role: string; points: string[] }[] = (site.about as any).team ?? [];
 
 const gallery = [
   { src: '/uploads/panels/facility-1.webp', caption: 'Panels ready for dispatch' },
@@ -82,6 +86,26 @@ const gallery = [
     </div>
   </section>
 
+  {team.length > 0 && (
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <span class="eyebrow">Team</span>
+          <h2>The people behind our panels</h2>
+        </div>
+        <div class="team rail--m">
+          {team.map((m, i) => (
+            <article class="member reveal" style={`transition-delay:${i * 70}ms`}>
+              <h3>{m.name}</h3>
+              <p class="member__role mono">{m.role}</p>
+              <ul>{m.points.map((pt) => <li>{pt}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
   <section class="section">
     <div class="wrap">
       <div class="section-head reveal">
@@ -131,6 +155,12 @@ const gallery = [
   .value h3 { margin-top: 16px; font-size: 19px; }
   .value p { margin-top: 8px; color: var(--ink-2); font-size: 15px; }
 
+  .team { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+  .member { background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--action); border-radius: var(--radius-lg); padding: 18px 20px; }
+  .member h3 { margin: 0; font-size: 18px; }
+  .member__role { margin: 4px 0 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .member ul { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+
   .photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
   .photo { margin: 0; border-radius: var(--radius-lg); overflow: hidden; background: var(--white); border: 1px solid var(--line); }
   .photo img { width: 100%; aspect-ratio: 1; object-fit: cover; }
@@ -139,6 +169,7 @@ const gallery = [
   @media (max-width: 900px) {
     .story { grid-template-columns: 1fr; }
     .values { grid-template-columns: 1fr 1fr; }
+    .team { grid-template-columns: 1fr 1fr; }
     .photos { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 560px) {
