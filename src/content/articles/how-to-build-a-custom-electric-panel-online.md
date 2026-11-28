@@ -1,6 +1,6 @@
 ---
 title: "How to build a custom electric panel online: a step-by-step guide"
-description: "Configure an LT electrical panel yourself in our free online electric panel builder: choose the application, supply, loads and every component, then get a quotation from our Bengaluru engineers."
+description: "Configure an LT electrical panel in our free online electric panel builder: choose the application, loads and every component, then get a quotation."
 date: 2026-11-27
 image: /uploads/panels/mcc-panel-2.webp
 imageAlt: "Custom MCC panel built by Poweramps in Bengaluru"

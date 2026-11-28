@@ -1,6 +1,6 @@
 ---
 title: "What is a DG synchronization panel and when do you need one?"
-description: "A DG synchronization panel runs two or more diesel generators in parallel on one bus and shares the load between them. How synchronizing works, what's inside the panel, and when it makes sense."
+description: "A DG synchronization panel runs two or more generators in parallel and shares the load. How synchronizing works, what's inside and when you need one."
 date: 2026-11-24
 image: /uploads/panels/dg-sync-panel-25ka-1.webp
 imageAlt: "DG synchronization panel for paralleling diesel generators"

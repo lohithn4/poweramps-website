@@ -1,6 +1,6 @@
 ---
 title: "MCC vs PCC panel: what's the difference and which do you need?"
-description: "A power control centre (PCC) distributes power to big feeders; a motor control centre (MCC) starts, stops and protects motors. Here's how they differ and how they fit together on an Indian industrial site."
+description: "A PCC distributes power to big feeders; an MCC starts, stops and protects motors. How they differ and how they fit together on an industrial site."
 date: 2026-11-26
 image: /uploads/panels/mcc-panel-1.webp
 imageAlt: "Motor control centre (MCC) panel with individual motor feeders"

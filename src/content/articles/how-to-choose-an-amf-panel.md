@@ -1,6 +1,6 @@
 ---
 title: "How to choose an AMF panel for your DG set"
-description: "An AMF (automatic mains failure) panel starts your generator when grid power fails and changes the load over automatically. What it does, how to size it, and what to specify before you buy."
+description: "An AMF panel starts your generator when grid power fails and changes the load over. What it does, how to size it and what to specify before you buy."
 date: 2026-11-25
 image: /uploads/panels/amf-panel-15ka-1.webp
 imageAlt: "AMF panel for automatic DG changeover"
