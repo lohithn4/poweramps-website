@@ -3,9 +3,9 @@
   "shortName": "Poweramps",
   "legalName": "Poweramps Technology Private Limited",
   "tagline": "Electrical control & power distribution panels, engineered in Bengaluru.",
-  "description": "Electrical panel manufacturer in Bengaluru since 1997: MCC, PLC, VFD, AMF, DG sync, fire-fighting & UPS panels, factory tested and supplied across India.",
+  "description": "Electrical panel manufacturer in Bengaluru since 2008: MCC, PLC, VFD, AMF, DG sync, fire-fighting & UPS panels, factory tested and supplied across India.",
   "seoTitle": "Electrical Panel Manufacturer & Panel Builder, Bengaluru",
-  "homeDescription": "Poweramps Technology: electrical panel manufacturer in Bengaluru (Bangalore) since 1997. Electric control panels and panel boards: MCC, PLC, VFD, AMF, fire-fighting. Made to order, or build your panel online.",
+  "homeDescription": "Poweramps Technology: electrical panel manufacturer in Bengaluru (Bangalore) since 2008. Electric control panels and panel boards: MCC, PLC, VFD, AMF, fire-fighting. Made to order, or build your panel online.",
   "brand": {
     "wordmark": "POWERAMPS",
     "wordmarkSub": "TECHNOLOGY PVT. LTD.",
@@ -23,13 +23,15 @@
     "lead": "We design, build, test and install control & power distribution panels for factories, water plants, hospitals, data centres and buildings."
   },
   "about": {
-    "headline": "Engineering panels in Bengaluru since 1997.",
+    "headline": "Engineering panels in Bengaluru since 2008.",
     "story": [
-      "Since 1997, Poweramps Technology has manufactured, supplied and serviced electrical panels and control equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.",
+      "We started building electrical panels in Bengaluru in 2008 as Venus Enterprises, and incorporated as Poweramps Technology Pvt. Ltd. in 2013. Since then we have manufactured, supplied and serviced electrical panels and control equipment. Our range covers motor control centres, PLC and VFD automation panels, AMF and DG synchronization panels, fire-fighting controls, UPS distribution, remote power panels and bus duct tap-off boxes.",
       "Led by directors K. V. V. Chalapathi and Rajshekar, our team combines in-house design, fabrication and testing with installation and maintenance services. Every panel is built from quality components sourced from trusted vendors, and we deal transparently and deliver on time."
     ]
   },
-  "established": 1997,
+  "established": 2008,
+  "incorporated": 2013,
+  "formerName": "Venus Enterprises",
   "director": "K. V. V. Chalapathi, Rajshekar",
   "contactName": "K. V. V. Chalapathi",
   "contactRole": "Director",

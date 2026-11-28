@@ -10,7 +10,8 @@ const categories = await getCategories();
 const a = site.address;
 
 const facts = [
-  { label: 'Established', value: String(site.established) },
+  { label: 'Established', value: (site as any).formerName ? `${site.established} (as ${(site as any).formerName})` : String(site.established) },
+  ...((site as any).incorporated ? [{ label: 'Incorporated', value: `${(site as any).incorporated} (Pvt. Ltd.)` }] : []),
   { label: 'Business', value: 'Manufacturer, supplier & service provider' },
   { label: site.director.includes(',') ? 'Directors' : 'Director', value: site.director },
   { label: 'Legal status', value: 'Private limited company' },

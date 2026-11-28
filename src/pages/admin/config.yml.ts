@@ -281,7 +281,9 @@ collections:
                 name: story
                 widget: list
                 field: { label: Paragraph, name: paragraph, widget: text }
-          - { label: Year established, name: established, widget: number, value_type: int }
+          - { label: Year established, name: established, widget: number, value_type: int, hint: "First year the business built panels (including any former name)" }
+          - { label: Year incorporated, name: incorporated, widget: number, value_type: int, required: false }
+          - { label: Former business name, name: formerName, widget: string, required: false, hint: "e.g. Venus Enterprises; shown on the About page" }
           - { label: Director(s), name: director, widget: string, hint: "Separate several names with commas" }
           - { label: Contact person, name: contactName, widget: string, required: false, hint: "Shown next to the phone number, e.g. on the home and contact pages" }
           - { label: Contact person role, name: contactRole, widget: string, required: false, hint: "e.g. Director, Sales Manager" }

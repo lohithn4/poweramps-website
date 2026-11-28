@@ -3,7 +3,7 @@
  * Each becomes /<slug>-manufacturer/ and lists the matching catalogue panels.
  *
  * Keep every claim true: only facts already shown elsewhere on the site
- * (since 1997, Bengaluru works, factory tested, dispatch 3–7 days, installation & service)
+ * (since 2008, Bengaluru works, factory tested, dispatch 3–7 days, installation & service)
  * or in the panels' own specifications.
  */
 export interface PanelType {
@@ -31,7 +31,7 @@ export const PANEL_TYPES: PanelType[] = [
     short: 'LT panels',
     h1: 'LT Panel Manufacturer in Bengaluru',
     title: 'LT Panel Manufacturer in Bengaluru, India',
-    description: 'LT electrical panel manufacturer in Bengaluru since 1997: MCC, PLC, VFD, AMF, DG synchronization, fire-fighting and power distribution panels, built and tested in-house.',
+    description: 'LT electrical panel manufacturer in Bengaluru since 2008: MCC, PLC, VFD, AMF, DG synchronization, fire-fighting and power distribution panels, built and tested in-house.',
     lead: 'We design, build, test and install low-voltage (415 V) control and power distribution panels for factories, water and sewage plants, hospitals, data centres, IT parks and residential towers across India, from our works on Kanakapura Road, Bengaluru.',
     what: 'An LT (low tension) panel is the switchboard that receives power at low voltage, typically 415 V three phase, and distributes, controls and protects it for motors, lighting, HVAC and other loads. Depending on the job it can be a main distribution board, a motor control centre, a generator changeover panel or a dedicated control panel for a pump, plant or machine.',
     build: [
@@ -60,7 +60,7 @@ export const PANEL_TYPES: PanelType[] = [
     short: 'control panels',
     h1: 'Electrical Control Panel Manufacturer in Bengaluru',
     title: 'Electrical Control Panel Manufacturer in Bangalore / Bengaluru',
-    description: 'Electric control panel and panel board manufacturer in Bengaluru (Bangalore) since 1997: PLC, VFD, MCC, AMF, fire pump, STP and RO control panels, built to order and factory tested.',
+    description: 'Electric control panel and panel board manufacturer in Bengaluru (Bangalore) since 2008: PLC, VFD, MCC, AMF, fire pump, STP and RO control panels, built to order and factory tested.',
     lead: 'Electric control panels and control panel boards for motors, pumps, generators, machines and plants, designed, wired and factory tested at our works on Kanakapura Road, Bengaluru, and supplied across India.',
     what: 'An electrical control panel (also called a control panel board or electric control panel) houses the switchgear, starters, relays, controllers and indication that run and protect a piece of equipment: a motor, a pump set, a generator, a treatment plant or a machine. It can be a simple starter panel, a PLC automation panel, a VFD speed-control panel or a full motor control centre.',
     build: [
